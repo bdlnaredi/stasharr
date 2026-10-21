@@ -55,6 +55,10 @@ mutation ConfigureLibraryWatcher($input: LibraryWatcherConfigInput!) {
   }
 }
 
+mutation LibraryWatcherReidentify {
+  libraryWatcherReidentify
+}
+
 mutation LibraryWatcherCheckNow {
   libraryWatcherCheckNow
 }

@@ -2085,6 +2085,7 @@ const (
 	WatcherGenerateReels   = "stasharr.watcher.generate_reels"
 	WatcherGenerateMedia   = "stasharr.watcher.generate_media"
 	WatcherPollMinutes     = "stasharr.watcher.poll_minutes"
+	WatcherCreateMissing   = "stasharr.watcher.create_missing"
 	ReelDuration           = "stasharr.reels.duration"
 )
 
@@ -2100,6 +2101,10 @@ func (i *Config) GetWatcherDebounceSeconds() int {
 func (i *Config) GetWatcherIdentify() bool      { return i.getBoolDefault(WatcherIdentify, true) }
 func (i *Config) GetWatcherGenerateReels() bool { return i.getBoolDefault(WatcherGenerateReels, false) }
 func (i *Config) GetWatcherGenerateMedia() bool { return i.getBoolDefault(WatcherGenerateMedia, true) }
+
+// GetWatcherCreateMissing reports whether auto-import creates studios,
+// performers and tags that are not in the library yet.
+func (i *Config) GetWatcherCreateMissing() bool { return i.getBoolDefault(WatcherCreateMissing, true) }
 
 // GetWatcherPollMinutes returns how often to rescan for changes that file
 // system events miss, such as network shares. 0 disables polling.
