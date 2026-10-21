@@ -56,6 +56,10 @@ type LibraryWatcherConfig {
   running: Boolean!
   "Folders being watched"
   watched_paths: [String!]!
+  "When the watcher last looked for new files"
+  last_check_at: Time
+  "What the last check found"
+  last_result: String
 }
 
 input LibraryWatcherConfigInput {
@@ -83,6 +87,8 @@ extend type Mutation {
   generateReels(input: GenerateReelsInput!): ID!
   "Editor or admin"
   reelDestroy(id: ID!): Boolean!
+  "Editor or admin. Looks for new files in every library folder now."
+  libraryWatcherCheckNow: Boolean!
   "Admin only"
   configureLibraryWatcher(input: LibraryWatcherConfigInput!): LibraryWatcherConfig!
 }

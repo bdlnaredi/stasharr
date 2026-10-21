@@ -84,4 +84,6 @@ fragment LibraryWatcherConfigData on LibraryWatcherConfig {
   identify_sources
   running
   watched_paths
+  last_check_at
+  last_result
 }

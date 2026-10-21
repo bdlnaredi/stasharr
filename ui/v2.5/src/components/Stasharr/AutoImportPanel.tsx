@@ -29,6 +29,7 @@ export const AutoImportPanel: React.FC = () => {
   });
   const [configure] = GQL.useConfigureLibraryWatcherMutation();
   const [generateReels] = GQL.useGenerateReelsMutation();
+  const [checkNow] = GQL.useLibraryWatcherCheckNowMutation();
   const [saving, setSaving] = useState(false);
 
   if (loading || !data) return <LoadingIndicator />;
@@ -43,6 +44,18 @@ export const AutoImportPanel: React.FC = () => {
       Toast.error(e);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function onCheckNow() {
+    try {
+      await checkNow();
+      Toast.success(
+        "Checking your library for new files. See Settings → Tasks for progress."
+      );
+      setTimeout(() => refetch(), 5000);
+    } catch (e) {
+      Toast.error(e);
     }
   }
 
@@ -81,6 +94,25 @@ export const AutoImportPanel: React.FC = () => {
             onChange={() => save({ enabled: !cfg.enabled })}
           />
         </Row>
+
+        {cfg.running && (
+          <Row
+            heading="Last check"
+            sub={
+              cfg.last_check_at
+                ? `${new Date(cfg.last_check_at).toLocaleString()}: ${cfg.last_result ?? ""}`
+                : "Not yet. New files are picked up as they appear, and the whole library is checked on the timer below."
+            }
+          >
+            <Button
+              variant="secondary"
+              disabled={saving}
+              onClick={() => onCheckNow()}
+            >
+              Check now
+            </Button>
+          </Row>
+        )}
 
         <Row
           heading="Wait before scanning (seconds)"

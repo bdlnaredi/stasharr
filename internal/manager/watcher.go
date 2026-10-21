@@ -46,6 +46,46 @@ type LibraryWatcher struct {
 	lastPoll time.Time
 	busy     bool
 	busyAt   time.Time
+
+	lastCheck  time.Time
+	lastResult string
+}
+
+// Status returns when the watcher last checked for new files and what it found.
+func (w *LibraryWatcher) Status() (time.Time, string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.lastCheck, w.lastResult
+}
+
+func (w *LibraryWatcher) setResult(msg string) {
+	w.mu.Lock()
+	w.lastCheck = time.Now()
+	w.lastResult = msg
+	w.mu.Unlock()
+}
+
+// CheckNow scans every library folder for new files straight away.
+func (w *LibraryWatcher) CheckNow() error {
+	w.mu.Lock()
+	if !w.running {
+		w.mu.Unlock()
+		return errors.New("auto-import is switched off")
+	}
+	w.clearStaleBusy()
+	if w.busy {
+		w.mu.Unlock()
+		return errors.New("a check is already running")
+	}
+	roots := slices.Clone(w.roots)
+	w.busy = true
+	w.busyAt = time.Now()
+	w.lastPoll = time.Now()
+	w.mu.Unlock()
+
+	logger.Info("[watcher] checking library for new files")
+	w.process(roots)
+	return nil
 }
 
 func NewLibraryWatcher() *LibraryWatcher {
@@ -257,23 +297,26 @@ func (w *LibraryWatcher) flush() {
 
 	dirs = collapsePaths(dirs)
 	logger.Infof("[watcher] new files in %s", strings.Join(dirs, ", "))
-	w.process(dirs, nil)
+	w.process(dirs)
 }
 
 func (w *LibraryWatcher) pollLoop(ctx context.Context) {
+	// first check soon after start, to pick up anything added while stopped
+	wait := 2 * time.Minute
 	for {
-		minutes := config.GetInstance().GetWatcherPollMinutes()
-		if minutes <= 0 {
-			minutes = 60 // re-check the setting hourly
-		}
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(time.Duration(minutes) * time.Minute):
+		case <-time.After(wait):
 		}
-		if config.GetInstance().GetWatcherPollMinutes() <= 0 {
+
+		minutes := config.GetInstance().GetWatcherPollMinutes()
+		if minutes <= 0 {
+			// polling is off: re-check the setting hourly
+			wait = time.Hour
 			continue
 		}
+		wait = time.Duration(minutes) * time.Minute
 
 		w.mu.Lock()
 		w.clearStaleBusy()
@@ -281,7 +324,6 @@ func (w *LibraryWatcher) pollLoop(ctx context.Context) {
 			w.mu.Unlock()
 			continue
 		}
-		since := w.lastPoll
 		w.lastPoll = time.Now()
 		roots := slices.Clone(w.roots)
 		w.busy = true
@@ -289,7 +331,10 @@ func (w *LibraryWatcher) pollLoop(ctx context.Context) {
 		w.mu.Unlock()
 
 		logger.Debug("[watcher] polling library for changes")
-		w.process(roots, &since)
+		// a full scan only reads files it has not seen before; moved or
+		// copied downloads keep their old modification time, so no time
+		// filter is used here
+		w.process(roots)
 	}
 }
 
@@ -319,7 +364,7 @@ func collapsePaths(paths []string) []string {
 
 // process queues the scan, then a follow-up job that handles the scenes the
 // scan created. Jobs run one at a time, so the follow-up runs after the scan.
-func (w *LibraryWatcher) process(dirs []string, minModTime *time.Time) {
+func (w *LibraryWatcher) process(dirs []string) {
 	mgr := GetInstance()
 	ctx := context.Background()
 
@@ -332,6 +377,7 @@ func (w *LibraryWatcher) process(dirs []string, minModTime *time.Time) {
 	maxID, err := maxSceneID(ctx)
 	if err != nil {
 		logger.Errorf("[watcher] %v", err)
+		w.setResult("Error: " + err.Error())
 		done()
 		return
 	}
@@ -346,12 +392,10 @@ func (w *LibraryWatcher) process(dirs []string, minModTime *time.Time) {
 	// fingerprints are needed to match scenes on ThePornDB and StashDB
 	input.ScanGeneratePhashes = true
 	input.Rescan = false
-	if minModTime != nil {
-		input.Filter = &ScanMetaDataFilterInput{MinModTime: minModTime}
-	}
 
 	if _, err := mgr.Scan(ctx, input); err != nil {
 		logger.Errorf("[watcher] scan: %v", err)
+		w.setResult("Scan failed: " + err.Error())
 		done()
 		return
 	}
@@ -401,6 +445,7 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 	}
 	if newID <= sinceID {
 		logger.Debug("[watcher] no new scenes")
+		w.setResult("No new files")
 		return nil
 	}
 
@@ -425,6 +470,7 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 		return nil
 	}
 	logger.Infof("[watcher] %d new scene(s)", len(ids))
+	w.setResult(fmt.Sprintf("Added %d new scene(s)", len(ids)))
 
 	if cfg.GetWatcherIdentify() {
 		opts := identifyOptionsFor(cfg)

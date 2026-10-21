@@ -2108,7 +2108,7 @@ func (i *Config) GetWatcherPollMinutes() int {
 	defer i.RUnlock()
 	v := i.forKey(WatcherPollMinutes)
 	if !v.Exists(WatcherPollMinutes) {
-		return 30
+		return 15
 	}
 	return v.Int(WatcherPollMinutes)
 }

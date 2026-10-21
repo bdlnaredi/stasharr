@@ -154,6 +154,10 @@ func watcherConfig() *LibraryWatcherConfig {
 		if ret.Running {
 			ret.WatchedPaths = mgr.Watcher.WatchedPaths()
 		}
+		if at, result := mgr.Watcher.Status(); !at.IsZero() {
+			ret.LastCheckAt = &at
+			ret.LastResult = &result
+		}
 	}
 	return ret
 }
@@ -210,4 +214,18 @@ func (r *mutationResolver) ConfigureLibraryWatcher(ctx context.Context, input Li
 		mgr.Watcher.Restart()
 	}
 	return watcherConfig(), nil
+}
+
+func (r *mutationResolver) LibraryWatcherCheckNow(ctx context.Context) (bool, error) {
+	if err := access.RequireRole(ctx, access.RoleEditor); err != nil {
+		return false, err
+	}
+	w := manager.GetInstance().Watcher
+	if w == nil {
+		return false, errors.New("auto-import is not available")
+	}
+	if err := w.CheckNow(); err != nil {
+		return false, err
+	}
+	return true, nil
 }
