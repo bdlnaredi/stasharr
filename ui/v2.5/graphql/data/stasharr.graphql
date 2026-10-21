@@ -87,3 +87,68 @@ fragment LibraryWatcherConfigData on LibraryWatcherConfig {
   last_check_at
   last_result
 }
+
+fragment TrashItemData on TrashItem {
+  id
+  original_path
+  trash_path
+  size
+  is_dir
+  deleted_at
+  purge_at
+}
+
+fragment TrashConfigData on TrashConfig {
+  enabled
+  retention_days
+  trash_path
+}
+
+fragment DuplicateCleanupSceneData on Scene {
+  id
+  title
+  date
+  organized
+  paths {
+    screenshot
+  }
+  studio {
+    id
+    name
+  }
+  files {
+    id
+    path
+    size
+    width
+    height
+    bit_rate
+    duration
+    video_codec
+  }
+}
+
+fragment RenamerConfigData on RenamerConfig {
+  enabled
+  template
+  default_template
+  tokens {
+    token
+    description
+  }
+}
+
+fragment PlaylistData on Playlist {
+  id
+  name
+  description
+  watch_later
+  scene_count
+  updated_at
+  cover {
+    id
+    paths {
+      screenshot
+    }
+  }
+}

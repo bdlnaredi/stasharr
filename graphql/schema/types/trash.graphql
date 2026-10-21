@@ -1,0 +1,48 @@
+# Stasharr: trash bin
+
+type TrashItem {
+  id: ID!
+  "Where the file was before it was deleted. Empty when not known."
+  original_path: String!
+  "Where the file is now"
+  trash_path: String!
+  size: Int64!
+  is_dir: Boolean!
+  deleted_at: Time!
+  "When it will be deleted for good. Null when the trash bin keeps files until emptied."
+  purge_at: Time
+}
+
+type TrashConfig {
+  "Deleted library files go to the trash bin instead of being removed straight away"
+  enabled: Boolean!
+  "Days before files in the trash bin are deleted for good. 0 keeps them until the bin is emptied."
+  retention_days: Int!
+  "The trash folder set under Settings > System. Empty means a .stasharr-trash folder in each library folder."
+  trash_path: String!
+}
+
+type TrashBin {
+  config: TrashConfig!
+  items: [TrashItem!]!
+  total_size: Int64!
+}
+
+input TrashConfigInput {
+  enabled: Boolean
+  retention_days: Int
+}
+
+extend type Query {
+  "Admin only"
+  trashBin: TrashBin!
+}
+
+extend type Mutation {
+  "Admin only"
+  configureTrash(input: TrashConfigInput!): TrashConfig!
+  "Admin only. Moves files back and imports them again. Returns the restored paths."
+  trashRestore(ids: [ID!]!): [String!]!
+  "Admin only. Deletes files for good. Leave ids empty to empty the whole bin. Returns how many were deleted."
+  trashDelete(ids: [ID!]): Int!
+}

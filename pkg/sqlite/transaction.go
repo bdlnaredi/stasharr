@@ -133,5 +133,6 @@ func (db *Database) Repository() models.Repository {
 		SavedFilter:    db.SavedFilter,
 		User:           db.User,
 		Reel:           db.Reel,
+		Playlist:       db.Playlist,
 	}
 }

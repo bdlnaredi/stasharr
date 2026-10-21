@@ -39,3 +39,84 @@ query LibraryWatcherConfig {
     ...LibraryWatcherConfigData
   }
 }
+
+query TrashBin {
+  trashBin {
+    config {
+      ...TrashConfigData
+    }
+    total_size
+    items {
+      ...TrashItemData
+    }
+  }
+}
+
+query DuplicateCleanupPreview($input: DuplicateCleanupInput!) {
+  duplicateCleanupPreview(input: $input) {
+    keep {
+      ...DuplicateCleanupSceneData
+    }
+    remove {
+      ...DuplicateCleanupSceneData
+    }
+  }
+}
+
+query RenamerConfig {
+  renamerConfig {
+    ...RenamerConfigData
+  }
+}
+
+query RenamePreview($input: RenameScenesInput!) {
+  renamePreview(input: $input) {
+    checked
+    to_rename
+    items {
+      scene_id
+      title
+      old_path
+      new_path
+      status
+      reason
+    }
+  }
+}
+
+query FindPlaylists {
+  findPlaylists {
+    ...PlaylistData
+  }
+}
+
+query FindPlaylist($id: ID!) {
+  findPlaylist(id: $id) {
+    ...PlaylistData
+    scenes {
+      ...SlimSceneData
+    }
+  }
+}
+
+query ContinueWatching($limit: Int) {
+  continueWatching(limit: $limit) {
+    ...SlimSceneData
+  }
+}
+
+query ScenePlaylists($id: ID!) {
+  findScene(id: $id) {
+    id
+    in_watch_later
+    playlist_ids
+  }
+}
+
+query TrashEnabled {
+  trashBin {
+    config {
+      enabled
+    }
+  }
+}

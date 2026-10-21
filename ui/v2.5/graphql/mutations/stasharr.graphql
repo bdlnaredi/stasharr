@@ -58,3 +58,69 @@ mutation ConfigureLibraryWatcher($input: LibraryWatcherConfigInput!) {
 mutation LibraryWatcherCheckNow {
   libraryWatcherCheckNow
 }
+
+mutation ConfigureTrash($input: TrashConfigInput!) {
+  configureTrash(input: $input) {
+    ...TrashConfigData
+  }
+}
+
+mutation TrashRestore($ids: [ID!]!) {
+  trashRestore(ids: $ids)
+}
+
+mutation TrashDelete($ids: [ID!]) {
+  trashDelete(ids: $ids)
+}
+
+mutation DuplicateCleanup($input: DuplicateCleanupInput!) {
+  duplicateCleanup(input: $input)
+}
+
+mutation ConfigureRenamer($input: RenamerConfigInput!) {
+  configureRenamer(input: $input) {
+    ...RenamerConfigData
+  }
+}
+
+mutation RenameScenes($input: RenameScenesInput!) {
+  renameScenes(input: $input)
+}
+
+mutation PlaylistCreate($input: PlaylistCreateInput!) {
+  playlistCreate(input: $input) {
+    ...PlaylistData
+  }
+}
+
+mutation PlaylistUpdate($input: PlaylistUpdateInput!) {
+  playlistUpdate(input: $input) {
+    ...PlaylistData
+  }
+}
+
+mutation PlaylistDestroy($id: ID!) {
+  playlistDestroy(id: $id)
+}
+
+mutation PlaylistAddScenes($id: ID!, $scene_ids: [ID!]!) {
+  playlistAddScenes(id: $id, scene_ids: $scene_ids) {
+    ...PlaylistData
+  }
+}
+
+mutation PlaylistRemoveScenes($id: ID!, $scene_ids: [ID!]!) {
+  playlistRemoveScenes(id: $id, scene_ids: $scene_ids) {
+    ...PlaylistData
+  }
+}
+
+mutation PlaylistReorder($id: ID!, $scene_ids: [ID!]!) {
+  playlistReorder(id: $id, scene_ids: $scene_ids) {
+    ...PlaylistData
+  }
+}
+
+mutation WatchLaterToggle($scene_id: ID!) {
+  watchLaterToggle(scene_id: $scene_id)
+}

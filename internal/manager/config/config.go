@@ -2120,3 +2120,44 @@ func (i *Config) GetReelDuration() float64 {
 	}
 	return v
 }
+
+// Stasharr: trash bin and file renamer
+
+const (
+	TrashEnabled       = "stasharr.trash.enabled"
+	TrashRetentionDays = "stasharr.trash.retention_days"
+
+	RenamerEnabled  = "stasharr.renamer.enabled"
+	RenamerTemplate = "stasharr.renamer.template"
+
+	// DefaultRenamerTemplate puts files in a folder per studio, named by
+	// release date and title.
+	DefaultRenamerTemplate = "{studio}/{date} - {title}"
+)
+
+// GetTrashEnabled reports whether deleted library files go to the trash bin
+// instead of being removed straight away.
+func (i *Config) GetTrashEnabled() bool { return i.getBoolDefault(TrashEnabled, true) }
+
+// GetTrashRetentionDays returns how many days files stay in the trash bin
+// before they are deleted for good. 0 keeps them until the bin is emptied.
+func (i *Config) GetTrashRetentionDays() int {
+	i.RLock()
+	defer i.RUnlock()
+	v := i.forKey(TrashRetentionDays)
+	if !v.Exists(TrashRetentionDays) {
+		return 30
+	}
+	return v.Int(TrashRetentionDays)
+}
+
+// GetRenamerEnabled reports whether new scenes are renamed automatically
+// after they have been identified.
+func (i *Config) GetRenamerEnabled() bool { return i.getBoolDefault(RenamerEnabled, false) }
+
+func (i *Config) GetRenamerTemplate() string {
+	if v := i.getString(RenamerTemplate); v != "" {
+		return v
+	}
+	return DefaultRenamerTemplate
+}

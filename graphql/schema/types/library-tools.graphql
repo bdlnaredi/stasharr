@@ -1,0 +1,80 @@
+# Stasharr: duplicate cleanup and file renamer
+
+type DuplicateCleanupGroup {
+  "The best copy, which is kept"
+  keep: Scene!
+  "The other copies, which go to the trash bin"
+  remove: [Scene!]!
+}
+
+input DuplicateCleanupInput {
+  "How alike videos must look: 0 exact, 4 high, 8 medium, 10 low accuracy. Defaults to 0."
+  distance: Int
+  "Largest difference in length, in seconds. -1 ignores the length. Defaults to 1."
+  duration_diff: Float
+  "Only clean up the groups whose kept scene is one of these. Leave empty for every group."
+  keep_scene_ids: [ID!]
+}
+
+type RenamerToken {
+  token: String!
+  description: String!
+}
+
+type RenamerConfig {
+  "Rename new scenes automatically after auto-import has identified them"
+  enabled: Boolean!
+  "Folder and file name, without the extension, relative to the library folder"
+  template: String!
+  default_template: String!
+  tokens: [RenamerToken!]!
+}
+
+input RenamerConfigInput {
+  enabled: Boolean
+  template: String
+}
+
+type RenamePreviewItem {
+  scene_id: ID!
+  title: String!
+  old_path: String!
+  new_path: String!
+  "MOVE, SAME or SKIP"
+  status: String!
+  reason: String!
+}
+
+type RenamePreviewResult {
+  "Scenes looked at"
+  checked: Int!
+  "Scenes that would be renamed"
+  to_rename: Int!
+  "Up to 200 scenes, the ones that would be renamed first"
+  items: [RenamePreviewItem!]!
+}
+
+input RenameScenesInput {
+  "Scenes to rename. Leave empty for the whole library."
+  scene_ids: [ID!]
+  "Template to use instead of the saved one"
+  template: String
+}
+
+extend type Query {
+  "Admin only. Groups of duplicates and which copy would be kept."
+  duplicateCleanupPreview(input: DuplicateCleanupInput!): [DuplicateCleanupGroup!]!
+  "Admin only"
+  renamerConfig: RenamerConfig!
+  "Admin only. Shows what renaming would do without changing anything."
+  renamePreview(input: RenameScenesInput!): RenamePreviewResult!
+}
+
+extend type Mutation {
+  "Admin only. Returns the job id."
+  duplicateCleanup(input: DuplicateCleanupInput!): ID!
+  "Admin only"
+  configureRenamer(input: RenamerConfigInput!): RenamerConfig!
+  "Admin only. Returns the job id."
+  renameScenes(input: RenameScenesInput!): ID!
+}

@@ -52,3 +52,14 @@ export function useRoleBodyClass() {
     };
   }, [role, noDownload]);
 }
+
+// Whether deleted library files go to the Stasharr trash bin. Only admins
+// can delete files, so the setting is only looked up for them.
+export function useTrashEnabled(): boolean {
+  const { isAdmin, loading } = useCurrentUser();
+  const { data } = GQL.useTrashEnabledQuery({
+    skip: loading || !isAdmin,
+    fetchPolicy: "cache-and-network",
+  });
+  return data?.trashBin.config.enabled ?? false;
+}

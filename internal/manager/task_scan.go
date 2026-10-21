@@ -25,6 +25,7 @@ import (
 	"github.com/stashapp/stash/pkg/models/paths"
 	"github.com/stashapp/stash/pkg/scene"
 	"github.com/stashapp/stash/pkg/scene/generate"
+	"github.com/stashapp/stash/pkg/trash"
 	"github.com/stashapp/stash/pkg/txn"
 	"github.com/stashapp/stash/pkg/utils"
 )
@@ -583,6 +584,11 @@ func newScanFilter(c *config.Config, repo models.Repository, minModTime time.Tim
 }
 
 func (f *scanFilter) Accept(ctx context.Context, path string, info fs.FileInfo, zipFilePath string) bool {
+	// Stasharr: never import files from the trash bin
+	if trash.IsTrashPath(path) {
+		return false
+	}
+
 	if fsutil.IsPathInDir(f.generatedPath, path) {
 		logger.Warnf("Skipping %q as it overlaps with the generated folder", path)
 		return false

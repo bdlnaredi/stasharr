@@ -8,6 +8,7 @@ import { useConfigurationContext } from "src/hooks/Config";
 import { FormattedMessage, useIntl } from "react-intl";
 import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { objectPath } from "src/core/files";
+import { useTrashEnabled } from "src/components/Stasharr/CurrentUser";
 
 interface IDeleteSceneDialogProps {
   selected: GQL.SlimSceneDataFragment[];
@@ -35,6 +36,7 @@ export const DeleteScenesDialog: React.FC<IDeleteSceneDialogProps> = (
   );
 
   const { configuration: config } = useConfigurationContext();
+  const trashEnabled = useTrashEnabled();
 
   const [deleteFile, setDeleteFile] = useState<boolean>(
     config?.defaults.deleteFile ?? false
@@ -94,7 +96,7 @@ export const DeleteScenesDialog: React.FC<IDeleteSceneDialogProps> = (
       }
     });
 
-    const deleteTrashPath = config?.general.deleteTrashPath;
+    const deleteTrashPath = config?.general.deleteTrashPath || trashEnabled;
     const deleteAlertId = deleteTrashPath
       ? "dialogs.delete_alert_to_trash"
       : "dialogs.delete_alert";

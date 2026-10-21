@@ -61,6 +61,7 @@ import { StudioLogo } from "src/components/Shared/StudioLogo";
 import { JobFragment, useMonitorJob } from "src/utils/job";
 import { useCurrentUser } from "src/components/Stasharr/CurrentUser";
 import { SceneReelsPanel } from "src/components/Stasharr/SceneReelsPanel";
+import { PlaylistButtons } from "src/components/Stasharr/PlaylistButtons";
 
 const SubmitStashBoxDraft = lazyComponent(
   () => import("src/components/Dialogs/SubmitDraft")
@@ -194,8 +195,20 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
   const Toast = useToast();
   const intl = useIntl();
   const history = useHistory();
-  const { isEditor, canViewReels } = useCurrentUser();
+  const { isEditor, isAdmin, canViewReels } = useCurrentUser();
   const [generateReels] = GQL.useGenerateReelsMutation();
+  const [renameScenes] = GQL.useRenameScenesMutation();
+
+  async function onRenameFile() {
+    try {
+      await renameScenes({ variables: { input: { scene_ids: [scene.id] } } });
+      Toast.success(
+        "Renaming the file with your renamer template. See Settings → File renamer to change it."
+      );
+    } catch (e) {
+      Toast.error(e);
+    }
+  }
   const [updateScene] = useSceneUpdate();
   const [generateScreenshot] = useSceneGenerateScreenshot();
   const [screenshotJobID, setScreenshotJobID] = useState<string>();
@@ -524,6 +537,15 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
         >
           Make reel
         </Dropdown.Item>
+        {isAdmin && !!scene.files.length && (
+          <Dropdown.Item
+            key="rename-file"
+            className="bg-secondary text-white"
+            onClick={() => onRenameFile()}
+          >
+            Rename file
+          </Dropdown.Item>
+        )}
         {boxes.length > 0 && (
           <Dropdown.Item
             key="submit"
@@ -781,6 +803,7 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
                   onIncrement={() => onIncrementOClick()}
                 />
               </span>
+              <PlaylistButtons sceneID={scene.id} />
               {isEditor && (
                 <span>
                   <OrganizedButton

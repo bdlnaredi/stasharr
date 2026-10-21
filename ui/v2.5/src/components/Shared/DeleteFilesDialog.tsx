@@ -5,6 +5,7 @@ import { useToast } from "src/hooks/Toast";
 import { ConfigurationContext } from "src/hooks/Config";
 import { FormattedMessage, useIntl } from "react-intl";
 import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { useTrashEnabled } from "src/components/Stasharr/CurrentUser";
 
 interface IFile {
   id: string;
@@ -43,6 +44,7 @@ export const DeleteFilesDialog: React.FC<IDeleteSceneDialogProps> = (
 
   const context = React.useContext(ConfigurationContext);
   const config = context?.configuration;
+  const trashEnabled = useTrashEnabled();
 
   async function onDelete() {
     setIsDeleting(true);
@@ -60,7 +62,7 @@ export const DeleteFilesDialog: React.FC<IDeleteSceneDialogProps> = (
   function renderDeleteFileAlert() {
     const deletedFiles = props.selected.map((f) => f.path);
 
-    const deleteTrashPath = config?.general.deleteTrashPath;
+    const deleteTrashPath = config?.general.deleteTrashPath || trashEnabled;
     const deleteAlertId = deleteTrashPath
       ? "dialogs.delete_alert_to_trash"
       : "dialogs.delete_alert";
