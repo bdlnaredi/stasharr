@@ -47,7 +47,10 @@ const reelColumns = "reels.id, reels.scene_id, reels.path, reels.duration, reels
 
 func (s *ReelStore) Create(ctx context.Context, r *models.Reel) error {
 	r.CreatedAt = time.Now()
-	segs, _ := json.Marshal(r.Segments)
+	segs, err := json.Marshal(r.Segments)
+	if err != nil {
+		return fmt.Errorf("encoding reel segments: %w", err)
+	}
 	res, err := dbWrapper.Exec(ctx,
 		"INSERT INTO reels (scene_id, path, duration, width, height, source, segments, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 		r.SceneID, r.Path, r.Duration, r.Width, r.Height, r.Source, string(segs), Timestamp{r.CreatedAt})

@@ -16,7 +16,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -627,10 +626,4 @@ func renderReel(ctx context.Context, vf *models.VideoFile, segs []models.ReelSeg
 		return fmt.Errorf("rendering reel: %w", err)
 	}
 	return nil
-}
-
-// reelJSON is used for logging plans.
-func reelJSON(segs []models.ReelSegment) string {
-	b, _ := json.Marshal(segs)
-	return string(b)
 }

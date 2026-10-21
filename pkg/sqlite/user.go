@@ -147,6 +147,10 @@ func (s *UserStore) TouchLogin(ctx context.Context, id int) error {
 }
 
 func (s *UserStore) Destroy(ctx context.Context, id int) error {
+	// playlists are keyed by user id without a foreign key, as the owner is 0
+	if _, err := dbWrapper.Exec(ctx, "DELETE FROM playlists WHERE user_id = ?", id); err != nil {
+		return err
+	}
 	_, err := dbWrapper.Exec(ctx, "DELETE FROM users WHERE id = ?", id)
 	return err
 }

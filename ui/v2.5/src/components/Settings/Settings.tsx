@@ -22,6 +22,9 @@ import { useCurrentUser } from "../Stasharr/CurrentUser";
 import { UsersPanel } from "../Stasharr/UsersPanel";
 import { AutoImportPanel } from "../Stasharr/AutoImportPanel";
 import { AccountPanel } from "../Stasharr/AccountPanel";
+import { TrashPanel } from "../Stasharr/TrashPanel";
+import { DuplicateCleanupPanel } from "../Stasharr/DuplicateCleanupPanel";
+import { RenamerPanel } from "../Stasharr/RenamerPanel";
 import { TroubleshootingModeButton } from "../TroubleshootingMode/TroubleshootingModeButton";
 import { useTroubleshootingMode } from "../TroubleshootingMode/useTroubleshootingMode";
 
@@ -32,6 +35,9 @@ const validTabs = [
   "security",
   "users",
   "auto-import",
+  "trash",
+  "duplicates",
+  "renamer",
   "account",
   "metadata-providers",
   "services",
@@ -116,6 +122,9 @@ function tabsForRole(isAdmin: boolean, isEditor: boolean): ISettingsTab[] {
   const extra: ISettingsTab[] = [
     { key: "users", label: "Users & tiers" },
     { key: "auto-import", label: "Auto-import" },
+    { key: "trash", label: "Trash bin" },
+    { key: "duplicates", label: "Duplicate cleanup" },
+    { key: "renamer", label: "File renamer" },
     { key: "account", label: "Account" },
   ];
   // new tabs go after Security
@@ -193,6 +202,15 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
             </Tab.Pane>
             <Tab.Pane eventKey="auto-import" unmountOnExit>
               <AutoImportPanel />
+            </Tab.Pane>
+            <Tab.Pane eventKey="trash" unmountOnExit>
+              <TrashPanel />
+            </Tab.Pane>
+            <Tab.Pane eventKey="duplicates" unmountOnExit>
+              <DuplicateCleanupPanel />
+            </Tab.Pane>
+            <Tab.Pane eventKey="renamer" unmountOnExit>
+              <RenamerPanel />
             </Tab.Pane>
             <Tab.Pane eventKey="account" unmountOnExit>
               <AccountPanel />

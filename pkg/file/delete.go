@@ -10,10 +10,16 @@ import (
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/models"
+	"github.com/stashapp/stash/pkg/trash"
 	"github.com/stashapp/stash/pkg/txn"
 )
 
 const deleteFileSuffix = ".delete"
+
+// TrashDirFor returns the trash folder to use for a library file when no
+// trash path is configured, or "" to delete the file permanently. Stasharr
+// sets it to a trash folder at the top of the file's library folder.
+var TrashDirFor func(path string) string
 
 // RenamerRemover provides access to the Rename and Remove functions.
 type RenamerRemover interface {
@@ -194,23 +200,34 @@ func (d *Deleter) Rollback() {
 // Any errors encountered are logged. All files will be attempted, regardless
 // of the errors encountered.
 func (d *Deleter) Commit() {
-	if d.TrashPath != "" {
-		// Files were already moved to trash during renameForDelete, just clear tracking
-		logger.Debugf("Commit: %d files and %d directories already in trash, clearing tracking", len(d.files), len(d.dirs))
-	} else {
-		// Permanently delete files and directories marked with .delete suffix
-		for _, f := range d.files {
-			if err := d.RenamerRemover.Remove(f + deleteFileSuffix); err != nil {
-				logger.Warnf("Error deleting file %q: %v", f+deleteFileSuffix, err)
-			}
-		}
-
-		for _, f := range d.dirs {
-			if err := d.RenamerRemover.RemoveAll(f + deleteFileSuffix); err != nil {
-				logger.Warnf("Error deleting directory %q: %v", f+deleteFileSuffix, err)
-			}
+	// Files moved to the trash were moved during renameForDelete: record
+	// them in the trash bin. Permanently delete the rest.
+	recorded := make(map[string]string)
+	for _, f := range append(append([]string{}, d.files...), d.dirs...) {
+		if t, ok := d.trashedPaths[f]; ok {
+			recorded[f] = t
 		}
 	}
+
+	for _, f := range d.files {
+		if _, ok := d.trashedPaths[f]; ok {
+			continue
+		}
+		if err := d.RenamerRemover.Remove(f + deleteFileSuffix); err != nil {
+			logger.Warnf("Error deleting file %q: %v", f+deleteFileSuffix, err)
+		}
+	}
+
+	for _, f := range d.dirs {
+		if _, ok := d.trashedPaths[f]; ok {
+			continue
+		}
+		if err := d.RenamerRemover.RemoveAll(f + deleteFileSuffix); err != nil {
+			logger.Warnf("Error deleting directory %q: %v", f+deleteFileSuffix, err)
+		}
+	}
+
+	trash.Record(recorded)
 
 	d.files = nil
 	d.dirs = nil
@@ -218,15 +235,24 @@ func (d *Deleter) Commit() {
 }
 
 func (d *Deleter) renameForDelete(path string, bypassTrash bool) error {
-	if d.TrashPath != "" && !bypassTrash {
-		// Move file to trash immediately
-		trashDest, err := fsutil.MoveToTrash(path, d.TrashPath)
-		if err != nil {
-			return err
+	if !bypassTrash {
+		trashDir := d.TrashPath
+		if trashDir == "" && TrashDirFor != nil {
+			trashDir = TrashDirFor(path)
 		}
-		d.trashedPaths[path] = trashDest
-		logger.Infof("Moved %q to trash at %s", path, trashDest)
-		return nil
+		if trashDir != "" {
+			// Move file to trash immediately
+			trashDest, err := fsutil.MoveToTrash(path, trashDir)
+			if err != nil {
+				return err
+			}
+			if d.trashedPaths == nil {
+				d.trashedPaths = make(map[string]string)
+			}
+			d.trashedPaths[path] = trashDest
+			logger.Infof("Moved %q to trash at %s", path, trashDest)
+			return nil
+		}
 	}
 
 	// Standard behavior: rename with .delete suffix (or when bypassing trash)
@@ -234,12 +260,8 @@ func (d *Deleter) renameForDelete(path string, bypassTrash bool) error {
 }
 
 func (d *Deleter) renameForRestore(path string) error {
-	if d.TrashPath != "" {
+	if trashPath, ok := d.trashedPaths[path]; ok {
 		// Restore file from trash
-		trashPath, ok := d.trashedPaths[path]
-		if !ok {
-			return fmt.Errorf("no trash path found for %q", path)
-		}
 		return d.RenamerRemover.Rename(trashPath, path)
 	}
 

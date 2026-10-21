@@ -88,6 +88,26 @@ func (w *LibraryWatcher) CheckNow() error {
 	return nil
 }
 
+var errWatcherBusy = errors.New("a check is already running")
+
+// ImportNow scans, identifies and prepares the given folders straight away,
+// even when the watcher is switched off. Used for files restored from the
+// trash bin.
+func (w *LibraryWatcher) ImportNow(dirs []string) error {
+	w.mu.Lock()
+	w.clearStaleBusy()
+	if w.busy {
+		w.mu.Unlock()
+		return errWatcherBusy
+	}
+	w.busy = true
+	w.busyAt = time.Now()
+	w.mu.Unlock()
+
+	w.process(collapsePaths(dirs))
+	return nil
+}
+
 func NewLibraryWatcher() *LibraryWatcher {
 	return &LibraryWatcher{pending: map[string]struct{}{}}
 }
@@ -483,6 +503,11 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 				logger.Errorf("[watcher] identify: %v", err)
 			}
 		}
+	}
+
+	if cfg.GetRenamerEnabled() {
+		// jobs run in order, so the files are renamed before media is generated
+		mgr.JobManager.Add(ctx, "Auto-import: renaming files", &RenameJob{SceneIDs: intIDs})
 	}
 
 	if cfg.GetWatcherGenerateMedia() {

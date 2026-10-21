@@ -14,6 +14,7 @@ import {
 } from "src/core/config";
 import { useScrollToTopOnMount } from "src/hooks/scrollToTop";
 import { PatchComponent } from "src/patch";
+import { ContinueWatchingRow } from "../Stasharr/ContinueWatchingRow";
 
 const FrontPage: React.FC = PatchComponent("FrontPage", () => {
   const intl = useIntl();
@@ -71,6 +72,7 @@ const FrontPage: React.FC = PatchComponent("FrontPage", () => {
   return (
     <div className="recommendations-container">
       <div>
+        <ContinueWatchingRow />
         {frontPageContent?.map((content, i) => (
           <Control key={i} content={content} />
         ))}

@@ -58,6 +58,9 @@ import useFocus from "src/utils/focus";
 import { useZoomKeybinds } from "../List/ZoomSlider";
 import { FilteredListToolbar } from "../List/FilteredListToolbar";
 import { FilterTags } from "../List/FilterTags";
+import { AddToPlaylistDialog } from "../Stasharr/PlaylistButtons";
+import { useCurrentUser } from "../Stasharr/CurrentUser";
+import { useToast } from "src/hooks/Toast";
 import { SidebarFolderFilter } from "../List/Filters/FolderFilter";
 
 function renderMetadataByline(result: GQL.FindScenesQueryResult) {
@@ -413,6 +416,27 @@ export const FilteredSceneList = PatchComponent(
 
     const { modal, showModal, closeModal } = modalState;
 
+    const { isAdmin } = useCurrentUser();
+    const Toast = useToast();
+    const [renameScenes] = GQL.useRenameScenesMutation();
+
+    async function onRenameFiles() {
+      const ids = Array.from(selectedIds.values());
+      if (
+        !window.confirm(
+          `Rename and move the files of ${ids.length} scene(s) using your renamer template?`
+        )
+      ) {
+        return;
+      }
+      try {
+        await renameScenes({ variables: { input: { scene_ids: ids } } });
+        Toast.success("Renaming files. See Settings → Tasks for progress.");
+      } catch (e) {
+        Toast.error(e);
+      }
+    }
+
     // Utility hooks
     const { setPage, removeCriterion, clearAllCriteria } = useFilterOperations({
       filter,
@@ -612,6 +636,22 @@ export const FilteredSceneList = PatchComponent(
         text: `${intl.formatMessage({ id: "actions.merge" })}…`,
         onClick: () => onMerge(),
         isDisplayed: () => hasSelection,
+      },
+      {
+        text: "Add to playlist…",
+        onClick: () =>
+          showModal(
+            <AddToPlaylistDialog
+              sceneIDs={Array.from(selectedIds.values())}
+              onClose={() => closeModal()}
+            />
+          ),
+        isDisplayed: () => hasSelection,
+      },
+      {
+        text: "Rename files…",
+        onClick: () => onRenameFiles(),
+        isDisplayed: () => hasSelection && isAdmin,
       },
       {
         text: intl.formatMessage({ id: "actions.export" }),

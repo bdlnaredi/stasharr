@@ -32,6 +32,14 @@ var viewerMutations = map[string]bool{
 	"sceneDeletePlay":         true,
 	"sceneResetPlayCount":     true,
 	"changeMyPassword":        true,
+	// own playlists
+	"playlistCreate":       true,
+	"playlistUpdate":       true,
+	"playlistDestroy":      true,
+	"playlistAddScenes":    true,
+	"playlistRemoveScenes": true,
+	"playlistReorder":      true,
+	"watchLaterToggle":     true,
 	// accepted but ignored for non-admins, see ConfigureUI
 	"configureUI":        true,
 	"configureUISetting": true,
@@ -56,6 +64,8 @@ var adminMutations = map[string]bool{
 	"configureLibraryWatcher": true,
 	"userCreate":              true, "userUpdate": true, "userDestroy": true, "userGenerateAPIKey": true,
 	"userTierCreate": true, "userTierUpdate": true, "userTierDestroy": true,
+	"configureTrash": true, "trashRestore": true, "trashDelete": true,
+	"duplicateCleanup": true, "configureRenamer": true, "renameScenes": true,
 }
 
 // Mutations that delete files from disk when delete_file is set.
@@ -69,7 +79,7 @@ var fileDeletingMutations = map[string]bool{
 var editorQueries = map[string]bool{
 	"directory": true, "parseSceneFilenames": true, "findDuplicateScenes": true,
 	"validateStashBoxCredentials": true,
-	"findScenesByPathRegex": true, "libraryWatcherConfig": true,
+	"findScenesByPathRegex":       true, "libraryWatcherConfig": true,
 	"scrapeSingleScene": true, "scrapeMultiScenes": true, "scrapeSingleStudio": true,
 	"scrapeSingleTag": true, "scrapeSinglePerformer": true, "scrapeMultiPerformers": true,
 	"scrapeSingleGallery": true, "scrapeSingleMovie": true, "scrapeSingleGroup": true,
@@ -83,6 +93,7 @@ var adminQueries = map[string]bool{
 	"logs": true, "installedPackages": true, "availablePackages": true,
 	"dlnaStatus": true, "users": true, "userTiers": true,
 	"loggingSubscribe": true,
+	"trashBin":         true, "duplicateCleanupPreview": true, "renamerConfig": true, "renamePreview": true,
 }
 
 func requiredRole(op string, field string) access.Role {

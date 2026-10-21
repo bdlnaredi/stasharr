@@ -10,6 +10,13 @@ things Stash does not do on its own:
   ThePornDB, StashDB and any other stash-boxes or scrapers you have set up
 - **Reels**: automatic 15 second vertical clips of the best moments of a scene,
   with a swipe-through Reels page
+- **Trash bin**: deleted files can be restored, and are deleted for good after
+  30 days
+- **Duplicate cleanup**: keeps the best copy of each duplicate and moves the
+  rest to the trash bin, without losing tags or history
+- **Playlists, Watch later and Continue watching**, per user
+- **File renamer**: moves and renames files from their metadata with a
+  template such as `{studio}/{date} - {title}`
 
 Everything else works exactly like Stash, and an existing Stash database is
 upgraded in place the first time Stasharr starts. The web interface runs on
@@ -125,6 +132,59 @@ Make reels from a scene's **⋯** menu (**Make reel**), from the scene's **Reels
 tab, for the whole library under Settings → Auto-import, or automatically for
 new scenes. Watch them on the **Reels** page, which plays one reel per screen as
 you scroll. Reels are stored in your generated folder under `reels/`.
+
+## Trash bin
+
+Files you delete from the library (scenes, images, galleries, or duplicates
+cleaned up) are moved to a trash bin instead of being removed straight away.
+By default this is a `.stasharr-trash` folder at the top of each library
+folder, so deleting is instant and needs no extra disk. If you set a trash
+folder under **Settings → System**, that folder is used instead.
+
+Under **Settings → Trash bin** you can restore files, delete them for good,
+empty the bin, and choose how many days files are kept (30 by default; 0 keeps
+them until you empty the bin). Restored files are scanned and identified again
+like a new download. Files in the trash bin are never scanned.
+
+## Duplicate cleanup
+
+**Settings → Duplicate cleanup** finds copies of the same video using the
+same fingerprints as Stash's duplicate checker. In each group it keeps the
+best copy: highest resolution, then highest bitrate, then largest file. The
+tags, performers, galleries, groups, URLs, stash IDs, play and O history,
+ratings, markers and playlist entries of the other copies are copied to the
+one that is kept, and the other files go to the trash bin. Press **Find
+duplicates** to see the list first, untick any group you want to leave alone,
+then press **Clean up**.
+
+## Playlists, Watch later and Continue watching
+
+Every user has their own playlists:
+
+- **Watch later**: the bookmark button on a scene adds it to Watch later
+- **Playlists**: the list button next to it adds the scene to a playlist, or
+  select scenes in the Scenes list and choose **Add to playlist** from the ⋯
+  menu. Open **Playlists** in the menu to play a playlist in order or
+  shuffled, reorder it, rename it or delete it
+- **Continue watching**: scenes you started but did not finish appear at the
+  top of the home page and the Playlists page, and pick up where you left off
+
+## File renamer
+
+**Settings → File renamer** moves and renames video files using their
+metadata, inside the library folder they are already in. The default template
+is `{studio}/{date} - {title}`; the file extension is added for you, and `/`
+makes folders. Tokens: `{title}`, `{studio}`, `{parent_studio}`, `{date}`,
+`{year}`, `{month}`, `{performers}`, `{performer}`, `{code}`, `{director}`,
+`{resolution}`, `{codec}`, `{stash_id}` and `{id}`. Parts that are empty for a
+scene are left out together with their separators.
+
+Press **Preview** to see what would change, then **Rename library**. You can
+also rename one scene from its ⋯ menu (**Rename file**), or selected scenes
+from the Scenes list. Turn on **Rename new scenes automatically** to rename
+files as soon as auto-import has identified them. Scenes without a title are
+left alone, subtitles and funscripts with the same name move with the video,
+and empty folders left behind are removed.
 
 ## Building from source
 

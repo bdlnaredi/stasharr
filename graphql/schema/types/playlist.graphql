@@ -1,0 +1,56 @@
+# Stasharr: playlists, Watch later and Continue watching. Playlists belong
+# to the logged in user.
+
+type Playlist {
+  id: ID!
+  name: String!
+  description: String!
+  "Every user has one Watch later playlist. It cannot be renamed or deleted."
+  watch_later: Boolean!
+  scene_count: Int!
+  "The first scene, for the playlist cover"
+  cover: Scene
+  "Scenes in playlist order"
+  scenes: [Scene!]!
+  created_at: Time!
+  updated_at: Time!
+}
+
+input PlaylistCreateInput {
+  name: String!
+  description: String
+  scene_ids: [ID!]
+}
+
+input PlaylistUpdateInput {
+  id: ID!
+  name: String
+  description: String
+}
+
+extend type Scene {
+  "Whether the scene is in the current user's Watch later playlist"
+  in_watch_later: Boolean!
+  "The current user's playlists that hold this scene"
+  playlist_ids: [ID!]!
+}
+
+extend type Query {
+  "The current user's playlists, Watch later first"
+  findPlaylists: [Playlist!]!
+  findPlaylist(id: ID!): Playlist
+  "Scenes the current user started but did not finish, most recent first"
+  continueWatching(limit: Int): [Scene!]!
+}
+
+extend type Mutation {
+  playlistCreate(input: PlaylistCreateInput!): Playlist!
+  playlistUpdate(input: PlaylistUpdateInput!): Playlist!
+  playlistDestroy(id: ID!): Boolean!
+  playlistAddScenes(id: ID!, scene_ids: [ID!]!): Playlist!
+  playlistRemoveScenes(id: ID!, scene_ids: [ID!]!): Playlist!
+  "Sets the order of the playlist's scenes"
+  playlistReorder(id: ID!, scene_ids: [ID!]!): Playlist!
+  "Adds or removes a scene from Watch later. Returns whether it is now in Watch later."
+  watchLaterToggle(scene_id: ID!): Boolean!
+}

@@ -54,6 +54,8 @@ type Manager struct {
 	UserService   *UserService
 	Watcher       *LibraryWatcher
 
+	trashLoopStarted bool
+
 	PluginCache  *plugin.Cache
 	ScraperCache *scraper.Cache
 

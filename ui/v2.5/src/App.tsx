@@ -79,6 +79,9 @@ const Groups = lazyComponent(() => import("./components/Groups/Groups"));
 const Tags = lazyComponent(() => import("./components/Tags/Tags"));
 const Images = lazyComponent(() => import("./components/Images/Images"));
 const Reels = lazyComponent(() => import("./components/Stasharr/Reels"));
+const Playlists = lazyComponent(
+  () => import("./components/Stasharr/Playlists")
+);
 const Setup = lazyComponent(() => import("./components/Setup/Setup"));
 const Migrate = lazyComponent(() => import("./components/Setup/Migrate"));
 
@@ -269,6 +272,7 @@ export const App: React.FC = () => {
             <Route path="/groups" component={Groups} />
             <Route path="/stats" component={Stats} />
             <Route path="/reels" component={Reels} />
+            <Route path="/playlists" component={Playlists} />
             <Route path="/settings" component={Settings} />
             <Route
               path="/sceneFilenameParser"

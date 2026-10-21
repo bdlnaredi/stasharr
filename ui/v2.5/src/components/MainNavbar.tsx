@@ -39,6 +39,7 @@ import {
   faUser,
   faUserCircle,
   faVideo,
+  faListUl,
 } from "@fortawesome/free-solid-svg-icons";
 import { baseURL } from "src/core/createClient";
 import { PatchComponent } from "src/patch";
@@ -101,6 +102,10 @@ const messages = defineMessages({
     id: "stasharr.reels",
     defaultMessage: "Reels",
   },
+  playlists: {
+    id: "stasharr.playlists",
+    defaultMessage: "Playlists",
+  },
 });
 
 const reelsMenuItem: IMenuItem = {
@@ -109,6 +114,14 @@ const reelsMenuItem: IMenuItem = {
   href: "/reels",
   icon: faMobileAlt,
   hotkey: "g r",
+};
+
+const playlistsMenuItem: IMenuItem = {
+  name: "playlists",
+  message: messages.playlists,
+  href: "/playlists",
+  icon: faListUl,
+  hotkey: "g w",
 };
 
 const allMenuItems: IMenuItem[] = [
@@ -206,8 +219,11 @@ export const MainNavbar: React.FC = () => {
   // Show all menu items by default, unless config says otherwise
   const menuItems = useMemo(() => {
     let cfgMenuItems = configuration?.interface.menuItems;
-    const withReels = (items: IMenuItem[]) =>
-      canViewReels ? [...items, reelsMenuItem] : items;
+    const withReels = (items: IMenuItem[]) => [
+      ...items,
+      playlistsMenuItem,
+      ...(canViewReels ? [reelsMenuItem] : []),
+    ];
     if (!cfgMenuItems) {
       return withReels(allMenuItems);
     }

@@ -7,6 +7,7 @@ import { useToast } from "src/hooks/Toast";
 import { useConfigurationContext } from "src/hooks/Config";
 import { FormattedMessage, useIntl } from "react-intl";
 import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { useTrashEnabled } from "src/components/Stasharr/CurrentUser";
 
 interface IDeleteGalleryDialogProps {
   selected: GQL.SlimGalleryDataFragment[];
@@ -34,6 +35,7 @@ export const DeleteGalleriesDialog: React.FC<IDeleteGalleryDialogProps> = (
   );
 
   const { configuration: config } = useConfigurationContext();
+  const trashEnabled = useTrashEnabled();
 
   const [deleteFile, setDeleteFile] = useState<boolean>(
     config?.defaults.deleteFile ?? false
@@ -84,7 +86,7 @@ export const DeleteGalleriesDialog: React.FC<IDeleteGalleryDialogProps> = (
       return;
     }
 
-    const deleteTrashPath = config?.general.deleteTrashPath;
+    const deleteTrashPath = config?.general.deleteTrashPath || trashEnabled;
     const deleteAlertId = deleteTrashPath
       ? "dialogs.delete_alert_to_trash"
       : "dialogs.delete_alert";

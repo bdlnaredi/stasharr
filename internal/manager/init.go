@@ -250,6 +250,9 @@ func (s *Manager) postInit(ctx context.Context) error {
 	s.RefreshFFMpeg(ctx)
 	s.RefreshStreamManager()
 
+	// Stasharr: deleted library files go to the trash bin
+	s.setupTrash()
+
 	// start the library watcher once the database is ready
 	go s.Watcher.RestartWhenReady(s.Database)
 
