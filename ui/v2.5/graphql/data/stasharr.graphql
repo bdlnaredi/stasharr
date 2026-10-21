@@ -79,6 +79,7 @@ fragment LibraryWatcherConfigData on LibraryWatcherConfig {
   identify
   generate_reels
   generate_media
+  create_missing
   poll_minutes
   reel_duration
   identify_sources

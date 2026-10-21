@@ -30,6 +30,7 @@ export const AutoImportPanel: React.FC = () => {
   const [configure] = GQL.useConfigureLibraryWatcherMutation();
   const [generateReels] = GQL.useGenerateReelsMutation();
   const [checkNow] = GQL.useLibraryWatcherCheckNowMutation();
+  const [reidentify] = GQL.useLibraryWatcherReidentifyMutation();
   const [saving, setSaving] = useState(false);
 
   if (loading || !data) return <LoadingIndicator />;
@@ -54,6 +55,17 @@ export const AutoImportPanel: React.FC = () => {
         "Checking your library for new files. See Settings → Tasks for progress."
       );
       setTimeout(() => refetch(), 5000);
+    } catch (e) {
+      Toast.error(e);
+    }
+  }
+
+  async function onReidentify() {
+    try {
+      await reidentify();
+      Toast.success(
+        "Identifying scenes that have no studio or performers. See Settings → Tasks for progress."
+      );
     } catch (e) {
       Toast.error(e);
     }
@@ -179,6 +191,31 @@ export const AutoImportPanel: React.FC = () => {
             checked={cfg.identify}
             onChange={() => save({ identify: !cfg.identify })}
           />
+        </Row>
+
+        <Row
+          heading="Add missing studios, performers and tags"
+          sub="When a match has a studio, performer or tag that is not in your library yet, create it. Off means only ones you already have are linked."
+        >
+          <Form.Switch
+            id="watcher-create-missing"
+            disabled={disabled}
+            checked={cfg.create_missing}
+            onChange={() => save({ create_missing: !cfg.create_missing })}
+          />
+        </Row>
+
+        <Row
+          heading="Fix incomplete scenes"
+          sub="Identify again every scene that has no studio or no performers, for example ones imported before missing studios and performers were added."
+        >
+          <Button
+            variant="secondary"
+            disabled={saving}
+            onClick={() => onReidentify()}
+          >
+            Identify again
+          </Button>
         </Row>
 
         <Row

@@ -541,6 +541,78 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 // using ThePornDB, then StashDB, then other stash-boxes, then scrapers that
 // can identify scenes from their file details.
 func identifyOptionsFor(cfg *config.Config) identify.Options {
+	ret := baseIdentifyOptions(cfg)
+	if cfg.GetWatcherCreateMissing() {
+		withCreateMissing(&ret)
+	}
+	return ret
+}
+
+// createMissingFields are the fields whose objects identify can create.
+var createMissingFields = []string{"studio", "performers", "tags"}
+
+// withCreateMissing makes identify add studios, performers and tags that are
+// not in the library yet, instead of leaving them out. Upstream Stash only
+// links existing ones unless "create missing" is ticked for each field.
+func withCreateMissing(opts *identify.Options) {
+	yes := true
+	set := func(m *identify.MetadataOptions, addMissing bool) {
+		have := map[string]bool{}
+		fields := make([]*identify.FieldOptions, 0, len(m.FieldOptions)+len(createMissingFields))
+		for _, f := range m.FieldOptions {
+			if f == nil {
+				continue
+			}
+			cp := *f
+			if slices.Contains(createMissingFields, cp.Field) && cp.Strategy != identify.FieldStrategyIgnore {
+				cp.CreateMissing = &yes
+			}
+			have[cp.Field] = true
+			fields = append(fields, &cp)
+		}
+		if addMissing {
+			for _, name := range createMissingFields {
+				if !have[name] {
+					fields = append(fields, &identify.FieldOptions{Field: name, Strategy: identify.FieldStrategyMerge, CreateMissing: &yes})
+				}
+			}
+		}
+		m.FieldOptions = fields
+	}
+
+	if opts.Options == nil {
+		opts.Options = &identify.MetadataOptions{}
+	} else {
+		cp := *opts.Options
+		opts.Options = &cp
+	}
+	set(opts.Options, true)
+	// performers with one name, such as many ThePornDB performers, are
+	// skipped by default; create them too unless the saved settings say not to
+	if opts.Options.SkipSingleNamePerformers == nil {
+		no := false
+		opts.Options.SkipSingleNamePerformers = &no
+	}
+
+	sources := make([]*identify.Source, 0, len(opts.Sources))
+	for _, s := range opts.Sources {
+		if s == nil {
+			continue
+		}
+		cp := *s
+		if cp.Options != nil {
+			o := *cp.Options
+			// a source's own field settings win over the defaults, so turn
+			// create missing on there too
+			set(&o, false)
+			cp.Options = &o
+		}
+		sources = append(sources, &cp)
+	}
+	opts.Sources = sources
+}
+
+func baseIdentifyOptions(cfg *config.Config) identify.Options {
 	if def := cfg.GetDefaultIdentifySettings(); def != nil && len(def.Sources) > 0 {
 		ret := *def
 		ret.Paths = nil
@@ -613,4 +685,44 @@ func IdentifySourceNames(cfg *config.Config) []string {
 		}
 	}
 	return ret
+}
+
+// ReidentifyIncomplete identifies again every scene that has no studio or no
+// performers, using the auto-import identify settings.
+func ReidentifyIncomplete(ctx context.Context, progress *job.Progress) error {
+	mgr := GetInstance()
+	r := mgr.Repository
+	var ids []string
+	if err := r.WithReadTxn(ctx, func(ctx context.Context) error {
+		all, err := r.Scene.All(ctx)
+		if err != nil {
+			return err
+		}
+		for _, s := range all {
+			if s.StudioID == nil {
+				ids = append(ids, strconv.Itoa(s.ID))
+				continue
+			}
+			if err := s.LoadPerformerIDs(ctx, r.Scene); err != nil {
+				return err
+			}
+			if len(s.PerformerIDs.List()) == 0 {
+				ids = append(ids, strconv.Itoa(s.ID))
+			}
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+	if len(ids) == 0 {
+		logger.Info("[watcher] every scene already has a studio and performers")
+		return nil
+	}
+	opts := identifyOptionsFor(mgr.Config)
+	if len(opts.Sources) == 0 {
+		return errors.New("no identify sources: add ThePornDB or StashDB under Settings > Metadata Providers")
+	}
+	logger.Infof("[watcher] identifying %d scene(s) with no studio or performers", len(ids))
+	opts.SceneIDs = ids
+	return CreateIdentifyJob(opts).Execute(ctx, progress)
 }

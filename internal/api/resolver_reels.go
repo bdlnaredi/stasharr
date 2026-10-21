@@ -10,6 +10,7 @@ import (
 	"github.com/stashapp/stash/internal/manager"
 	"github.com/stashapp/stash/internal/manager/config"
 	"github.com/stashapp/stash/pkg/access"
+	"github.com/stashapp/stash/pkg/job"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/sliceutil/stringslice"
 )
@@ -141,6 +142,7 @@ func watcherConfig() *LibraryWatcherConfig {
 		Identify:        cfg.GetWatcherIdentify(),
 		GenerateReels:   cfg.GetWatcherGenerateReels(),
 		GenerateMedia:   cfg.GetWatcherGenerateMedia(),
+		CreateMissing:   cfg.GetWatcherCreateMissing(),
 		PollMinutes:     cfg.GetWatcherPollMinutes(),
 		ReelDuration:    cfg.GetReelDuration(),
 		IdentifySources: manager.IdentifySourceNames(cfg),
@@ -194,6 +196,9 @@ func (r *mutationResolver) ConfigureLibraryWatcher(ctx context.Context, input Li
 	if input.GenerateMedia != nil {
 		cfg.SetBool(config.WatcherGenerateMedia, *input.GenerateMedia)
 	}
+	if input.CreateMissing != nil {
+		cfg.SetBool(config.WatcherCreateMissing, *input.CreateMissing)
+	}
 	if input.PollMinutes != nil {
 		if *input.PollMinutes < 0 || *input.PollMinutes > 1440 {
 			return nil, errors.New("poll interval must be between 0 and 1440 minutes")
@@ -228,4 +233,15 @@ func (r *mutationResolver) LibraryWatcherCheckNow(ctx context.Context) (bool, er
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *mutationResolver) LibraryWatcherReidentify(ctx context.Context) (string, error) {
+	if err := access.RequireRole(ctx, access.RoleEditor); err != nil {
+		return "", err
+	}
+	j := job.MakeJobExec(func(ctx context.Context, progress *job.Progress) error {
+		return manager.ReidentifyIncomplete(ctx, progress)
+	})
+	jobID := manager.GetInstance().JobManager.Add(context.WithoutCancel(access.WithPrincipal(ctx, nil)), "Auto-import: identify incomplete scenes", j)
+	return strconv.Itoa(jobID), nil
 }

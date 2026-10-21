@@ -46,6 +46,8 @@ type LibraryWatcherConfig {
   generate_reels: Boolean!
   "Generate covers, previews and sprites for new files"
   generate_media: Boolean!
+  "Create studios, performers and tags that are not in the library yet"
+  create_missing: Boolean!
   "Minutes between checks for changes that file events miss (network shares). 0 turns polling off."
   poll_minutes: Int!
   "Default reel length in seconds"
@@ -68,6 +70,7 @@ input LibraryWatcherConfigInput {
   identify: Boolean
   generate_reels: Boolean
   generate_media: Boolean
+  create_missing: Boolean
   poll_minutes: Int
   reel_duration: Float
 }
@@ -89,6 +92,8 @@ extend type Mutation {
   reelDestroy(id: ID!): Boolean!
   "Editor or admin. Looks for new files in every library folder now."
   libraryWatcherCheckNow: Boolean!
+  "Editor or admin. Identifies scenes that have no studio or no performers again. Returns the job id."
+  libraryWatcherReidentify: ID!
   "Admin only"
   configureLibraryWatcher(input: LibraryWatcherConfigInput!): LibraryWatcherConfig!
 }
