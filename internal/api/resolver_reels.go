@@ -239,9 +239,7 @@ func (r *mutationResolver) LibraryWatcherReidentify(ctx context.Context) (string
 	if err := access.RequireRole(ctx, access.RoleEditor); err != nil {
 		return "", err
 	}
-	j := job.MakeJobExec(func(ctx context.Context, progress *job.Progress) error {
-		return manager.ReidentifyIncomplete(ctx, progress)
-	})
+	j := job.MakeJobExec(manager.ReidentifyIncomplete)
 	jobID := manager.GetInstance().JobManager.Add(context.WithoutCancel(access.WithPrincipal(ctx, nil)), "Auto-import: identify incomplete scenes", j)
 	return strconv.Itoa(jobID), nil
 }
