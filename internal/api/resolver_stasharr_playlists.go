@@ -254,7 +254,7 @@ func (r *mutationResolver) PlaylistUpdate(ctx context.Context, input PlaylistUpd
 		}
 		if input.Name != nil {
 			if p.WatchLater {
-				return errors.New("Watch later cannot be renamed")
+				return errors.New("the Watch later playlist cannot be renamed")
 			}
 			name, err := playlistName(*input.Name)
 			if err != nil {
@@ -277,7 +277,7 @@ func (r *mutationResolver) PlaylistDestroy(ctx context.Context, id string) (bool
 			return err
 		}
 		if p.WatchLater {
-			return errors.New("Watch later cannot be deleted")
+			return errors.New("the Watch later playlist cannot be deleted")
 		}
 		return r.repository.Playlist.Destroy(ctx, p.ID)
 	})

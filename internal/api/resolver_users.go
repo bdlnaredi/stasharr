@@ -318,7 +318,7 @@ func (r *mutationResolver) UserDestroy(ctx context.Context, id string) (bool, er
 	return true, nil
 }
 
-func (r *mutationResolver) UserGenerateAPIKey(ctx context.Context, id string, clear *bool) (*string, error) {
+func (r *mutationResolver) UserGenerateAPIKey(ctx context.Context, id string, clearKey *bool) (*string, error) {
 	if err := access.RequireRole(ctx, access.RoleAdmin); err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (r *mutationResolver) UserGenerateAPIKey(ctx context.Context, id string, cl
 		return nil, fmt.Errorf("invalid id %q", id)
 	}
 	var key *string
-	if clear == nil || !*clear {
+	if clearKey == nil || !*clearKey {
 		k := manager.GenerateUserAPIKey()
 		key = &k
 	}

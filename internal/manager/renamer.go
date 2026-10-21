@@ -209,7 +209,7 @@ func ValidateRenamerTemplate(tmpl string) error {
 		return errors.New("the template has no tokens, so every file would get the same name")
 	}
 	if strings.Contains(tmpl, "..") {
-		return errors.New("the template may not contain ..")
+		return errors.New("the template may not contain \"..\"")
 	}
 	return nil
 }
