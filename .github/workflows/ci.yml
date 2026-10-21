@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061
+        with:
+          package_json_file: ui/v2.5/package.json
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Install UI dependencies
+        run: make pre-ui
+
+      - name: Generate GraphQL code
+        run: make generate
+
+      - name: Type-check UI
+        working-directory: ui/v2.5
+        run: pnpm run check
+
+      - name: Build UI
+        run: make ui
+
+      - name: Test backend
+        run: make it

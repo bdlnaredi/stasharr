@@ -1,0 +1,139 @@
+# Stasharr
+
+Stasharr is a fork of [Stash](https://github.com/stashapp/stash) that adds the
+things Stash does not do on its own:
+
+- **Multi-user logins** with roles (Admin, Editor, Viewer)
+- **Tiers** that decide which part of the library each user can see
+- **Per-user play history, O history, ratings and resume position**
+- **Auto-import**: new files are scanned and identified automatically, using
+  ThePornDB, StashDB and any other stash-boxes or scrapers you have set up
+- **Reels**: automatic 15 second vertical clips of the best moments of a scene,
+  with a swipe-through Reels page
+
+Everything else works exactly like Stash, and an existing Stash database is
+upgraded in place the first time Stasharr starts. The web interface runs on
+port **2704**.
+
+## Install with Docker
+
+```yaml
+services:
+  stasharr:
+    image: ghcr.io/bdlnaredi/stasharr:latest
+    container_name: stasharr
+    restart: unless-stopped
+    ports:
+      - "2704:2704"
+    environment:
+      - STASH_STASH=/data/
+      - STASH_GENERATED=/generated/
+      - STASH_METADATA=/metadata/
+      - STASH_CACHE=/cache/
+      - STASH_PORT=2704
+      - TZ=Asia/Kolkata
+    volumes:
+      - ./config:/root/.stash
+      - ./data:/data
+      - ./metadata:/metadata
+      - ./cache:/cache
+      - ./blobs:/blobs
+      - ./generated:/generated
+```
+
+Then open `http://YOUR-SERVER:2704`.
+
+**Moving from Stash:** point the `/root/.stash` volume at your existing Stash
+config folder (and the other volumes at the same folders as before). Back up
+`stash-go.sqlite` first: Stasharr adds new tables to the database, and after
+that the database can no longer be opened by upstream Stash.
+
+An Unraid template is in [`unraid/stasharr.xml`](unraid/stasharr.xml).
+
+## Users, roles and tiers
+
+1. Go to **Settings → Security** and set a username and password. This is the
+   **owner** account. It always has full access and is never listed as a
+   normal user.
+2. Go to **Settings → Users & tiers** to add people.
+
+| Role   | Can do |
+|--------|--------|
+| Admin  | Everything, including settings, users and deleting files |
+| Editor | Edit metadata, scrape, identify, run tasks, make reels. Cannot change settings, manage users or delete files from disk |
+| Viewer | Browse and play what their tier allows. Has their own ratings, play count, O count and resume position. Cannot edit anything |
+
+A **tier** is a library access policy you give to a group of users, for
+example *Free*, *Premium* and *VIP*:
+
+- **Library folders**: only content inside these folders is visible
+- **Hidden tags**: content with any of these tags is hidden, and so are the tags
+- **Required tags**: only content with at least one of these tags is visible
+- **Downloads** and **Reels** can be switched on or off per tier
+
+Users without a tier see the whole library. Admins are never restricted.
+
+Each user can also get their own **API key** (key button in the user list) for
+apps and scripts. Users change their own password under **Settings → Account**.
+
+### What is per user
+
+| Per user | Shared by everyone |
+|----------|--------------------|
+| Scene rating | Image and gallery ratings |
+| Scene play count and play history | Image O counts |
+| Scene O count and O history | Performer, studio and tag favourites |
+| Resume position and total play time | Saved filters and interface settings |
+
+The owner account keeps using the original Stash values, so nothing you have
+recorded so far is lost.
+
+## Auto-import
+
+**Settings → Auto-import** turns on the library watcher. When new videos
+appear in your library folders, Stasharr waits until they stop changing (so
+downloads can finish), then:
+
+1. **Scans** only the folders that changed, including the phash fingerprints
+   that ThePornDB and StashDB match on
+2. **Identifies** the new scenes. It uses your saved Identify defaults from
+   Settings → Tasks → Identify if you have them; otherwise ThePornDB first,
+   then StashDB, then your other stash-boxes, then scrapers that can identify
+   scenes from file details
+3. **Generates** covers, previews and sprites with your default Generate settings
+4. Optionally **makes a reel** for each new scene
+
+Network shares (SMB/NFS) and some Docker setups do not report new files to the
+app, so the watcher also checks the library on a timer (every 30 minutes by
+default; you can change it or turn it off).
+
+Add your ThePornDB and StashDB API keys under **Settings → Metadata Providers →
+Stash-box endpoints** first.
+
+## Reels
+
+A reel is a 15 second vertical (9:16) MP4 made from the best moments of a
+scene. The moments are chosen in this order:
+
+1. **Markers**: if the scene has markers (your own, or from ThePornDB/StashDB),
+   the reel is built around them
+2. **Interactive heatmap**: for scenes with a funscript, the most intense parts
+3. **Audio and motion**: otherwise ffmpeg finds the loudest, busiest parts of
+   the video, skipping intros and credits
+
+Make reels from a scene's **⋯** menu (**Make reel**), from the scene's **Reels**
+tab, for the whole library under Settings → Auto-import, or automatically for
+new scenes. Watch them on the **Reels** page, which plays one reel per screen as
+you scroll. Reels are stored in your generated folder under `reels/`.
+
+## Building from source
+
+Stasharr builds the same way as Stash; see
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Every push to `main` builds and
+publishes the Docker image `ghcr.io/bdlnaredi/stasharr` with GitHub Actions.
+
+## Licence
+
+Stasharr is a fork of Stash and, like Stash, is licensed under the
+[GNU AGPL v3](LICENSE). The original Stash README is kept in
+[docs/UPSTREAM_README.md](docs/UPSTREAM_README.md).

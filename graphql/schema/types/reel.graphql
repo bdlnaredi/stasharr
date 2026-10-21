@@ -1,0 +1,88 @@
+# Stasharr: auto generated short vertical reels
+
+type ReelSegment {
+  "Start in the source scene, in seconds"
+  start: Float!
+  "End in the source scene, in seconds"
+  end: Float!
+}
+
+type Reel {
+  id: ID!
+  scene: Scene!
+  duration: Float!
+  width: Int!
+  height: Int!
+  "How the moments were chosen: MARKERS, HEATMAP or ANALYSIS"
+  source: String!
+  segments: [ReelSegment!]!
+  "URL of the reel video"
+  stream: String!
+  created_at: Time!
+}
+
+type FindReelsResultType {
+  count: Int!
+  reels: [Reel!]!
+}
+
+input GenerateReelsInput {
+  "Scenes to make reels for. Leave empty for every scene that does not have a reel yet."
+  scene_ids: [ID!]
+  "Target reel length in seconds. Defaults to 15."
+  duration: Float
+  "Replace existing reels"
+  overwrite: Boolean
+}
+
+type LibraryWatcherConfig {
+  "Watch library folders and scan new files as they appear"
+  enabled: Boolean!
+  "Seconds to wait after the last change before scanning, so downloads can finish"
+  debounce_seconds: Int!
+  "Identify new scenes after scanning"
+  identify: Boolean!
+  "Generate a reel for new scenes after identifying"
+  generate_reels: Boolean!
+  "Generate covers, previews and sprites for new files"
+  generate_media: Boolean!
+  "Minutes between checks for changes that file events miss (network shares). 0 turns polling off."
+  poll_minutes: Int!
+  "Default reel length in seconds"
+  reel_duration: Float!
+  "The identify sources used, in order"
+  identify_sources: [String!]!
+  "Whether the watcher is running"
+  running: Boolean!
+  "Folders being watched"
+  watched_paths: [String!]!
+}
+
+input LibraryWatcherConfigInput {
+  enabled: Boolean
+  debounce_seconds: Int
+  identify: Boolean
+  generate_reels: Boolean
+  generate_media: Boolean
+  poll_minutes: Int
+  reel_duration: Float
+}
+
+extend type Scene {
+  reels: [Reel!]!
+}
+
+extend type Query {
+  "Reels, newest first"
+  findReels(page: Int, per_page: Int): FindReelsResultType!
+  libraryWatcherConfig: LibraryWatcherConfig!
+}
+
+extend type Mutation {
+  "Editor or admin. Returns the job id."
+  generateReels(input: GenerateReelsInput!): ID!
+  "Editor or admin"
+  reelDestroy(id: ID!): Boolean!
+  "Admin only"
+  configureLibraryWatcher(input: LibraryWatcherConfigInput!): LibraryWatcherConfig!
+}

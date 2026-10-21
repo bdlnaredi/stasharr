@@ -1,0 +1,41 @@
+query Me {
+  me {
+    ...CurrentUserData
+  }
+}
+
+query Users {
+  users {
+    ...UserData
+  }
+}
+
+query UserTiers {
+  userTiers {
+    ...UserTierData
+  }
+}
+
+query FindReels($page: Int, $per_page: Int) {
+  findReels(page: $page, per_page: $per_page) {
+    count
+    reels {
+      ...ReelData
+    }
+  }
+}
+
+query SceneReels($id: ID!) {
+  findScene(id: $id) {
+    id
+    reels {
+      ...ReelData
+    }
+  }
+}
+
+query LibraryWatcherConfig {
+  libraryWatcherConfig {
+    ...LibraryWatcherConfigData
+  }
+}

@@ -1,0 +1,56 @@
+mutation UserCreate($input: UserCreateInput!) {
+  userCreate(input: $input) {
+    ...UserData
+  }
+}
+
+mutation UserUpdate($input: UserUpdateInput!) {
+  userUpdate(input: $input) {
+    ...UserData
+  }
+}
+
+mutation UserDestroy($id: ID!) {
+  userDestroy(id: $id)
+}
+
+mutation UserGenerateAPIKey($id: ID!, $clear: Boolean) {
+  userGenerateAPIKey(id: $id, clear: $clear)
+}
+
+mutation UserTierCreate($input: UserTierCreateInput!) {
+  userTierCreate(input: $input) {
+    ...UserTierData
+  }
+}
+
+mutation UserTierUpdate($input: UserTierUpdateInput!) {
+  userTierUpdate(input: $input) {
+    ...UserTierData
+  }
+}
+
+mutation UserTierDestroy($id: ID!) {
+  userTierDestroy(id: $id)
+}
+
+mutation ChangeMyPassword($current_password: String!, $new_password: String!) {
+  changeMyPassword(
+    current_password: $current_password
+    new_password: $new_password
+  )
+}
+
+mutation GenerateReels($input: GenerateReelsInput!) {
+  generateReels(input: $input)
+}
+
+mutation ReelDestroy($id: ID!) {
+  reelDestroy(id: $id)
+}
+
+mutation ConfigureLibraryWatcher($input: LibraryWatcherConfigInput!) {
+  configureLibraryWatcher(input: $input) {
+    ...LibraryWatcherConfigData
+  }
+}

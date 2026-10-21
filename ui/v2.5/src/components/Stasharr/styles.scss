@@ -1,0 +1,151 @@
+// Stasharr additions
+
+// hide controls a viewer cannot use (the server rejects them anyway)
+body.stasharr-role-viewer {
+  .details-edit,
+  .edit-existing-button,
+  .delete-button,
+  .list-operation-buttons .dropdown,
+  [data-action="new"] {
+    display: none !important;
+  }
+}
+
+body.stasharr-no-download {
+  .download-button,
+  a[download] {
+    display: none !important;
+  }
+}
+
+.stasharr-table {
+  td,
+  th {
+    vertical-align: middle;
+  }
+}
+
+.stasharr-user-link span {
+  font-size: 0.9rem;
+}
+
+.stasharr-account .stasharr-password > div:last-child {
+  max-width: 320px;
+  width: 100%;
+}
+
+// reels feed: one vertical clip per screen, snapping as you scroll
+.stasharr-reels {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - #{$navbar-height});
+  margin: 0 -15px;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+}
+
+.stasharr-reels-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  padding: 0.5rem;
+  width: 100%;
+}
+
+.stasharr-reel {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  height: calc(100vh - #{$navbar-height} - 1rem);
+  justify-content: center;
+  margin-bottom: 1rem;
+  position: relative;
+  scroll-snap-align: center;
+  width: 100%;
+}
+
+.stasharr-reel-video {
+  aspect-ratio: 9 / 16;
+  background: #000;
+  border-radius: 12px;
+  cursor: pointer;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: cover;
+}
+
+.stasharr-reel-info {
+  bottom: 1.5rem;
+  color: #fff;
+  left: 50%;
+  max-width: min(90vw, calc((100vh - #{$navbar-height}) * 9 / 16 - 4rem));
+  pointer-events: none;
+  position: absolute;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  transform: translateX(calc(-50% - 1.5rem));
+  width: 100%;
+
+  a {
+    pointer-events: auto;
+  }
+
+  .stasharr-reel-title {
+    color: #fff;
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .stasharr-reel-meta,
+  .stasharr-reel-performers,
+  .stasharr-reel-studio {
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+}
+
+.stasharr-reel-actions {
+  bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  right: calc(50% - min(45vw, (100vh - #{$navbar-height}) * 9 / 32));
+
+  .btn-link {
+    color: #fff;
+    font-size: 1.4rem;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  }
+}
+
+.stasharr-reels-empty {
+  margin: 3rem auto;
+  max-width: 520px;
+  text-align: center;
+}
+
+.stasharr-scene-reels {
+  padding: 0.5rem 0;
+
+  .stasharr-scene-reel {
+    margin-bottom: 1rem;
+  }
+
+  video {
+    aspect-ratio: 9 / 16;
+    background: #000;
+    border-radius: 8px;
+    max-height: 60vh;
+    max-width: 100%;
+  }
+
+  .stasharr-scene-reel-info {
+    align-items: center;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+    margin-top: 0.25rem;
+  }
+}

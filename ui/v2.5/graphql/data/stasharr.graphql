@@ -1,0 +1,87 @@
+fragment UserTierData on UserTier {
+  id
+  name
+  description
+  allowed_paths
+  blocked_tags {
+    id
+    name
+  }
+  required_tags {
+    id
+    name
+  }
+  can_download
+  can_view_reels
+  user_count
+}
+
+fragment UserData on User {
+  id
+  username
+  role
+  disabled
+  has_api_key
+  last_login_at
+  created_at
+  tier {
+    id
+    name
+  }
+}
+
+fragment CurrentUserData on CurrentUser {
+  username
+  role
+  is_owner
+  tier
+  can_download
+  can_view_reels
+  multi_user_enabled
+}
+
+fragment ReelData on Reel {
+  id
+  duration
+  width
+  height
+  source
+  stream
+  created_at
+  segments {
+    start
+    end
+  }
+  scene {
+    id
+    title
+    date
+    files {
+      path
+    }
+    paths {
+      screenshot
+    }
+    studio {
+      id
+      name
+    }
+    performers {
+      id
+      name
+    }
+  }
+}
+
+fragment LibraryWatcherConfigData on LibraryWatcherConfig {
+  enabled
+  debounce_seconds
+  identify
+  generate_reels
+  generate_media
+  poll_minutes
+  reel_duration
+  identify_sources
+  running
+  watched_paths
+}

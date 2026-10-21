@@ -1,0 +1,123 @@
+# Stasharr: multi-user accounts, roles and tiers
+
+enum UserRole {
+  "Full access, including settings and user management"
+  ADMIN
+  "Edit metadata, scrape, identify and run library tasks"
+  EDITOR
+  "Browse and play content allowed by their tier"
+  VIEWER
+}
+
+"A tier is a library access policy shared by a group of users"
+type UserTier {
+  id: ID!
+  name: String!
+  description: String
+  "Library folders this tier can see. Empty means every library folder."
+  allowed_paths: [String!]!
+  "Content with any of these tags is hidden, and so are the tags themselves"
+  blocked_tags: [Tag!]!
+  "When set, only content with at least one of these tags is shown"
+  required_tags: [Tag!]!
+  can_download: Boolean!
+  can_view_reels: Boolean!
+  user_count: Int!
+  created_at: Time!
+  updated_at: Time!
+}
+
+type User {
+  id: ID!
+  username: String!
+  role: UserRole!
+  tier: UserTier
+  disabled: Boolean!
+  has_api_key: Boolean!
+  last_login_at: Time
+  created_at: Time!
+  updated_at: Time!
+}
+
+"The account making the request"
+type CurrentUser {
+  username: String!
+  role: UserRole!
+  "True for the owner account configured in Settings > Security"
+  is_owner: Boolean!
+  tier: String
+  can_download: Boolean!
+  can_view_reels: Boolean!
+  "False when no owner account is configured, so multi-user is not active"
+  multi_user_enabled: Boolean!
+}
+
+input UserCreateInput {
+  username: String!
+  password: String!
+  role: UserRole!
+  tier_id: ID
+  disabled: Boolean
+}
+
+input UserUpdateInput {
+  id: ID!
+  username: String
+  "Leave empty to keep the current password"
+  password: String
+  role: UserRole
+  "Pass null to remove the user from their tier"
+  tier_id: ID
+  disabled: Boolean
+}
+
+input UserTierCreateInput {
+  name: String!
+  description: String
+  allowed_paths: [String!]
+  blocked_tag_ids: [ID!]
+  required_tag_ids: [ID!]
+  can_download: Boolean
+  can_view_reels: Boolean
+}
+
+input UserTierUpdateInput {
+  id: ID!
+  name: String
+  description: String
+  allowed_paths: [String!]
+  blocked_tag_ids: [ID!]
+  required_tag_ids: [ID!]
+  can_download: Boolean
+  can_view_reels: Boolean
+}
+
+extend type Query {
+  "The current user. Null when no login is configured."
+  me: CurrentUser
+  "Admin only"
+  users: [User!]!
+  "Admin only"
+  userTiers: [UserTier!]!
+}
+
+extend type Mutation {
+  "Admin only"
+  userCreate(input: UserCreateInput!): User!
+  "Admin only"
+  userUpdate(input: UserUpdateInput!): User!
+  "Admin only"
+  userDestroy(id: ID!): Boolean!
+  "Admin only. Creates a new API key for the user, or removes it when clear is true. Returns the new key."
+  userGenerateAPIKey(id: ID!, clear: Boolean): String
+
+  "Admin only"
+  userTierCreate(input: UserTierCreateInput!): UserTier!
+  "Admin only"
+  userTierUpdate(input: UserTierUpdateInput!): UserTier!
+  "Admin only. Users in the tier are moved to no tier."
+  userTierDestroy(id: ID!): Boolean!
+
+  "Any database user can change their own password"
+  changeMyPassword(current_password: String!, new_password: String!): Boolean!
+}
