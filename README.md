@@ -21,6 +21,17 @@ things Stash does not do on its own:
 Everything else works exactly like Stash, and an existing Stash database is
 upgraded in place the first time Stasharr starts. The web interface runs on
 port **2704**.
+⚠️ WARNING: EARLY-STAGE SOFTWARE
+
+This application is new and under active development. Please read before installing.
+
+It may be broken. Features may be incomplete, unstable, or not work as expected. Bugs are likely.
+Updates will be frequent. Releases may be pushed often and without notice, and may include breaking changes to configuration, container paths, environment variables, or data formats.
+Data loss is possible. Updates, bugs, or misconfiguration could corrupt, overwrite, or delete your data.
+Back up first. Before installing or updating, back up your appdata and any data the container can access. Do not point this container at the only copy of anything important.
+Pin your version. Consider using a specific image tag instead of latest, and disable auto-updates (including the CA Auto Update plugin and Watchtower) until the project matures.
+
+NO WARRANTY / NO LIABILITY: This software is provided “as is,” without warranty of any kind, express or implied. The author(s) and contributors accept no liability for any data loss, system damage, downtime, or other harm arising from its installation or use. You use this software entirely at your own risk.
 
 ## Install with Docker
 
