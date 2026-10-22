@@ -21,6 +21,8 @@ things Stash does not do on its own:
 Everything else works exactly like Stash, and an existing Stash database is
 upgraded in place the first time Stasharr starts. The web interface runs on
 port **2704**.
+
+
 ⚠️ WARNING: EARLY-STAGE SOFTWARE
 
 This application is new and under active development. Please read before installing.
