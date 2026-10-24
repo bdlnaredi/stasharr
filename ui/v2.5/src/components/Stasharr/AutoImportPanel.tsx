@@ -253,6 +253,44 @@ export const AutoImportPanel: React.FC = () => {
       </div>
 
       <div className="setting-section">
+        <h1>Audio files</h1>
+        <div className="sub-heading">
+          Audio files in your library folders are added as scenes, so they can
+          be identified, tagged, rated and played like videos. Their cover is
+          the album art, or a picture of the sound wave. They are listed under
+          Audio in the menu.
+        </div>
+        <Row heading="Add audio files">
+          <Form.Switch
+            id="audio-enabled"
+            disabled={disabled}
+            checked={cfg.audio_enabled}
+            onChange={() => save({ audio_enabled: !cfg.audio_enabled })}
+          />
+        </Row>
+        <Row
+          heading="Audio file extensions"
+          sub="Separated by commas. Run a scan after changing this."
+        >
+          <Form.Control
+            className="text-input"
+            disabled={disabled || !cfg.audio_enabled}
+            defaultValue={cfg.audio_extensions.join(", ")}
+            key={cfg.audio_extensions.join(",")}
+            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+              const list = e.currentTarget.value
+                .split(",")
+                .map((x) => x.trim())
+                .filter(Boolean);
+              if (list.join(",") !== cfg.audio_extensions.join(",")) {
+                save({ audio_extensions: list });
+              }
+            }}
+          />
+        </Row>
+      </div>
+
+      <div className="setting-section">
         <h1>Reels</h1>
         <div className="sub-heading">
           Short vertical clips, each one continuous part of a scene. Every

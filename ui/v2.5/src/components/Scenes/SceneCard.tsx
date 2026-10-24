@@ -373,6 +373,8 @@ export const SceneSpecsOverlay: React.FC<ISceneSpecsOverlay> = React.memo(
           <span className="overlay-resolution">
             {TextUtils.resolution(file.width, file.height)}
           </span>
+        ) : !file.video_codec && file.audio_codec ? (
+          <span className="overlay-resolution">AUDIO</span>
         ) : (
           ""
         )}

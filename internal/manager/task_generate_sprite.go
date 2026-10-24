@@ -61,7 +61,7 @@ func (t *GenerateSpriteTask) Start(ctx context.Context) {
 
 // required returns true if the sprite needs to be generated
 func (t GenerateSpriteTask) required() bool {
-	if t.Scene.Path == "" {
+	if t.Scene.Path == "" || sceneIsAudio(&t.Scene) {
 		return false
 	}
 

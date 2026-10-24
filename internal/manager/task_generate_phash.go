@@ -96,6 +96,11 @@ func (t *GeneratePhashTask) findExistingPhash(ctx context.Context) (interface{},
 }
 
 func (t *GeneratePhashTask) required() bool {
+	// a phash is made from the picture: audio files have none
+	if t.File == nil || t.File.IsAudioOnly() {
+		return false
+	}
+
 	if t.Overwrite {
 		return true
 	}

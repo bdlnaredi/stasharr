@@ -61,6 +61,7 @@ func (rs sceneRoutes) Routes() chi.Router {
 		// streaming endpoints
 		r.Get("/stream", rs.StreamDirect)
 		r.Get("/stream.mp4", rs.StreamMp4)
+		r.Get("/stream.mp3", rs.StreamMp3)
 		r.Get("/stream.webm", rs.StreamWebM)
 		r.Get("/stream.mkv", rs.StreamMKV)
 		r.Get("/stream.m3u8", rs.StreamHLS)
@@ -97,6 +98,17 @@ func (rs sceneRoutes) StreamDirect(w http.ResponseWriter, r *http.Request) {
 		SceneCoverGetter: rs.sceneFinder,
 	}
 	ss.StreamSceneDirect(scene, w, r)
+}
+
+// StreamMp3 converts an audio file to mp3 as it plays.
+func (rs sceneRoutes) StreamMp3(w http.ResponseWriter, r *http.Request) {
+	scene := r.Context().Value(sceneKey).(*models.Scene)
+	f := scene.Files.Primary()
+	if f == nil {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+	manager.StreamAudioMp3(w, r, f)
 }
 
 func (rs sceneRoutes) StreamMp4(w http.ResponseWriter, r *http.Request) {

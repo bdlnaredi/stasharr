@@ -18,9 +18,19 @@ import (
 	"github.com/stashapp/stash/pkg/signedurl"
 )
 
+// appFiles are the files a phone needs to install Stasharr as an app. They
+// hold nothing private, and the browser fetches some of them without the
+// login cookie.
+var appFiles = map[string]bool{
+	"/manifest.json": true, "/sw.js": true, "/favicon.ico": true, "/apple-touch-icon.png": true,
+	"/stasharr-192.png": true, "/stasharr-512.png": true,
+	"/stasharr-maskable-192.png": true, "/stasharr-maskable-512.png": true,
+	"/stash_icon.svg": true,
+}
+
 func allowUnauthenticated(r *http.Request) bool {
 	// #2715 - allow access to UI files
-	return strings.HasPrefix(r.URL.Path, loginEndpoint) || r.URL.Path == logoutEndpoint || r.URL.Path == "/css" || strings.HasPrefix(r.URL.Path, "/assets")
+	return strings.HasPrefix(r.URL.Path, loginEndpoint) || r.URL.Path == logoutEndpoint || r.URL.Path == "/css" || strings.HasPrefix(r.URL.Path, "/assets") || appFiles[r.URL.Path]
 }
 
 // authenticateSignedRequest checks if the request is a valid signed media request.

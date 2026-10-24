@@ -102,7 +102,7 @@ func (j *ReelJob) Execute(ctx context.Context, progress *job.Progress) error {
 		}
 		progress.ExecuteTask(fmt.Sprintf("Making reels for scene %d", id), func() {
 			if _, err := GenerateReels(ctx, id, duration, count, j.Overwrite); err != nil {
-				if errors.Is(err, errReelExists) {
+				if errors.Is(err, errReelExists) || errors.Is(err, errReelAudio) {
 					return
 				}
 				logger.Errorf("[reels] scene %d: %v", id, err)
@@ -113,7 +113,10 @@ func (j *ReelJob) Execute(ctx context.Context, progress *job.Progress) error {
 	return nil
 }
 
-var errReelExists = errors.New("scene already has reels")
+var (
+	errReelExists = errors.New("scene already has reels")
+	errReelAudio  = errors.New("audio files have no picture for a reel")
+)
 
 type reelPlan struct {
 	source string
@@ -157,6 +160,10 @@ func GenerateReels(ctx context.Context, sceneID int, duration float64, count int
 		return err
 	}); err != nil {
 		return nil, err
+	}
+
+	if vf.IsAudioOnly() {
+		return nil, errReelAudio
 	}
 
 	if len(old) > 0 && !overwrite {

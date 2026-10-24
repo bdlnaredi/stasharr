@@ -62,6 +62,7 @@ import { JobFragment, useMonitorJob } from "src/utils/job";
 import { useCurrentUser } from "src/components/Stasharr/CurrentUser";
 import { SceneReelsPanel } from "src/components/Stasharr/SceneReelsPanel";
 import { PlaylistButtons } from "src/components/Stasharr/PlaylistButtons";
+import { SimilarScenesPanel } from "src/components/Stasharr/SimilarScenesPanel";
 
 const SubmitStashBoxDraft = lazyComponent(
   () => import("src/components/Dialogs/SubmitDraft")
@@ -642,6 +643,9 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
                 <FormattedMessage id="history" />
               </Nav.Link>
             </Nav.Item>
+            <Nav.Item>
+              <Nav.Link eventKey="scene-similar-panel">Similar</Nav.Link>
+            </Nav.Item>
             {canViewReels && (
               <Nav.Item>
                 <Nav.Link eventKey="scene-reels-panel">Reels</Nav.Link>
@@ -718,6 +722,9 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
               onSubmit={onSave}
               onDelete={() => setIsDeleteAlertOpen(true)}
             />
+          </Tab.Pane>
+          <Tab.Pane eventKey="scene-similar-panel" mountOnEnter unmountOnExit>
+            <SimilarScenesPanel sceneId={scene.id} />
           </Tab.Pane>
           {canViewReels && (
             <Tab.Pane eventKey="scene-reels-panel" mountOnEnter>

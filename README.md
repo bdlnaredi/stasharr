@@ -17,6 +17,10 @@ things Stash does not do on its own:
 - **Playlists, Watch later and Continue watching**, per user
 - **File renamer**: moves and renames files from their metadata with a
   template such as `{studio}/{date} - {title}`
+- **Recommendations**: "Similar" scenes on every scene page and "Recommended
+  for you" on the home page, per user
+- **Phone app**: install Stasharr on your phone's home screen
+- **Audio files**: mp3, m4a, flac and other audio files are added as scenes
 
 Everything else works exactly like Stash, and an existing Stash database is
 upgraded in place the first time Stasharr starts. The web interface runs on
@@ -207,6 +211,46 @@ from the Scenes list. Turn on **Rename new scenes automatically** to rename
 files as soon as auto-import has identified them. Scenes without a title are
 left alone, subtitles and funscripts with the same name move with the video,
 and empty folders left behind are removed.
+
+## Recommendations
+
+Recommendations come from the metadata you already have, so they need no AI
+and no extra service:
+
+- **Similar** (a tab on every scene page) lists scenes that share performers,
+  the studio, the studio's network and tags with the scene. Rare tags count
+  for more than tags that half the library has.
+- **Recommended for you** (on the home page) looks at what you play, O and
+  rate, builds a picture of the performers, studios and tags you like, and
+  suggests scenes you have not watched yet. Low ratings push similar scenes
+  down. Every user gets their own, and it only shows once you have some
+  history.
+
+## Phone app
+
+Stasharr can be installed on your phone's home screen and opens full screen,
+like an app. Go to **Settings → Account → Install on this device**, or use
+your browser's "Install app" / "Add to Home screen" menu item. On phones the
+menu bar also has one-tap buttons for Reels and Playlists, and turning the
+phone sideways while a video plays goes full screen.
+
+Phones only install apps from secure `https://` addresses. If you open
+Stasharr as `http://your-server:2704`, put it behind https first, for example
+with [Tailscale Serve](https://tailscale.com/kb/1312/serve) or a reverse proxy
+such as Caddy, Nginx Proxy Manager or SWAG. Over plain http you can still use
+"Add to Home screen" as a shortcut.
+
+## Audio files
+
+Audio files in your library folders (`mp3`, `m4a`, `m4b`, `aac`, `flac`,
+`wav`, `ogg`, `oga`, `opus`, `wma`) are added as scenes, so they can be
+identified, tagged, rated, put in playlists and played like videos. Their
+cover is the embedded album art, or a picture of the sound wave when there is
+none. Previews, sprites, fingerprints and reels are skipped for them, since
+they have no picture. Formats browsers cannot play (such as `wma`) are
+converted to mp3 while they play. Audio files are listed under **Audio** in
+the menu and marked AUDIO on their cards. Turn this off, or change the
+extensions, under **Settings → Auto-import → Audio files**, then run a scan.
 
 ## Building from source
 

@@ -80,6 +80,8 @@ fragment LibraryWatcherConfigData on LibraryWatcherConfig {
   generate_reels
   generate_media
   create_missing
+  audio_enabled
+  audio_extensions
   poll_minutes
   reel_duration
   reel_count

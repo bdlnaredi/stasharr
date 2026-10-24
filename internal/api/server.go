@@ -620,7 +620,8 @@ func setPageSecurityHeaders(w http.ResponseWriter, r *http.Request, plugins []*p
 	styleSrc := strings.Join(styleSrcSlice, " ")
 
 	cspDirectives := fmt.Sprintf("default-src %s; connect-src %s; img-src %s; script-src %s; style-src %s; media-src %s;", defaultSrc, connectSrc, imageSrc, scriptSrc, styleSrc, mediaSrc)
-	cspDirectives += " worker-src blob:; child-src 'none'; object-src 'none'; form-action 'self';"
+	// 'self' lets the Stasharr service worker run, so the app can be installed
+	cspDirectives += " worker-src 'self' blob:; manifest-src 'self'; child-src 'none'; object-src 'none'; form-action 'self';"
 
 	w.Header().Set("Referrer-Policy", "same-origin")
 	w.Header().Set("Content-Security-Policy", cspDirectives)

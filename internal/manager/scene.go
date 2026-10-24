@@ -146,6 +146,18 @@ func GetSceneStreamPaths(scene *models.Scene, directStreamURL *url.URL, maxStrea
 
 	var endpoints []*SceneStreamEndpoint
 
+	// Stasharr: audio files play as they are, with an mp3 conversion for
+	// formats browsers cannot play
+	if pf.IsAudioOnly() {
+		if AudioPlaysInBrowser(pf) {
+			direct := endpointType{label: "Direct stream", mimeType: AudioMimeType(pf.Path)}
+			endpoints = append(endpoints, makeStreamEndpoint(direct, ""))
+		}
+		mp3 := endpointType{label: "MP3", mimeType: "audio/mpeg", extension: ".mp3"}
+		endpoints = append(endpoints, makeStreamEndpoint(mp3, ""))
+		return endpoints, nil
+	}
+
 	// direct stream should only apply when the audio codec is supported
 	audioCodec := ffmpeg.MissingUnsupported
 	if pf.AudioCodec != "" {

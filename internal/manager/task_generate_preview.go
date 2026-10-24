@@ -84,7 +84,7 @@ func (t *GeneratePreviewTask) required() bool {
 }
 
 func (t *GeneratePreviewTask) videoPreviewRequired() bool {
-	if t.Scene.Path == "" {
+	if t.Scene.Path == "" || sceneIsAudio(&t.Scene) {
 		return false
 	}
 
@@ -110,7 +110,7 @@ func (t *GeneratePreviewTask) imagePreviewRequired() bool {
 		return false
 	}
 
-	if t.Scene.Path == "" {
+	if t.Scene.Path == "" || sceneIsAudio(&t.Scene) {
 		return false
 	}
 

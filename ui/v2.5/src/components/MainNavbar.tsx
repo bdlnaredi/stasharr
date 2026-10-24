@@ -40,10 +40,12 @@ import {
   faUserCircle,
   faVideo,
   faListUl,
+  faMusic,
 } from "@fortawesome/free-solid-svg-icons";
 import { baseURL } from "src/core/createClient";
 import { PatchComponent } from "src/patch";
 import { useCurrentUser } from "./Stasharr/CurrentUser";
+import { audioScenesLink } from "./Stasharr/audio";
 
 interface IMenuItem {
   name: string;
@@ -106,6 +108,10 @@ const messages = defineMessages({
     id: "stasharr.playlists",
     defaultMessage: "Playlists",
   },
+  audio: {
+    id: "stasharr.audio",
+    defaultMessage: "Audio",
+  },
 });
 
 const reelsMenuItem: IMenuItem = {
@@ -123,6 +129,21 @@ const playlistsMenuItem: IMenuItem = {
   icon: faListUl,
   hotkey: "g w",
 };
+
+// built on first use, as it needs the scene filter options
+let audioMenuItem: IMenuItem | undefined;
+function getAudioMenuItem(): IMenuItem {
+  if (!audioMenuItem) {
+    audioMenuItem = {
+      name: "audio",
+      message: messages.audio,
+      href: audioScenesLink(),
+      icon: faMusic,
+      hotkey: "g a",
+    };
+  }
+  return audioMenuItem;
+}
 
 const allMenuItems: IMenuItem[] = [
   {
@@ -221,6 +242,7 @@ export const MainNavbar: React.FC = () => {
     let cfgMenuItems = configuration?.interface.menuItems;
     const withReels = (items: IMenuItem[]) => [
       ...items,
+      getAudioMenuItem(),
       playlistsMenuItem,
       ...(canViewReels ? [reelsMenuItem] : []),
     ];
@@ -452,6 +474,29 @@ export const MainNavbar: React.FC = () => {
             </Link>
           </div>
         )}
+        {/* Stasharr: one tap to Reels and Playlists on phones */}
+        {canViewReels && (
+          <NavLink
+            className="nav-utility d-sm-none"
+            exact
+            to="/reels"
+            onClick={handleDismiss}
+          >
+            <Button className="minimal d-flex align-items-center h-100" title="Reels">
+              <Icon icon={faMobileAlt} />
+            </Button>
+          </NavLink>
+        )}
+        <NavLink
+          className="nav-utility d-sm-none"
+          exact
+          to="/playlists"
+          onClick={handleDismiss}
+        >
+          <Button className="minimal d-flex align-items-center h-100" title="Playlists">
+            <Icon icon={faListUl} />
+          </Button>
+        </NavLink>
         <MainNavbarUtilityItems>
           {renderUtilityButtons()}
         </MainNavbarUtilityItems>
