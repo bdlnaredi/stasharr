@@ -29,8 +29,10 @@ type FindReelsResultType {
 input GenerateReelsInput {
   "Scenes to make reels for. Leave empty for every scene that does not have a reel yet."
   scene_ids: [ID!]
-  "Target reel length in seconds. Defaults to 15."
+  "Reel length in seconds. Defaults to the setting (15)."
   duration: Float
+  "Reels per scene, 1 to 5. Defaults to the setting (3)."
+  count: Int
   "Replace existing reels"
   overwrite: Boolean
 }
@@ -52,6 +54,8 @@ type LibraryWatcherConfig {
   poll_minutes: Int!
   "Default reel length in seconds"
   reel_duration: Float!
+  "Reels made per scene, each from a different part"
+  reel_count: Int!
   "The identify sources used, in order"
   identify_sources: [String!]!
   "Whether the watcher is running"
@@ -73,6 +77,7 @@ input LibraryWatcherConfigInput {
   create_missing: Boolean
   poll_minutes: Int
   reel_duration: Float
+  reel_count: Int
 }
 
 extend type Scene {

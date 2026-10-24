@@ -71,10 +71,22 @@ export const AutoImportPanel: React.FC = () => {
     }
   }
 
-  async function makeAllReels() {
+  async function makeAllReels(overwrite: boolean) {
+    if (
+      overwrite &&
+      !window.confirm(
+        "Delete every reel and make new ones for every scene? This can take a long time."
+      )
+    ) {
+      return;
+    }
     try {
-      await generateReels({ variables: { input: {} } });
-      Toast.success("Making reels for every scene without one. See Settings → Tasks for progress.");
+      await generateReels({ variables: { input: overwrite ? { overwrite: true } : {} } });
+      Toast.success(
+        overwrite
+          ? "Remaking reels for every scene. See Settings → Tasks for progress."
+          : "Making reels for every scene without one. See Settings → Tasks for progress."
+      );
     } catch (e) {
       Toast.error(e);
     }
@@ -243,8 +255,9 @@ export const AutoImportPanel: React.FC = () => {
       <div className="setting-section">
         <h1>Reels</h1>
         <div className="sub-heading">
-          Short vertical clips made from the best moments of a scene: its
-          markers when it has them, otherwise the loudest and busiest parts.
+          Short vertical clips, each one continuous part of a scene. Every
+          scene gets a few, each from a different high point: the loudest and
+          busiest parts, with the parts right after markers preferred.
         </div>
         <Row heading="Reel length (seconds)" sub="Between 5 and 90.">
           <Form.Control
@@ -263,11 +276,33 @@ export const AutoImportPanel: React.FC = () => {
           />
         </Row>
         <Row
-          heading="Make reels for the whole library"
-          sub="Runs as a task for every scene that does not have a reel yet. This can take a while."
+          heading="Reels per scene"
+          sub="Between 1 and 5. Short scenes get fewer, so the reels do not overlap."
         >
-          <Button variant="secondary" onClick={() => makeAllReels()}>
+          <Form.Control
+            className="text-input"
+            type="number"
+            min={1}
+            max={5}
+            disabled={disabled}
+            defaultValue={cfg.reel_count}
+            onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+              const v = parseInt(e.currentTarget.value, 10);
+              if (!Number.isNaN(v) && v !== cfg.reel_count) {
+                save({ reel_count: v });
+              }
+            }}
+          />
+        </Row>
+        <Row
+          heading="Make reels for the whole library"
+          sub="Runs as a task. Make reels does scenes that have none yet; Remake all replaces every existing reel with the new style. This can take a while."
+        >
+          <Button variant="secondary" onClick={() => makeAllReels(false)}>
             Make reels
+          </Button>{" "}
+          <Button variant="secondary" onClick={() => makeAllReels(true)}>
+            Remake all
           </Button>
         </Row>
       </div>

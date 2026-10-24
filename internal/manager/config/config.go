@@ -2087,6 +2087,7 @@ const (
 	WatcherPollMinutes     = "stasharr.watcher.poll_minutes"
 	WatcherCreateMissing   = "stasharr.watcher.create_missing"
 	ReelDuration           = "stasharr.reels.duration"
+	ReelCount              = "stasharr.reels.count"
 )
 
 func (i *Config) GetWatcherEnabled() bool { return i.getBoolDefault(WatcherEnabled, false) }
@@ -2116,6 +2117,15 @@ func (i *Config) GetWatcherPollMinutes() int {
 		return 15
 	}
 	return v.Int(WatcherPollMinutes)
+}
+
+// GetReelCount returns how many reels to make per scene.
+func (i *Config) GetReelCount() int {
+	v := i.getInt(ReelCount)
+	if v < 1 || v > 5 {
+		return 3
+	}
+	return v
 }
 
 func (i *Config) GetReelDuration() float64 {

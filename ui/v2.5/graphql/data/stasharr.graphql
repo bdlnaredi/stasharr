@@ -82,6 +82,7 @@ fragment LibraryWatcherConfigData on LibraryWatcherConfig {
   create_missing
   poll_minutes
   reel_duration
+  reel_count
   identify_sources
   running
   watched_paths
