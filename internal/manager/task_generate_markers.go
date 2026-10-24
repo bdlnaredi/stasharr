@@ -67,7 +67,7 @@ func (t *GenerateMarkersTask) generateSpecificMarker(ctx context.Context, marker
 
 	videoFile := scene.Files.Primary()
 
-	if videoFile == nil {
+	if videoFile == nil || videoFile.IsAudioOnly() {
 		// nothing to do
 		return
 	}
@@ -96,7 +96,7 @@ func (t *GenerateMarkersTask) generateSceneMarkers(ctx context.Context, scene *m
 
 	videoFile := scene.Files.Primary()
 
-	if len(sceneMarkers) == 0 || videoFile == nil {
+	if len(sceneMarkers) == 0 || videoFile == nil || videoFile.IsAudioOnly() {
 		return
 	}
 

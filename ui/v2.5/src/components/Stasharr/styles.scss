@@ -395,3 +395,64 @@ body.stasharr-no-download {
     display: none;
   }
 }
+
+// "More like this" list on the scene page
+.stasharr-similar {
+  padding: 0.25rem 0;
+}
+
+.stasharr-similar-item {
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: inherit;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+.stasharr-similar-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stasharr-similar-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stasharr-similar-item .stasharr-playlist-thumb {
+  display: block;
+}
+
+// audio files keep their cover visible while playing
+.video-js.stasharr-audio.vjs-has-started .vjs-poster {
+  display: block !important;
+}
+
+// installed app: keep clear of the phone's notch and gesture bar
+@media (display-mode: standalone) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .top-nav {
+    padding-top: calc(0.25rem + env(safe-area-inset-top));
+
+    @include media-breakpoint-down(xs) {
+      @media (orientation: portrait) {
+        padding-bottom: calc(0.25rem + env(safe-area-inset-bottom));
+        padding-top: 0.25rem;
+      }
+    }
+  }
+}

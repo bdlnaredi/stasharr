@@ -50,6 +50,10 @@ type LibraryWatcherConfig {
   generate_media: Boolean!
   "Create studios, performers and tags that are not in the library yet"
   create_missing: Boolean!
+  "Add audio files to the library as scenes"
+  audio_enabled: Boolean!
+  "File extensions treated as audio"
+  audio_extensions: [String!]!
   "Minutes between checks for changes that file events miss (network shares). 0 turns polling off."
   poll_minutes: Int!
   "Default reel length in seconds"
@@ -75,6 +79,8 @@ input LibraryWatcherConfigInput {
   generate_reels: Boolean
   generate_media: Boolean
   create_missing: Boolean
+  audio_enabled: Boolean
+  audio_extensions: [String!]
   poll_minutes: Int
   reel_duration: Float
   reel_count: Int

@@ -41,8 +41,29 @@ func isZip(pathname string) bool {
 }
 
 func isVideo(pathname string) bool {
-	vidExt := config.GetInstance().GetVideoExtensions()
-	return fsutil.MatchExtension(pathname, vidExt)
+	cfg := config.GetInstance()
+	vidExt := cfg.GetVideoExtensions()
+	return fsutil.MatchExtension(pathname, vidExt) || isAudio(pathname)
+}
+
+// isAudio reports whether a path is an audio file that Stasharr imports as a
+// scene.
+func isAudio(pathname string) bool {
+	cfg := config.GetInstance()
+	return cfg.GetAudioEnabled() && fsutil.MatchExtension(pathname, cfg.GetAudioExtensions())
+}
+
+// sceneIsAudio reports whether a scene's main file is audio only.
+func sceneIsAudio(s *models.Scene) bool {
+	if s == nil {
+		return false
+	}
+	if s.Files.PrimaryLoaded() {
+		if f := s.Files.Primary(); f != nil {
+			return f.IsAudioOnly()
+		}
+	}
+	return s.Path != "" && fsutil.MatchExtension(s.Path, config.GetInstance().GetAudioExtensions())
 }
 
 func isImage(pathname string) bool {

@@ -2176,3 +2176,24 @@ func (i *Config) GetRenamerTemplate() string {
 	}
 	return DefaultRenamerTemplate
 }
+
+// Stasharr: audio files
+
+const (
+	AudioEnabled    = "stasharr.audio.enabled"
+	AudioExtensions = "stasharr.audio.extensions"
+)
+
+var DefaultAudioExtensions = []string{"mp3", "m4a", "m4b", "aac", "flac", "wav", "ogg", "oga", "opus", "wma"}
+
+// GetAudioEnabled reports whether audio files are added to the library as
+// scenes.
+func (i *Config) GetAudioEnabled() bool { return i.getBoolDefault(AudioEnabled, true) }
+
+func (i *Config) GetAudioExtensions() []string {
+	ret := i.getStringSlice(AudioExtensions)
+	if len(ret) == 0 {
+		return DefaultAudioExtensions
+	}
+	return ret
+}

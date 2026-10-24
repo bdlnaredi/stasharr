@@ -1,9 +1,57 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import * as GQL from "src/core/generated-graphql";
 import { useToast } from "src/hooks/Toast";
 import { baseURL } from "src/core/createClient";
 import { useCurrentUser } from "./CurrentUser";
+import { canInstall, isInstalled, onInstallChange, promptInstall } from "./pwa";
+
+// Install Stasharr as an app on this phone or computer.
+export const InstallAppSection: React.FC = () => {
+  const [, setTick] = useState(0);
+  useEffect(() => onInstallChange(() => setTick((t) => t + 1)), []);
+
+  let sub: React.ReactNode;
+  if (isInstalled()) {
+    sub = "Stasharr is running as an installed app.";
+  } else if (!window.isSecureContext) {
+    sub = (
+      <>
+        Phones only install apps from secure (https) addresses. Open Stasharr
+        through https, for example with Tailscale or a reverse proxy, then come
+        back here. Until then you can still use your browser&apos;s
+        &quot;Add to Home screen&quot;.
+      </>
+    );
+  } else if (canInstall()) {
+    sub = "Adds Stasharr to your home screen. It opens full screen, without the browser bars.";
+  } else {
+    sub = (
+      <>
+        Open your browser menu and choose &quot;Install app&quot; or
+        &quot;Add to Home screen&quot;. On iPhone, tap Share and then
+        &quot;Add to Home Screen&quot;.
+      </>
+    );
+  }
+
+  return (
+    <div className="setting-section">
+      <h1>App</h1>
+      <div className="setting">
+        <div>
+          <h3>Install on this device</h3>
+          <div className="sub-heading">{sub}</div>
+        </div>
+        <div>
+          {canInstall() && !isInstalled() && (
+            <Button onClick={() => promptInstall()}>Install</Button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const roleNames: Record<GQL.UserRole, string> = {
   [GQL.UserRole.Admin]: "Admin",
@@ -22,12 +70,15 @@ export const AccountPanel: React.FC = () => {
 
   if (!me || !me.multi_user_enabled) {
     return (
-      <div className="setting-section">
-        <h1>Account</h1>
-        <div className="sub-heading">
-          No login is set up, so there is only one account.
+      <>
+        <div className="setting-section">
+          <h1>Account</h1>
+          <div className="sub-heading">
+            No login is set up, so there is only one account.
+          </div>
         </div>
-      </div>
+        <InstallAppSection />
+      </>
     );
   }
 
@@ -53,6 +104,7 @@ export const AccountPanel: React.FC = () => {
   }
 
   return (
+    <>
     <div className="setting-section stasharr-account">
       <h1>Account</h1>
       <div className="setting">
@@ -126,6 +178,8 @@ export const AccountPanel: React.FC = () => {
         </div>
       )}
     </div>
+    <InstallAppSection />
+    </>
   );
 };
 

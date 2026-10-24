@@ -1,0 +1,8 @@
+# Stasharr: recommendations from shared performers, tags and studios
+
+extend type Query {
+  "Scenes like this one, best first"
+  findSimilarScenes(scene_id: ID!, limit: Int): [Scene!]!
+  "Scenes the current user has not watched that match what they watch, rate highly and O. Empty until they have some history."
+  recommendedScenes(limit: Int): [Scene!]!
+}

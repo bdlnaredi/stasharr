@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/stashapp/stash/internal/manager"
 	"github.com/stashapp/stash/internal/manager/config"
@@ -149,6 +151,8 @@ func watcherConfig() *LibraryWatcherConfig {
 		GenerateReels:   cfg.GetWatcherGenerateReels(),
 		GenerateMedia:   cfg.GetWatcherGenerateMedia(),
 		CreateMissing:   cfg.GetWatcherCreateMissing(),
+		AudioEnabled:    cfg.GetAudioEnabled(),
+		AudioExtensions: cfg.GetAudioExtensions(),
 		PollMinutes:     cfg.GetWatcherPollMinutes(),
 		ReelDuration:    cfg.GetReelDuration(),
 		ReelCount:       cfg.GetReelCount(),
@@ -205,6 +209,26 @@ func (r *mutationResolver) ConfigureLibraryWatcher(ctx context.Context, input Li
 	}
 	if input.CreateMissing != nil {
 		cfg.SetBool(config.WatcherCreateMissing, *input.CreateMissing)
+	}
+	if input.AudioEnabled != nil {
+		cfg.SetBool(config.AudioEnabled, *input.AudioEnabled)
+	}
+	if input.AudioExtensions != nil {
+		var exts []string
+		for _, e := range input.AudioExtensions {
+			e = strings.ToLower(strings.TrimPrefix(strings.TrimSpace(e), "."))
+			if e == "" {
+				continue
+			}
+			if slices.Contains(cfg.GetVideoExtensions(), e) {
+				return nil, fmt.Errorf("%s is already a video extension", e)
+			}
+			exts = append(exts, e)
+		}
+		if len(exts) == 0 {
+			exts = config.DefaultAudioExtensions
+		}
+		cfg.SetInterface(config.AudioExtensions, exts)
 	}
 	if input.PollMinutes != nil {
 		if *input.PollMinutes < 0 || *input.PollMinutes > 1440 {

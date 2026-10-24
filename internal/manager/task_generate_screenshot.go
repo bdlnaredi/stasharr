@@ -44,6 +44,16 @@ func (t *GenerateCoverTask) Start(ctx context.Context) {
 		return
 	}
 
+	if videoFile.IsAudioOnly() {
+		data, err := audioCover(ctx, videoFile.Path)
+		if err != nil {
+			logger.Errorf("Error making cover for %s: %v", scenePath, err)
+			return
+		}
+		t.saveCover(ctx, data)
+		return
+	}
+
 	var at float64
 	if t.ScreenshotAt == nil {
 		at = float64(videoFile.Duration) * 0.2
@@ -73,6 +83,11 @@ func (t *GenerateCoverTask) Start(ctx context.Context) {
 		return
 	}
 
+	t.saveCover(ctx, coverImageData)
+}
+
+func (t *GenerateCoverTask) saveCover(ctx context.Context, coverImageData []byte) {
+	r := t.repository
 	if err := r.WithTxn(ctx, func(ctx context.Context) error {
 		qb := r.Scene
 		scenePartial := models.NewScenePartial()
@@ -83,8 +98,7 @@ func (t *GenerateCoverTask) Start(ctx context.Context) {
 		}
 
 		// update the scene with the update date
-		_, err = qb.UpdatePartial(ctx, t.Scene.ID, scenePartial)
-		if err != nil {
+		if _, err := qb.UpdatePartial(ctx, t.Scene.ID, scenePartial); err != nil {
 			return fmt.Errorf("error updating scene: %v", err)
 		}
 

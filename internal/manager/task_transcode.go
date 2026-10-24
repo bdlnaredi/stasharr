@@ -109,7 +109,7 @@ func (t *GenerateTranscodeTask) Start(ctx context.Context) {
 // if container is missing from DB it is treated as non supported in order not to delay the user
 func (t *GenerateTranscodeTask) required() bool {
 	f := t.Scene.Files.Primary()
-	if f == nil {
+	if f == nil || f.IsAudioOnly() {
 		return false
 	}
 

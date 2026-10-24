@@ -833,6 +833,19 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = PatchComponent(
       };
     }, [getPlayer, scene, loadMarkers]);
 
+    // Stasharr: audio files keep showing their cover while playing
+    const isAudio =
+      !!file && !file.video_codec && !file.width && !file.height;
+    useEffect(() => {
+      const player = getPlayer();
+      if (!player) return;
+      const withAudioMode = player as unknown as {
+        audioPosterMode?: (value: boolean) => void;
+      };
+      withAudioMode.audioPosterMode?.(isAudio);
+      player.toggleClass("stasharr-audio", isAudio);
+    }, [getPlayer, isAudio]);
+
     useEffect(() => {
       const player = getPlayer();
       if (!player) return;

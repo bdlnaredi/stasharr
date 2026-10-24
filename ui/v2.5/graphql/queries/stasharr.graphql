@@ -120,3 +120,15 @@ query TrashEnabled {
     }
   }
 }
+
+query FindSimilarScenes($scene_id: ID!, $limit: Int) {
+  findSimilarScenes(scene_id: $scene_id, limit: $limit) {
+    ...SlimSceneData
+  }
+}
+
+query RecommendedScenes($limit: Int) {
+  recommendedScenes(limit: $limit) {
+    ...SlimSceneData
+  }
+}
