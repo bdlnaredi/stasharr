@@ -330,7 +330,7 @@ func evenSegments(total float64, n int, segLen float64) []models.ReelSegment {
 	}
 	segs := make([]models.ReelSegment, 0, n)
 	for i := 0; i < n; i++ {
-		start := lo
+		var start float64
 		if n > 1 {
 			start = lo + (hi-lo)*float64(i)/float64(n-1)
 		} else {
@@ -609,7 +609,7 @@ func reelFilterGraph(length float64, hasAudio bool) string {
 	const fade = 0.3
 	fadeOut := math.Max(length-fade, 0)
 	var b strings.Builder
-	fmt.Fprintf(&b, "[0:v]setpts=PTS-STARTPTS,fps=30,split=2[bg][fg];")
+	b.WriteString("[0:v]setpts=PTS-STARTPTS,fps=30,split=2[bg][fg];")
 	fmt.Fprintf(&b, "[bg]scale=%d:%d:force_original_aspect_ratio=increase,crop=%d:%d,boxblur=6:2,scale=%d:%d[bgb];",
 		reelWidth/4, reelHeight/4, reelWidth/4, reelHeight/4, reelWidth, reelHeight)
 	fmt.Fprintf(&b, "[fg]scale=%d:%d:force_original_aspect_ratio=decrease[fgs];", reelWidth, reelHeight)
