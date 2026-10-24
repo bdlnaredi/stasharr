@@ -1,16 +1,17 @@
 package manager
 
-// Automatic short vertical reels, built from the most interesting moments
-// of a scene.
+// Automatic short vertical reels. Each reel is one continuous clip of a
+// scene (15 seconds by default), and a scene gets several reels (3 by
+// default), each from a different high point.
 //
-// Moments are chosen, in order of preference, from:
-//   - MARKERS:  the scene's markers (from you, or from ThePornDB / StashDB)
+// High points are found, cheaply, from:
 //   - HEATMAP:  the intensity of an interactive funscript next to the video
 //   - ANALYSIS: loudness of the audio track combined with on-screen motion,
-//     measured by ffmpeg
+//     measured by ffmpeg from the audio and the key frames only
+//   - MARKERS:  the scene's markers (from you, or from ThePornDB / StashDB)
+//     are a strong hint: the clip after a marker is preferred
 //
-// The chosen moments are cut into equal segments, letterboxed onto a
-// blurred 9:16 background and joined into a single MP4.
+// Each clip is letterboxed onto a blurred 9:16 background.
 
 import (
 	"bufio"
@@ -46,8 +47,10 @@ const (
 
 // ReelJob generates reels for a set of scenes.
 type ReelJob struct {
-	SceneIDs  []int
-	Duration  float64
+	SceneIDs []int
+	Duration float64
+	// Count is the number of reels per scene. 0 uses the setting.
+	Count     int
 	Overwrite bool
 }
 
@@ -58,6 +61,10 @@ func (j *ReelJob) Execute(ctx context.Context, progress *job.Progress) error {
 	duration := j.Duration
 	if duration <= 0 {
 		duration = mgr.Config.GetReelDuration()
+	}
+	count := j.Count
+	if count <= 0 {
+		count = mgr.Config.GetReelCount()
 	}
 
 	ids := j.SceneIDs
@@ -93,8 +100,8 @@ func (j *ReelJob) Execute(ctx context.Context, progress *job.Progress) error {
 			logger.Info("Stopping reel generation due to user request")
 			return nil
 		}
-		progress.ExecuteTask(fmt.Sprintf("Making reel for scene %d", id), func() {
-			if _, err := GenerateReel(ctx, id, duration, j.Overwrite); err != nil {
+		progress.ExecuteTask(fmt.Sprintf("Making reels for scene %d", id), func() {
+			if _, err := GenerateReels(ctx, id, duration, count, j.Overwrite); err != nil {
 				if errors.Is(err, errReelExists) {
 					return
 				}
@@ -106,15 +113,17 @@ func (j *ReelJob) Execute(ctx context.Context, progress *job.Progress) error {
 	return nil
 }
 
-var errReelExists = errors.New("scene already has a reel")
+var errReelExists = errors.New("scene already has reels")
 
 type reelPlan struct {
-	source   string
-	segments []models.ReelSegment
+	source string
+	// one clip per reel
+	clips []models.ReelSegment
 }
 
-// GenerateReel makes a reel for one scene and stores it.
-func GenerateReel(ctx context.Context, sceneID int, duration float64, overwrite bool) (*models.Reel, error) {
+// GenerateReels makes up to count reels for one scene and stores them,
+// replacing the scene's old reels.
+func GenerateReels(ctx context.Context, sceneID int, duration float64, count int, overwrite bool) ([]*models.Reel, error) {
 	mgr := GetInstance()
 	r := mgr.Repository
 
@@ -158,35 +167,43 @@ func GenerateReel(ctx context.Context, sceneID int, duration float64, overwrite 
 		return nil, errors.New("video duration unknown, scan the file first")
 	}
 
-	plan, err := planReel(ctx, vf, markers, duration)
-	if err != nil {
-		return nil, err
+	plan := planReels(ctx, vf, markers, duration, count)
+	if len(plan.clips) == 0 {
+		return nil, errors.New("no moments to use")
 	}
 
 	outDir := mgr.Paths.Generated.Reels
 	if err := fsutil.EnsureDir(outDir); err != nil {
 		return nil, err
 	}
-	out := filepath.Join(outDir, fmt.Sprintf("%d_%d.mp4", sceneID, time.Now().Unix()))
 
-	if err := renderReel(ctx, vf, plan.segments, out); err != nil {
-		_ = os.Remove(out)
-		return nil, err
+	stamp := time.Now().Unix()
+	var made []*models.Reel
+	cleanup := func() {
+		for _, m := range made {
+			_ = os.Remove(m.Path)
+		}
 	}
-
-	total := 0.0
-	for _, s := range plan.segments {
-		total += s.End - s.Start
-	}
-
-	reel := &models.Reel{
-		SceneID:  sceneID,
-		Path:     out,
-		Duration: total,
-		Width:    reelWidth,
-		Height:   reelHeight,
-		Source:   plan.source,
-		Segments: plan.segments,
+	for i, clip := range plan.clips {
+		if job.IsCancelled(ctx) {
+			cleanup()
+			return nil, ctx.Err()
+		}
+		out := filepath.Join(outDir, fmt.Sprintf("%d_%d_%d.mp4", sceneID, stamp, i+1))
+		if err := renderReel(ctx, vf, clip, out); err != nil {
+			_ = os.Remove(out)
+			cleanup()
+			return nil, err
+		}
+		made = append(made, &models.Reel{
+			SceneID:  sceneID,
+			Path:     out,
+			Duration: round2(clip.End - clip.Start),
+			Width:    reelWidth,
+			Height:   reelHeight,
+			Source:   plan.source,
+			Segments: []models.ReelSegment{clip},
+		})
 	}
 
 	if err := r.WithTxn(ctx, func(ctx context.Context) error {
@@ -195,9 +212,15 @@ func GenerateReel(ctx context.Context, sceneID int, duration float64, overwrite 
 				return err
 			}
 		}
-		return r.Reel.Create(ctx, reel)
+		// newest first in the feed: create the best-placed clip last
+		for i := len(made) - 1; i >= 0; i-- {
+			if err := r.Reel.Create(ctx, made[i]); err != nil {
+				return err
+			}
+		}
+		return nil
 	}); err != nil {
-		_ = os.Remove(out)
+		cleanup()
 		return nil, err
 	}
 
@@ -205,58 +228,12 @@ func GenerateReel(ctx context.Context, sceneID int, duration float64, overwrite 
 		_ = os.Remove(o.Path)
 	}
 
-	logger.Infof("[reels] made %.0fs reel for %q from %s", total, scene.GetTitle(), strings.ToLower(plan.source))
-	return reel, nil
+	logger.Infof("[reels] made %d reel(s) of %.0fs for %q from %s", len(made), duration, scene.GetTitle(), strings.ToLower(plan.source))
+	return made, nil
 }
 
-// segmentCount returns how many cuts make up a reel of the given length.
-func segmentCount(duration float64) int {
-	n := int(math.Round(duration / 3))
-	if n < 3 {
-		n = 3
-	}
-	if n > 6 {
-		n = 6
-	}
-	return n
-}
-
-func planReel(ctx context.Context, vf *models.VideoFile, markers []*models.SceneMarker, duration float64) (*reelPlan, error) {
-	total := vf.Duration
-
-	// short videos: use them whole
-	if total <= duration+1 {
-		return &reelPlan{source: ReelSourceEven, segments: []models.ReelSegment{{Start: 0, End: total}}}, nil
-	}
-
-	if segs := segmentsFromMarkers(markers, total, duration); len(segs) > 0 {
-		return &reelPlan{source: ReelSourceMarkers, segments: segs}, nil
-	}
-
-	n := segmentCount(duration)
-	segLen := duration / float64(n)
-
-	if vf.Interactive {
-		if scores, err := funscriptScores(video.GetFunscriptPath(vf.Path), total); err == nil && len(scores) > 0 {
-			if segs := pickPeaks(scores, n, segLen, total); len(segs) > 0 {
-				return &reelPlan{source: ReelSourceHeatmap, segments: segs}, nil
-			}
-		}
-	}
-
-	scores, err := analysisScores(ctx, vf)
-	if err != nil {
-		logger.Warnf("[reels] analysis of %s failed, using evenly spaced moments: %v", vf.Path, err)
-	} else if segs := pickPeaks(scores, n, segLen, total); len(segs) > 0 {
-		return &reelPlan{source: ReelSourceAnalysis, segments: segs}, nil
-	}
-
-	return &reelPlan{source: ReelSourceEven, segments: evenSegments(total, n, segLen)}, nil
-}
-
-// segmentsFromMarkers uses markers spread across the scene. At least two
-// distinct markers are needed.
-func segmentsFromMarkers(markers []*models.SceneMarker, total, duration float64) []models.ReelSegment {
+// distinctMarkerTimes returns marker times at least minGap seconds apart.
+func distinctMarkerTimes(markers []*models.SceneMarker, total, minGap float64) []float64 {
 	var times []float64
 	for _, m := range markers {
 		if m.Seconds >= 0 && m.Seconds < total-1 {
@@ -264,56 +241,102 @@ func segmentsFromMarkers(markers []*models.SceneMarker, total, duration float64)
 		}
 	}
 	sort.Float64s(times)
-
-	// drop markers that are close together
-	var distinct []float64
+	var ret []float64
 	for _, t := range times {
-		if len(distinct) == 0 || t-distinct[len(distinct)-1] >= 10 {
-			distinct = append(distinct, t)
+		if len(ret) == 0 || t-ret[len(ret)-1] >= minGap {
+			ret = append(ret, t)
 		}
 	}
-	if len(distinct) < 2 {
-		return nil
+	return ret
+}
+
+// planReels picks count continuous clips of duration seconds from the most
+// interesting, well separated parts of the video.
+func planReels(ctx context.Context, vf *models.VideoFile, markers []*models.SceneMarker, duration float64, count int) *reelPlan {
+	total := vf.Duration
+
+	// short videos: one reel of the whole video
+	if total <= duration+1 {
+		return &reelPlan{source: ReelSourceEven, clips: []models.ReelSegment{{Start: 0, End: round2(total)}}}
 	}
 
-	n := segmentCount(duration)
-	if len(distinct) > n {
-		// spread the choice evenly across the markers
-		picked := make([]float64, 0, n)
-		for i := 0; i < n; i++ {
-			picked = append(picked, distinct[i*len(distinct)/n])
-		}
-		distinct = picked
+	// do not cram more clips in than fit with some room between them
+	fit := int((total * 0.9) / (duration * 1.5))
+	if fit < 1 {
+		fit = 1
 	}
-	n = len(distinct)
-	segLen := duration / float64(n)
+	if count > fit {
+		count = fit
+	}
+	if count < 1 {
+		count = 1
+	}
 
-	segs := make([]models.ReelSegment, 0, n)
-	for _, t := range distinct {
-		// markers usually mark the start of an action: skip the first moment
-		start := t + 1
-		if start+segLen > total {
-			start = total - segLen
+	var scores []float64
+	source := ""
+
+	if vf.Interactive {
+		if s, err := funscriptScores(video.GetFunscriptPath(vf.Path), total); err == nil && len(s) > 0 {
+			scores = zscores(s, true)
+			source = ReelSourceHeatmap
 		}
-		if start < 0 {
-			start = 0
-		}
-		segs = append(segs, models.ReelSegment{Start: round2(start), End: round2(start + segLen)})
 	}
-	return segs
+	if scores == nil {
+		s, err := analysisScores(ctx, vf)
+		if err != nil {
+			logger.Warnf("[reels] analysis of %s failed: %v", vf.Path, err)
+		} else {
+			scores = s
+			source = ReelSourceAnalysis
+		}
+	}
+
+	// markers usually mark the start of an action: favour the clip that
+	// follows each marker
+	if times := distinctMarkerTimes(markers, total, 10); len(times) > 0 {
+		if scores == nil {
+			scores = make([]float64, int(total)+1)
+		}
+		w := int(math.Ceil(duration))
+		for _, t := range times {
+			from := int(t) + 1
+			for i := from; i < from+w && i < len(scores); i++ {
+				scores[i] += 1.5
+			}
+		}
+		source = ReelSourceMarkers
+	}
+
+	if scores != nil {
+		if clips := pickPeaks(scores, count, duration, total); len(clips) > 0 {
+			return &reelPlan{source: source, clips: clips}
+		}
+	}
+
+	return &reelPlan{source: ReelSourceEven, clips: evenSegments(total, count, duration)}
 }
 
 func round2(f float64) float64 {
 	return math.Round(f*100) / 100
 }
 
+// evenSegments spreads n clips of segLen seconds across the video, skipping
+// the intro and credits.
 func evenSegments(total float64, n int, segLen float64) []models.ReelSegment {
 	lo := total * 0.08
 	hi := total*0.92 - segLen
+	if hi < lo {
+		lo, hi = 0, math.Max(total-segLen, 0)
+	}
 	segs := make([]models.ReelSegment, 0, n)
 	for i := 0; i < n; i++ {
-		start := lo + (hi-lo)*float64(i)/float64(max(n-1, 1))
-		segs = append(segs, models.ReelSegment{Start: round2(start), End: round2(start + segLen)})
+		start := lo
+		if n > 1 {
+			start = lo + (hi-lo)*float64(i)/float64(n-1)
+		} else {
+			start = (lo + hi) / 2
+		}
+		segs = append(segs, models.ReelSegment{Start: round2(start), End: round2(math.Min(start+segLen, total))})
 	}
 	return segs
 }
@@ -579,50 +602,48 @@ func lastLines(s string, n int) string {
 	return strings.Join(lines, " | ")
 }
 
-// reelFilterGraph builds the ffmpeg filter graph joining the segments onto
-// a blurred vertical canvas.
-func reelFilterGraph(segs []models.ReelSegment, hasAudio bool) string {
+// reelFilterGraph letterboxes one clip onto a blurred vertical canvas. The
+// background is blurred at a small size, which costs far less than blurring
+// at full size.
+func reelFilterGraph(length float64, hasAudio bool) string {
+	const fade = 0.3
+	fadeOut := math.Max(length-fade, 0)
 	var b strings.Builder
-	var concatInputs strings.Builder
-	const fade = 0.2
-	for i, s := range segs {
-		l := s.End - s.Start
-		fadeOut := math.Max(l-fade, 0)
-		fmt.Fprintf(&b, "[%d:v]setpts=PTS-STARTPTS,split=2[bg%d][fg%d];", i, i, i)
-		fmt.Fprintf(&b, "[bg%d]scale=%d:%d:force_original_aspect_ratio=increase,crop=%d:%d,boxblur=20:2[bgb%d];", i, reelWidth, reelHeight, reelWidth, reelHeight, i)
-		fmt.Fprintf(&b, "[fg%d]scale=%d:%d:force_original_aspect_ratio=decrease[fgs%d];", i, reelWidth, reelHeight, i)
-		fmt.Fprintf(&b, "[bgb%d][fgs%d]overlay=(W-w)/2:(H-h)/2,setsar=1,fps=30,format=yuv420p,fade=t=in:st=0:d=%.2f,fade=t=out:st=%.2f:d=%.2f[v%d];", i, i, fade, fadeOut, fade, i)
-		if hasAudio {
-			fmt.Fprintf(&b, "[%d:a]asetpts=PTS-STARTPTS,aresample=44100,aformat=channel_layouts=stereo,afade=t=in:st=0:d=%.2f,afade=t=out:st=%.2f:d=%.2f[a%d];", i, fade, fadeOut, fade, i)
-		} else {
-			fmt.Fprintf(&b, "anullsrc=r=44100:cl=stereo,atrim=0:%.2f[a%d];", l, i)
-		}
-		fmt.Fprintf(&concatInputs, "[v%d][a%d]", i, i)
+	fmt.Fprintf(&b, "[0:v]setpts=PTS-STARTPTS,fps=30,split=2[bg][fg];")
+	fmt.Fprintf(&b, "[bg]scale=%d:%d:force_original_aspect_ratio=increase,crop=%d:%d,boxblur=6:2,scale=%d:%d[bgb];",
+		reelWidth/4, reelHeight/4, reelWidth/4, reelHeight/4, reelWidth, reelHeight)
+	fmt.Fprintf(&b, "[fg]scale=%d:%d:force_original_aspect_ratio=decrease[fgs];", reelWidth, reelHeight)
+	fmt.Fprintf(&b, "[bgb][fgs]overlay=(W-w)/2:(H-h)/2,setsar=1,format=yuv420p,fade=t=in:st=0:d=%.2f,fade=t=out:st=%.2f:d=%.2f[v]", fade, fadeOut, fade)
+	if hasAudio {
+		fmt.Fprintf(&b, ";[0:a]asetpts=PTS-STARTPTS,aresample=44100,aformat=channel_layouts=stereo,afade=t=in:st=0:d=%.2f,afade=t=out:st=%.2f:d=%.2f[a]", fade, fadeOut, fade)
 	}
-	fmt.Fprintf(&b, "%sconcat=n=%d:v=1:a=1[v][a]", concatInputs.String(), len(segs))
 	return b.String()
 }
 
-func renderReel(ctx context.Context, vf *models.VideoFile, segs []models.ReelSegment, out string) error {
-	if len(segs) == 0 {
-		return errors.New("no moments to use")
+func renderReel(ctx context.Context, vf *models.VideoFile, clip models.ReelSegment, out string) error {
+	length := clip.End - clip.Start
+	if length <= 0 {
+		return errors.New("empty clip")
 	}
-	args := []string{"-hide_banner", "-nostats", "-v", "error", "-y"}
-	for _, s := range segs {
-		args = append(args,
-			"-ss", strconv.FormatFloat(s.Start, 'f', 2, 64),
-			"-t", strconv.FormatFloat(s.End-s.Start, 'f', 2, 64),
-			"-i", vf.Path)
+	hasAudio := vf.AudioCodec != ""
+	args := []string{"-hide_banner", "-nostats", "-v", "error", "-y",
+		"-ss", strconv.FormatFloat(clip.Start, 'f', 2, 64),
+		"-t", strconv.FormatFloat(length, 'f', 2, 64),
+		"-i", vf.Path,
+		"-filter_complex", reelFilterGraph(length, hasAudio),
+		"-map", "[v]",
+	}
+	if hasAudio {
+		args = append(args, "-map", "[a]", "-c:a", "aac", "-b:a", "128k")
+	} else {
+		args = append(args, "-an")
 	}
 	args = append(args,
-		"-filter_complex", reelFilterGraph(segs, vf.AudioCodec != ""),
-		"-map", "[v]", "-map", "[a]",
-		"-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-profile:v", "high",
-		"-c:a", "aac", "-b:a", "128k",
+		// two encoder threads keep the server responsive while reels are made
+		"-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-profile:v", "high", "-threads", "2",
 		"-movflags", "+faststart",
 		out)
-	_, err := runFFmpegCapture(ctx, args)
-	if err != nil {
+	if _, err := runFFmpegCapture(ctx, args); err != nil {
 		return fmt.Errorf("rendering reel: %w", err)
 	}
 	return nil

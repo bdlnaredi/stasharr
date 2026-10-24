@@ -100,6 +100,12 @@ func (r *mutationResolver) GenerateReels(ctx context.Context, input GenerateReel
 		}
 		j.Duration = *input.Duration
 	}
+	if input.Count != nil {
+		if *input.Count < 1 || *input.Count > 5 {
+			return "", errors.New("reels per scene must be between 1 and 5")
+		}
+		j.Count = *input.Count
+	}
 	if input.Overwrite != nil {
 		j.Overwrite = *input.Overwrite
 	}
@@ -145,6 +151,7 @@ func watcherConfig() *LibraryWatcherConfig {
 		CreateMissing:   cfg.GetWatcherCreateMissing(),
 		PollMinutes:     cfg.GetWatcherPollMinutes(),
 		ReelDuration:    cfg.GetReelDuration(),
+		ReelCount:       cfg.GetReelCount(),
 		IdentifySources: manager.IdentifySourceNames(cfg),
 		WatchedPaths:    []string{},
 	}
@@ -210,6 +217,12 @@ func (r *mutationResolver) ConfigureLibraryWatcher(ctx context.Context, input Li
 			return nil, errors.New("reel length must be between 5 and 90 seconds")
 		}
 		cfg.SetFloat(config.ReelDuration, *input.ReelDuration)
+	}
+	if input.ReelCount != nil {
+		if *input.ReelCount < 1 || *input.ReelCount > 5 {
+			return nil, errors.New("reels per scene must be between 1 and 5")
+		}
+		cfg.SetInt(config.ReelCount, *input.ReelCount)
 	}
 	if err := cfg.Write(); err != nil {
 		return nil, err

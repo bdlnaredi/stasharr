@@ -132,19 +132,28 @@ Stash-box endpoints** first.
 
 ## Reels
 
-A reel is a 15 second vertical (9:16) MP4 made from the best moments of a
-scene. The moments are chosen in this order:
+A reel is a continuous 15 second vertical (9:16) MP4 clip of a scene. Each
+scene gets 3 reels by default, each from a different high point, so a reel
+plays like a real moment from the scene rather than a montage. The high
+points are found from:
 
-1. **Markers**: if the scene has markers (your own, or from ThePornDB/StashDB),
-   the reel is built around them
-2. **Interactive heatmap**: for scenes with a funscript, the most intense parts
-3. **Audio and motion**: otherwise ffmpeg finds the loudest, busiest parts of
-   the video, skipping intros and credits
+1. **Interactive heatmap**: for scenes with a funscript, the most intense parts
+2. **Audio and motion**: otherwise ffmpeg finds the loudest, busiest parts,
+   skipping intros and credits. It only reads the audio and the key frames, so
+   this is quick
+3. **Markers**: the part right after each marker (your own, or from
+   ThePornDB/StashDB) is preferred
+
+Reels are kept apart, so they do not overlap; short scenes get fewer reels.
+The reel length (5–90 seconds) and reels per scene (1–5) are set under
+Settings → Auto-import. Making a reel only encodes the 15 seconds it uses, at
+720×1280, with two encoder threads so the server stays responsive.
 
 Make reels from a scene's **⋯** menu (**Make reel**), from the scene's **Reels**
-tab, for the whole library under Settings → Auto-import, or automatically for
-new scenes. Watch them on the **Reels** page, which plays one reel per screen as
-you scroll. Reels are stored in your generated folder under `reels/`.
+tab, for the whole library under Settings → Auto-import (**Make reels**, or
+**Remake all** to replace older reels), or automatically for new scenes.
+Watch them on the **Reels** page, which plays one reel per screen as you
+scroll. Reels are stored in your generated folder under `reels/`.
 
 ## Trash bin
 
