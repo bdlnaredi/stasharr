@@ -5,11 +5,11 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
-// Signing: repository secrets when set, otherwise the key in android/keystore
-val keystorePath: String = System.getenv("STASHARR_KEYSTORE")
-    ?: rootProject.file("keystore/stasharr.jks").absolutePath
-val keystorePassword: String = System.getenv("STASHARR_KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
-    ?: "jL_a9amq7rzz8EHkg0-fFL72Isug6oTJ"
+// Signing: the private key from the GitHub repository secrets. Builds made
+// without it (for example in Android Studio) use the debug key instead, and
+// cannot be installed over the released app.
+val keystorePath: String? = System.getenv("STASHARR_KEYSTORE")?.takeIf { it.isNotBlank() }
+val keystorePassword: String = System.getenv("STASHARR_KEYSTORE_PASSWORD").orEmpty()
 val keyAliasName: String = System.getenv("STASHARR_KEY_ALIAS")?.takeIf { it.isNotBlank() } ?: "stasharr"
 val keyPasswordValue: String = System.getenv("STASHARR_KEY_PASSWORD")?.takeIf { it.isNotBlank() }
     ?: keystorePassword
@@ -27,18 +27,24 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            storeFile = file(keystorePath)
-            storePassword = keystorePassword
-            keyAlias = keyAliasName
-            keyPassword = keyPasswordValue
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = keystorePassword
+                keyAlias = keyAliasName
+                keyPassword = keyPasswordValue
+            }
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (keystorePath != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
