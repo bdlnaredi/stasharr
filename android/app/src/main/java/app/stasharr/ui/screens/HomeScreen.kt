@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import app.stasharr.app
 import app.stasharr.data.Performer
 import app.stasharr.data.Scene
+import app.stasharr.data.SceneScope
 import app.stasharr.data.SceneSort
 import app.stasharr.data.Studio
 import app.stasharr.ui.LocalNav
@@ -93,7 +94,7 @@ private suspend fun loadHome(): HomeData = coroutineScope {
     val top = async { safe { repo.scenes(SceneSort.TopRated, perPage = 20).items.filter { (it.rating100 ?: 0) > 0 } } }
     val studios = async { safe { repo.studios(perPage = 16).items.filter { it.sceneCount > 0 } } }
     val perf = async { safe { repo.performers(perPage = 20).items.filter { it.sceneCount > 0 } } }
-    val audio = async { safe { repo.scenes(SceneSort.RecentlyAdded, perPage = 12, scope = app.stasharr.data.SceneScope.Audio).items } }
+    val audio = async { safe { repo.scenes(SceneSort.RecentlyAdded, perPage = 12, scope = SceneScope.Audio).items } }
 
     val recentList = recent.await()
     val recList = rec.await()

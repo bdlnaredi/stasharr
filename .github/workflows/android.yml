@@ -49,7 +49,7 @@ jobs:
           if ! gradle assembleRelease --no-daemon \
               -PversionCode=${{ github.run_number }} -PversionName=$VERSION_NAME 2>&1 | tee "$RUNNER_TEMP/build.log"; then
             # show the compiler errors as an annotation on the run
-            msg=$(grep -E "^e: |^w: .*error|What went wrong|^> |Could not resolve|error:" -A2 "$RUNNER_TEMP/build.log" \
+            msg=$(grep -E "^e: |What went wrong|^> [^T]|Could not resolve|error:" -A2 "$RUNNER_TEMP/build.log" \
               | grep -v "^--$" | head -80 | sed "s#file://$GITHUB_WORKSPACE/android/app/src/main/java/##" \
               | sed ':a;N;$!ba;s/%/%25/g;s/\r//g;s/\n/%0A/g')
             echo "::error title=Android build failed::$msg"
