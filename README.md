@@ -20,6 +20,8 @@ things Stash does not do on its own:
 - **Recommendations**: "Similar" scenes on every scene page and "Recommended
   for you" on the home page, per user
 - **Phone app**: install Stasharr on your phone's home screen
+- **Android app**: a native app with a Plex-style home screen, full screen
+  player, picture-in-picture and Reels
 - **Audio files**: mp3, m4a, flac and other audio files are added as scenes
 
 Everything else works exactly like Stash, and an existing Stash database is
@@ -251,6 +253,30 @@ they have no picture. Formats browsers cannot play (such as `wma`) are
 converted to mp3 while they play. Audio files are listed under **Audio** in
 the menu and marked AUDIO on their cards. Turn this off, or change the
 extensions, under **Settings → Auto-import → Audio files**, then run a scan.
+
+## Android app
+
+Stasharr has its own Android app, made to feel like Plex or Netflix: a big
+swipeable banner of picks for you, shelves for Continue watching,
+Recommended, Recently added, Watch later, performers and studios, rich scene
+pages with cast, chapters, tags and "More like this", Browse and search, a
+full screen player that remembers where you stopped and keeps playing in a
+small window (picture-in-picture), and swipe-up Reels.
+
+**Install:** on your phone, open this repository's
+[Releases page](https://github.com/bdlnaredi/stasharr/releases), find the
+newest **Stasharr for Android** and download the `.apk` file. Open it and
+allow your browser to install apps when Android asks. New versions install
+over the old one.
+
+**Sign in:** enter your server's address, for example `192.168.1.20:2704`
+(the app adds `http://` and the port for you), and your Stasharr username and
+password. Leave them empty if your server has no login. Away from home, use a
+VPN such as Tailscale, or an https address.
+
+The app plays the original file first, as Android plays far more formats
+than a browser, and falls back to the server's conversions when it cannot.
+Every change to the `android/` folder builds a new version automatically.
 
 ## Building from source
 

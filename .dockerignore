@@ -55,3 +55,6 @@ stash
 dist
 
 docker
+
+# the Android app is built separately
+android/
