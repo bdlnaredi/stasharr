@@ -41,8 +41,11 @@ jobs:
           STASHARR_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           # the private signing key from the repository secrets
-          if [ -z "$KEYSTORE_B64" ] || [ -z "$STASHARR_KEYSTORE_PASSWORD" ]; then
-            echo "::error title=Signing key missing::Add the ANDROID_KEYSTORE_BASE64 and ANDROID_KEYSTORE_PASSWORD repository secrets (Settings > Secrets and variables > Actions)."
+          missing=""
+          [ -z "$KEYSTORE_B64" ] && missing="$missing ANDROID_KEYSTORE_BASE64"
+          [ -z "$STASHARR_KEYSTORE_PASSWORD" ] && missing="$missing ANDROID_KEYSTORE_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "::error title=Signing key missing::These repository secrets are missing or empty:$missing (Settings > Secrets and variables > Actions > Repository secrets)."
             exit 1
           fi
           echo "$KEYSTORE_B64" | tr -d ' \r\n' | base64 -d > "$RUNNER_TEMP/stasharr.jks"
