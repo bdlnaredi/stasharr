@@ -26,6 +26,7 @@ data class MediaFile(
     @SerialName("video_codec") val videoCodec: String = "",
     @SerialName("audio_codec") val audioCodec: String = "",
     val size: Long = 0,
+    val format: String = "",
 )
 
 @Serializable

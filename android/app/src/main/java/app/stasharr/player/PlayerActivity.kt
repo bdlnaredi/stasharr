@@ -39,6 +39,9 @@ import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.cast.CastPlayer
+import androidx.media3.cast.SessionAvailabilityListener
+import com.google.android.gms.cast.framework.CastContext
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.PlayerView
@@ -81,6 +84,15 @@ class PlayerActivity : ComponentActivity() {
 
     private lateinit var prefs: PlayerPrefs
     internal var player by mutableStateOf<ExoPlayer?>(null)
+
+    // Chromecast; null when this phone has no Google Play services
+    private val castContext: CastContext? by lazy { runCatching { CastContext.getSharedInstance(this) }.getOrNull() }
+    private var castPlayer: CastPlayer? = null
+    internal val castAvailable: Boolean get() = castPlayer != null
+    /** The name of the TV being played on, or null when playing on the phone. */
+    internal var castingTo by mutableStateOf<String?>(null)
+    private var castSource: Source? = null
+    private var castOffset = 0.0
     internal var playerView: PlayerView? = null
 
     // what the screen shows
@@ -155,6 +167,7 @@ class PlayerActivity : ComponentActivity() {
         decoder = prefs.decoder
         aspect = prefs.aspect
         createPlayer()
+        setUpCast()
 
         readIntent(intent)
 
@@ -175,6 +188,97 @@ class PlayerActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun setUpCast() {
+        val ctx = castContext ?: return
+        val cp = runCatching { CastPlayer(ctx) }.getOrNull() ?: return
+        cp.setSessionAvailabilityListener(object : SessionAvailabilityListener {
+            override fun onCastSessionAvailable() = startCasting()
+            override fun onCastSessionUnavailable() = stopCasting()
+        })
+        cp.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (castingTo != null && state == Player.STATE_ENDED) playNext()
+            }
+        })
+        castPlayer = cp
+        if (cp.isCastSessionAvailable) startCasting()
+    }
+
+    /** The player in use: the TV while casting, otherwise the phone. */
+    internal fun activePlayer(): Player? = if (castingTo != null) castPlayer else player
+
+    /**
+     * What to send to the TV. A Chromecast plays MP4 files with H.264 video
+     * as they are; anything else goes through the server's conversion.
+     */
+    private fun pickCastSource(): Source? {
+        val s = scene ?: return null
+        val f = s.file
+        val direct = sources.firstOrNull { it.isDirect }
+        val directOk = s.isAudio || (f != null &&
+            f.format.lowercase() in setOf("mp4", "m4v", "mov") &&
+            f.videoCodec.lowercase() in setOf("h264", "avc1"))
+        if (directOk && direct != null) return direct
+        return sources.firstOrNull { it.isHls } ?: sources.firstOrNull { !it.isDirect } ?: direct
+    }
+
+    private fun castMime(src: Source, s: Scene): String = when {
+        src.isHls -> MimeTypes.APPLICATION_M3U8
+        s.isAudio && src.isDirect -> when (s.file?.path?.substringAfterLast('.')?.lowercase()) {
+            "m4a", "m4b", "aac" -> MimeTypes.AUDIO_MP4
+            "flac" -> MimeTypes.AUDIO_FLAC
+            "ogg", "oga", "opus" -> MimeTypes.AUDIO_OGG
+            "wav" -> MimeTypes.AUDIO_WAV
+            else -> MimeTypes.AUDIO_MPEG
+        }
+        src.url.contains(".mp3") -> MimeTypes.AUDIO_MPEG
+        else -> MimeTypes.VIDEO_MP4
+    }
+
+    /** Sends the scene to the TV, from the given time. */
+    private fun castFrom(startSeconds: Double) {
+        val s = scene ?: return
+        val cp = castPlayer ?: return
+        val src = pickCastSource() ?: return
+        castSource = src
+        var url = src.url
+        castOffset = 0.0
+        if (!src.seekable && startSeconds > 1) {
+            url += (if (url.contains('?')) "&" else "?") + "start=" + startSeconds.toInt()
+            castOffset = startSeconds.toInt().toDouble()
+        }
+        val item = MediaItem.Builder()
+            .setUri(url)
+            .setMimeType(castMime(src, s))
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(s.displayTitle)
+                    .setArtist(s.studio?.name)
+                    .setArtworkUri(s.paths.screenshot?.let { android.net.Uri.parse(it) })
+                    .build()
+            )
+            .build()
+        cp.setMediaItem(item, if (src.seekable) (startSeconds * 1000).toLong() else 0L)
+        cp.prepare()
+        cp.play()
+    }
+
+    private fun startCasting() {
+        val at = currentSeconds()
+        player?.pause()
+        castingTo = castContext?.sessionManager?.currentCastSession?.castDevice?.friendlyName ?: "TV"
+        castFrom(at)
+    }
+
+    private fun stopCasting() {
+        if (castingTo == null) return
+        val at = currentSeconds()
+        castingTo = null
+        castSource = null
+        // carry on on the phone from where the TV was
+        playSource(at)
     }
 
     private fun createPlayer() {
@@ -273,6 +377,10 @@ class PlayerActivity : ComponentActivity() {
     }
 
     internal fun playSource(startSeconds: Double) {
+        if (castingTo != null) {
+            castFrom(startSeconds)
+            return
+        }
         val s = scene ?: return
         val p = player ?: return
         val src = sources.getOrNull(sourceIndex) ?: return
@@ -313,7 +421,9 @@ class PlayerActivity : ComponentActivity() {
 
     // ---------------------------------------------------------------- controls
 
-    internal fun currentSeconds(): Double = offsetSeconds + (player?.currentPosition ?: 0L) / 1000.0
+    internal fun currentSeconds(): Double =
+        if (castingTo != null) castOffset + (castPlayer?.currentPosition ?: 0L) / 1000.0
+        else offsetSeconds + (player?.currentPosition ?: 0L) / 1000.0
 
     internal fun durationSeconds(): Double {
         val d = scene?.duration ?: 0.0
@@ -324,9 +434,14 @@ class PlayerActivity : ComponentActivity() {
 
     /** Jumps to a time in the scene, restarting a conversion there if needed. */
     internal fun seekTo(seconds: Double) {
+        val target = seconds.coerceIn(0.0, maxOf(0.0, durationSeconds() - 1))
+        if (castingTo != null) {
+            val cs = castSource
+            if (cs != null && cs.seekable) castPlayer?.seekTo((target * 1000).toLong()) else castFrom(target)
+            return
+        }
         val p = player ?: return
         val src = sources.getOrNull(sourceIndex) ?: return
-        val target = seconds.coerceIn(0.0, maxOf(0.0, durationSeconds() - 1))
         if (src.seekable) {
             p.seekTo((target * 1000).toLong())
         } else {
@@ -337,7 +452,7 @@ class PlayerActivity : ComponentActivity() {
     internal fun seekBy(seconds: Double) = seekTo(currentSeconds() + seconds)
 
     internal fun togglePlay() {
-        val p = player ?: return
+        val p = activePlayer() ?: return
         if (p.isPlaying) p.pause() else {
             if (p.playbackState == Player.STATE_ENDED) seekTo(0.0)
             p.play()
@@ -346,7 +461,7 @@ class PlayerActivity : ComponentActivity() {
 
     internal fun setPlaybackSpeed(s: Float) {
         speed = s
-        player?.setPlaybackSpeed(s)
+        runCatching { activePlayer()?.setPlaybackSpeed(s) }
     }
 
     internal fun chooseAspect(a: Aspect) {
@@ -513,6 +628,10 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onDestroy() {
         runCatching { unregisterReceiver(pipReceiver) }
+        // the TV keeps playing after the player closes, like other apps
+        castPlayer?.setSessionAvailabilityListener(null)
+        castPlayer?.release()
+        castPlayer = null
         stopRewind()
         player?.removeListener(listener)
         player?.release()
