@@ -62,6 +62,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.app
+import app.stasharr.data.OfflineItem
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.DownloadDone
 import app.stasharr.data.Playlist
 import app.stasharr.data.Scene
 import app.stasharr.player.ScenePreview
@@ -113,6 +117,10 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
     var rating by remember(scene.id) { mutableStateOf(scene.rating100) }
     var oCount by remember(scene.id) { mutableIntStateOf(scene.oCounter ?: 0) }
     var showPlaylists by remember { mutableStateOf(false) }
+    var showDownload by remember { mutableStateOf(false) }
+    val offline by app.downloads.items.collectAsState()
+    val downloaded = offline.any { it.sceneId == scene.id && it.done }
+    val downloading = offline.any { it.sceneId == scene.id && !it.done && it.state != OfflineItem.FAILED }
     var expanded by remember { mutableStateOf(false) }
     val similar = rememberLoad(scene.id) { app.repo.similar(scene.id, 20) }
     val resume = scene.resumeTime ?: 0.0
@@ -226,6 +234,18 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
                         }
                     }
                     RoundAction(Icons.AutoMirrored.Rounded.PlaylistAdd, "Playlist") { showPlaylists = true }
+                    RoundAction(
+                        when {
+                            downloaded -> Icons.Rounded.DownloadDone
+                            else -> Icons.Rounded.Download
+                        },
+                        when {
+                            downloaded -> "Downloaded"
+                            downloading -> "Downloading"
+                            else -> "Download"
+                        },
+                        active = downloaded || downloading,
+                    ) { showDownload = true }
                     RoundAction(Icons.Rounded.Whatshot, if (oCount > 0) "O · $oCount" else "O") {
                         scope.launch {
                             runCatching { app.repo.addO(scene.id) }.onSuccess { oCount = it }
@@ -324,6 +344,10 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
         }
     }
 
+    if (showDownload) {
+        DownloadSheet(scene, onDismiss = { showDownload = false })
+    }
+
     if (showPlaylists) {
         AddToPlaylistDialog(sceneId = scene.id, onDismiss = { showPlaylists = false }, onDone = { msg ->
             showPlaylists = false
@@ -354,7 +378,7 @@ fun AddToPlaylistDialog(sceneId: String, onDismiss: () -> Unit, onDone: (String)
         title = { Text("Add to playlist") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                playlists.value.orEmpty().filter { !it.watchLater }.forEach { p ->
+                playlists.value.orEmpty().filter { !it.watchLater && !it.smart }.forEach { p ->
                     Row(
                         Modifier
                             .fillMaxWidth()

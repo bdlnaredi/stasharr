@@ -59,6 +59,7 @@ import { useZoomKeybinds } from "../List/ZoomSlider";
 import { FilteredListToolbar } from "../List/FilteredListToolbar";
 import { FilterTags } from "../List/FilterTags";
 import { AddToPlaylistDialog } from "../Stasharr/PlaylistButtons";
+import { SmartPlaylistModal } from "../Stasharr/SmartPlaylists";
 import { useCurrentUser } from "../Stasharr/CurrentUser";
 import { useToast } from "src/hooks/Toast";
 import { SidebarFolderFilter } from "../List/Filters/FolderFilter";
@@ -647,6 +648,14 @@ export const FilteredSceneList = PatchComponent(
             />
           ),
         isDisplayed: () => hasSelection,
+      },
+      {
+        text: "Save as smart playlist…",
+        onClick: () =>
+          showModal(
+            <SmartPlaylistModal filter={filter} onClose={() => closeModal()} />
+          ),
+        isDisplayed: () => !hasSelection,
       },
       {
         text: "Rename files…",

@@ -42,8 +42,10 @@ import app.stasharr.app
 import app.stasharr.player.PlayerActivity
 import app.stasharr.ui.components.AppActions
 import app.stasharr.ui.components.LocalAppActions
+import app.stasharr.ui.components.LocalOpenDownloads
 import app.stasharr.ui.components.rememberLoad
 import app.stasharr.ui.screens.BrowseScreen
+import app.stasharr.ui.screens.DownloadsScreen
 import app.stasharr.ui.screens.HomeScreen
 import app.stasharr.ui.screens.LoginScreen
 import app.stasharr.ui.screens.PerformerScreen
@@ -66,6 +68,7 @@ class Navigator(private val nav: NavHostController, private val context: Context
     fun tag(id: String, name: String) = nav.navigate("tag/$id/${Uri.encode(name)}")
     fun playlist(id: String) = nav.navigate("playlist/$id")
     fun list(kind: SceneListKind) = nav.navigate("list/${kind.name}")
+    fun downloads() = nav.navigate("downloads")
     fun back() = nav.popBackStack()
 
     fun tab(route: String) = nav.navigate(route) {
@@ -127,7 +130,7 @@ private fun MainScaffold() {
     val backStack by nav.currentBackStackEntryAsState()
     val current = backStack?.destination?.route
 
-    CompositionLocalProvider(LocalNav provides navigator) {
+    CompositionLocalProvider(LocalNav provides navigator, LocalOpenDownloads provides { navigator.downloads() }) {
         Scaffold(
             containerColor = Brand.Background,
             contentWindowInsets = WindowInsets(0),
@@ -170,6 +173,7 @@ private fun MainScaffold() {
                     composable("tag/{id}/{name}") {
                         TagScreen(it.arguments?.getString("id").orEmpty(), it.arguments?.getString("name").orEmpty())
                     }
+                    composable("downloads") { DownloadsScreen() }
                     composable("playlist/{id}") { PlaylistScreen(it.arguments?.getString("id").orEmpty()) }
                     composable("list/{kind}") {
                         val kind = runCatching { SceneListKind.valueOf(it.arguments?.getString("kind").orEmpty()) }

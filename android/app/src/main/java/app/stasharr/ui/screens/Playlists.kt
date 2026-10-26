@@ -59,6 +59,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.BuildConfig
 import app.stasharr.app
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material.icons.rounded.DownloadForOffline
 import app.stasharr.data.Me
 import app.stasharr.data.Playlist
 import app.stasharr.ui.LocalNav
@@ -93,6 +95,15 @@ private fun PlaylistCard(p: Playlist, onClick: () -> Unit) {
                     .fillMaxSize()
                     .background(Brush.verticalGradient(0.4f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.8f)))
             )
+            if (p.smart) {
+                Text(
+                    "SMART",
+                    color = Color.Black,
+                    fontWeight = FontWeight.Black,
+                    fontSize = 10.sp,
+                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp).clip(RoundedCornerShape(50)).background(Brand.Gradient).padding(horizontal = 8.dp, vertical = 3.dp),
+                )
+            }
             if (p.watchLater) {
                 Icon(
                     Icons.Rounded.Bookmark, null, tint = Color.White,
@@ -287,6 +298,15 @@ fun ProfileScreen(me: Me?) {
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
         Spacer(Modifier.height(24.dp))
+        val nav = LocalNav.current
+        val offline by app.downloads.items.collectAsState()
+        GradientButton(
+            if (offline.isEmpty()) "Downloads" else "Downloads · ${offline.count { it.done }}",
+            onClick = { nav.downloads() },
+            icon = Icons.Rounded.DownloadForOffline,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        )
+        Spacer(Modifier.height(16.dp))
         InfoRow(Icons.Rounded.Dns, "Server", app.session.serverUrl.orEmpty())
         InfoRow(Icons.Rounded.VerifiedUser, "App version", BuildConfig.VERSION_NAME)
         Spacer(Modifier.height(24.dp))

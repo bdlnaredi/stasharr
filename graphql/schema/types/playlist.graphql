@@ -7,25 +7,49 @@ type Playlist {
   description: String!
   "Every user has one Watch later playlist. It cannot be renamed or deleted."
   watch_later: Boolean!
+  "Smart playlists fill themselves from a saved scene filter"
+  smart: Boolean!
+  smart_rule: SmartPlaylistRule
   scene_count: Int!
   "The first scene, for the playlist cover"
   cover: Scene
-  "Scenes in playlist order"
-  scenes: [Scene!]!
+  "Scenes in playlist order; limit returns only the first ones"
+  scenes(limit: Int): [Scene!]!
   created_at: Time!
   updated_at: Time!
+}
+
+type SmartPlaylistRule {
+  "The scene filter, as JSON in the SceneFilterType format"
+  filter: String!
+  sort: String
+  direction: SortDirectionEnum
+  limit: Int!
+}
+
+input SmartPlaylistRuleInput {
+  scene_filter: SceneFilterType
+  "Sort field, as in FindFilterType.sort, for example created_at or random"
+  sort: String
+  direction: SortDirectionEnum
+  "Most scenes the playlist holds; default 100, at most 1000"
+  limit: Int
 }
 
 input PlaylistCreateInput {
   name: String!
   description: String
   scene_ids: [ID!]
+  "Makes a smart playlist; scene_ids is then ignored"
+  smart_rule: SmartPlaylistRuleInput
 }
 
 input PlaylistUpdateInput {
   id: ID!
   name: String
   description: String
+  "Changes the rule of a smart playlist"
+  smart_rule: SmartPlaylistRuleInput
 }
 
 extend type Scene {

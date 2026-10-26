@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -552,9 +553,68 @@ private fun FilterSheet(m: BrowseModel, onDismiss: () -> Unit) {
                 GlassButton("Clear", onClick = { m.clearFilters() })
                 GradientButton("Show results", onClick = onDismiss, modifier = Modifier.weight(1f))
             }
+            if (m.tab == BrowseTab.Scenes || m.tab == BrowseTab.Audio) {
+                Spacer(Modifier.height(4.dp))
+                SaveSmartButton(m, Modifier.align(Alignment.CenterHorizontally))
+            }
             Spacer(Modifier.height(16.dp))
         }
     }
+}
+
+/** Saves the current scene filters and sort as a smart playlist on the server. */
+@Composable
+private fun SaveSmartButton(m: BrowseModel, modifier: Modifier = Modifier) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var open by remember { mutableStateOf(false) }
+    var name by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    androidx.compose.material3.TextButton(onClick = { open = true }, modifier = modifier) {
+        Text("Save as smart playlist", color = Brand.Orange)
+    }
+    if (!open) return
+    val audio = m.tab == BrowseTab.Audio
+    val sort = if (audio) m.audioSort else m.sceneSort
+    val filters = if (audio) m.audioFilters else m.sceneFilters
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = { open = false },
+        containerColor = Brand.Surface,
+        title = { Text("Smart playlist") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Keeps itself up to date with the scenes that match these filters, in this order. It shows as a row on Home.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Brand.TextMuted,
+                )
+                androidx.compose.material3.OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    singleLine = true,
+                    label = { Text("Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            }
+        },
+        confirmButton = {
+            androidx.compose.material3.TextButton(enabled = name.isNotBlank(), onClick = {
+                scope.launch {
+                    val json = mergeFilters(if (audio) SceneScope.Audio.toFilter() else null, filters.toJson())
+                    val key = if (sort.option.key == "random") "random" else sort.option.key
+                    runCatching { app.repo.createSmartPlaylist(name.trim(), json, key, sort.desc) }
+                        .onSuccess {
+                            open = false
+                            android.widget.Toast.makeText(context, "Saved ${name.trim()}", android.widget.Toast.LENGTH_SHORT).show()
+                            name = ""
+                        }
+                        .onFailure { error = it.message }
+                }
+            }) { Text("Save") }
+        },
+        dismissButton = { androidx.compose.material3.TextButton(onClick = { open = false }) { Text("Cancel") } },
+    )
 }
 
 @Composable

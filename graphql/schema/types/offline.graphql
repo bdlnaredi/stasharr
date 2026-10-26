@@ -1,0 +1,32 @@
+# Stasharr: offline downloads for the phone app
+
+type OfflineQualityOption {
+  id: String!
+  label: String!
+  "Height in pixels; 0 is the original file"
+  height: Int!
+}
+
+type OfflineDownload {
+  scene_id: ID!
+  quality: String!
+  "NONE, QUEUED, CONVERTING, READY or FAILED"
+  status: String!
+  "0 to 1 while converting"
+  progress: Float!
+  "Bytes, once ready"
+  size: Int!
+  error: String
+  "Where to download the file from, once ready"
+  url: String
+}
+
+extend type Query {
+  offlineQualities: [OfflineQualityOption!]!
+  offlineDownload(scene_id: ID!, quality: String!): OfflineDownload!
+}
+
+extend type Mutation {
+  "Starts preparing a download. Poll offlineDownload until it is READY."
+  prepareOfflineDownload(scene_id: ID!, quality: String!): OfflineDownload!
+}

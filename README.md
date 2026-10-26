@@ -197,6 +197,34 @@ Every user has their own playlists:
 - **Continue watching**: scenes you started but did not finish appear at the
   top of the home page and the Playlists page, and pick up where you left off
 
+### Smart playlists
+
+A smart playlist keeps itself up to date from a saved filter, for example
+"4K, rated 4 stars or more, not watched". Filter and sort the Scenes list,
+then choose **Save as smart playlist** from the ⋯ menu (in the Android app:
+**Filters → Save as smart playlist**). Each smart playlist appears as a row
+on the home page. To change its filter, set up the Scenes list again and save
+it over the old one.
+
+## Notifications
+
+Under **Settings → Notifications**, send messages to Discord, Telegram, ntfy,
+Gotify or any webhook when auto-import adds new scenes, when a new scene
+cannot be identified, when a task fails, and when a scheduled backup or
+metadata refresh finishes. **Send test** checks the settings.
+
+## Backups and metadata refresh
+
+Under **Settings → Backups & refresh**:
+
+- **Back up every day** at the chosen hour, keeping the newest few (7 by
+  default). Scheduled backups go in a `stasharr-auto` folder inside the
+  backup folder. Any backup in the list can be **restored**; the current
+  database is backed up first, so a restore can be undone.
+- **Refresh automatically** checks StashDB, ThePornDB and your other
+  stash-boxes again every few days for scenes, performers and studios you
+  have already matched, and adds new details, images, performers and tags.
+
 ## File renamer
 
 **Settings → File renamer** moves and renames video files using their
@@ -273,6 +301,13 @@ over the old one.
 (the app adds `http://` and the port for you), and your Stasharr username and
 password. Leave them empty if your server has no login. Away from home, use a
 VPN such as Tailscale, or an https address.
+
+**Downloads:** tap **Download** on a scene to watch it without the server.
+Pick the original file or a smaller 1080p, 720p or 480p copy, which the
+server makes first (it takes a few minutes and is kept on the server for a
+week). Downloads are under **You → Downloads** and the download button on
+Home, and still play when the server can't be reached. A user's tier must
+allow downloading.
 
 The app plays the original file first, as Android plays far more formats
 than a browser, and falls back to the server's conversions when it cannot.

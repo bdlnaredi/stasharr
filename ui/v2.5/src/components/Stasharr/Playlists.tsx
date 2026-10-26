@@ -39,7 +39,10 @@ const PlaylistCard: React.FC<{ playlist: GQL.PlaylistDataFragment }> = ({
         </span>
       </div>
       <Card.Body>
-        <h5>{playlist.name}</h5>
+        <h5>
+          {playlist.name}
+          {playlist.smart && <span className="stasharr-smart-badge">Smart</span>}
+        </h5>
         {playlist.description && (
           <div className="text-muted stasharr-playlist-desc">
             {playlist.description}
@@ -265,8 +268,18 @@ const PlaylistDetails: React.FC = () => {
             </Form>
           ) : (
             <>
-              <h2>{p.name}</h2>
+              <h2>
+                {p.name}
+                {p.smart && <span className="stasharr-smart-badge">Smart</span>}
+              </h2>
               {p.description && <div className="text-muted">{p.description}</div>}
+              {p.smart && (
+                <div className="text-muted">
+                  Updates itself from a saved filter. To change the filter,
+                  filter the <Link to="/scenes">Scenes</Link> list and choose ⋯ →
+                  Save as smart playlist.
+                </div>
+              )}
               <div className="text-muted">
                 {scenes.length} scene{scenes.length === 1 ? "" : "s"}
               </div>
@@ -303,7 +316,9 @@ const PlaylistDetails: React.FC = () => {
 
       {scenes.length === 0 ? (
         <div className="text-muted stasharr-playlists-section">
-          {p.watch_later
+          {p.smart
+            ? "No scenes match this playlist's filter right now."
+            : p.watch_later
             ? "Nothing here yet. Use the bookmark button on a scene to save it for later."
             : "Nothing here yet. Add scenes from a scene's playlist button, or select scenes in the Scenes list and choose Add to playlist."}
         </div>
@@ -327,6 +342,7 @@ const PlaylistDetails: React.FC = () => {
                   {[s.studio?.name, s.date].filter(Boolean).join(" · ")}
                 </div>
               </div>
+              {!p.smart && (
               <div className="stasharr-playlist-item-actions">
                 <Button variant="link" disabled={i === 0} title="Move up" onClick={() => move(i, -1)}>
                   <Icon icon={faArrowUp} />
@@ -343,6 +359,7 @@ const PlaylistDetails: React.FC = () => {
                   <Icon icon={faTimes} />
                 </Button>
               </div>
+              )}
             </div>
           ))}
         </div>

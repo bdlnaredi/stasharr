@@ -22,6 +22,7 @@ type playlistRow struct {
 	Name        string    `db:"name"`
 	Description string    `db:"description"`
 	WatchLater  bool      `db:"watch_later"`
+	SmartRule   string    `db:"smart_rule"`
 	CreatedAt   Timestamp `db:"created_at"`
 	UpdatedAt   Timestamp `db:"updated_at"`
 }
@@ -33,12 +34,13 @@ func (r playlistRow) resolve() *models.Playlist {
 		Name:        r.Name,
 		Description: r.Description,
 		WatchLater:  r.WatchLater,
+		RuleJSON:    r.SmartRule,
 		CreatedAt:   r.CreatedAt.Timestamp,
 		UpdatedAt:   r.UpdatedAt.Timestamp,
 	}
 }
 
-const playlistColumns = "id, user_id, name, description, watch_later, created_at, updated_at"
+const playlistColumns = "id, user_id, name, description, watch_later, smart_rule, created_at, updated_at"
 
 // WatchLaterName is the name of every user's Watch later playlist.
 const WatchLaterName = "Watch later"
@@ -89,8 +91,8 @@ func (s *PlaylistStore) Create(ctx context.Context, p *models.Playlist) error {
 	p.CreatedAt = now
 	p.UpdatedAt = now
 	res, err := dbWrapper.Exec(ctx,
-		"INSERT INTO playlists (user_id, name, description, watch_later, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-		p.UserID, p.Name, p.Description, p.WatchLater, Timestamp{now}, Timestamp{now})
+		"INSERT INTO playlists (user_id, name, description, watch_later, smart_rule, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		p.UserID, p.Name, p.Description, p.WatchLater, p.RuleJSON, Timestamp{now}, Timestamp{now})
 	if err != nil {
 		return fmt.Errorf("creating playlist: %w", err)
 	}
@@ -104,8 +106,8 @@ func (s *PlaylistStore) Create(ctx context.Context, p *models.Playlist) error {
 
 func (s *PlaylistStore) Update(ctx context.Context, p *models.Playlist) error {
 	p.UpdatedAt = time.Now()
-	_, err := dbWrapper.Exec(ctx, "UPDATE playlists SET name = ?, description = ?, updated_at = ? WHERE id = ?",
-		p.Name, p.Description, Timestamp{p.UpdatedAt}, p.ID)
+	_, err := dbWrapper.Exec(ctx, "UPDATE playlists SET name = ?, description = ?, smart_rule = ?, updated_at = ? WHERE id = ?",
+		p.Name, p.Description, p.RuleJSON, Timestamp{p.UpdatedAt}, p.ID)
 	return err
 }
 

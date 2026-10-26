@@ -128,3 +128,35 @@ mutation PlaylistReorder($id: ID!, $scene_ids: [ID!]!) {
 mutation WatchLaterToggle($scene_id: ID!) {
   watchLaterToggle(scene_id: $scene_id)
 }
+
+mutation SaveNotifyTargets($targets: [NotifyTargetInput!]!) {
+  saveNotifyTargets(targets: $targets) {
+    ...NotifyTargetData
+  }
+}
+
+mutation TestNotifyTarget($target: NotifyTargetInput!) {
+  testNotifyTarget(target: $target)
+}
+
+mutation ConfigureMaintenance($input: MaintenanceConfigInput!) {
+  configureMaintenance(input: $input) {
+    ...MaintenanceConfigData
+  }
+}
+
+mutation RunScheduledBackup {
+  runScheduledBackup
+}
+
+mutation RestoreDatabaseBackup($id: ID!) {
+  restoreDatabaseBackup(id: $id)
+}
+
+mutation DeleteDatabaseBackup($id: ID!) {
+  deleteDatabaseBackup(id: $id)
+}
+
+mutation RunMetadataResync {
+  runMetadataResync
+}

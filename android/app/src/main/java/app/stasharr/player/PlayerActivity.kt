@@ -58,8 +58,10 @@ import kotlinx.coroutines.launch
 data class Source(val label: String, val url: String) {
     val isDirect: Boolean get() = url.substringBefore('?').endsWith("/stream")
     val isHls: Boolean get() = url.substringBefore('?').endsWith(".m3u8")
+    /** A file downloaded to the phone. */
+    val isLocal: Boolean get() = url.startsWith("file:")
     /** Whether the player can jump around in it; other conversions restart from a time. */
-    val seekable: Boolean get() = isDirect || isHls
+    val seekable: Boolean get() = isDirect || isHls || isLocal
 }
 
 @OptIn(UnstableApi::class)
@@ -327,7 +329,16 @@ class PlayerActivity : ComponentActivity() {
         player?.stop()
         lifecycleScope.launch {
             try {
-                val s = app.repo.scene(id) ?: throw IllegalStateException("This scene no longer exists")
+                // a downloaded copy plays without the server
+                val local = app.downloads.localFile(id)
+                val online = try {
+                    app.repo.scene(id)
+                } catch (e: Exception) {
+                    if (local == null) throw e
+                    null
+                }
+                val s = online ?: (if (local != null) app.downloads.storedScene(id) else null)
+                    ?: throw IllegalStateException("This scene no longer exists")
                 scene = s
                 updatePipParams()
                 val f = s.file
@@ -336,8 +347,9 @@ class PlayerActivity : ComponentActivity() {
                     f.width >= f.height -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
                     else -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
                 }
-                sources = buildSources(s)
-                sourceIndex = if (decoder == Decoder.Server) firstServerSource() else 0
+                sources = (if (local != null) listOf(Source("Downloaded", android.net.Uri.fromFile(local).toString())) else emptyList()) +
+                    (if (online != null) buildSources(online) else emptyList())
+                sourceIndex = if (decoder == Decoder.Server && local == null) firstServerSource() else 0
                 if (sources.isEmpty()) {
                     error = "This scene has no file to play"
                 } else {
@@ -349,7 +361,7 @@ class PlayerActivity : ComponentActivity() {
         }
     }
 
-    private fun firstServerSource(): Int = sources.indexOfFirst { !it.isDirect }.coerceAtLeast(0)
+    private fun firstServerSource(): Int = sources.indexOfFirst { !it.isDirect && !it.isLocal }.coerceAtLeast(0)
 
     /** The original file first (the phone plays far more than a browser), then the server's conversions. */
     private fun buildSources(s: Scene): List<Source> {
@@ -391,8 +403,9 @@ class PlayerActivity : ComponentActivity() {
             offsetSeconds = startSeconds.toInt().toDouble()
         }
 
-        // subtitles from the server, if the scene has caption files
-        val subs = s.captions.orEmpty().mapNotNull { c ->
+        // subtitles from the server, if the scene has caption files; not
+        // for downloads, which may be played with no connection
+        val subs = if (src.isLocal) emptyList() else s.captions.orEmpty().mapNotNull { c ->
             val base = s.paths.caption ?: return@mapNotNull null
             MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse("$base?lang=${c.lang}&type=${c.type}"))
                 .setMimeType(MimeTypes.TEXT_VTT)

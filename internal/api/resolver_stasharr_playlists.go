@@ -43,7 +43,7 @@ func (r *Resolver) scenesInOrder(ctx context.Context, ids []int) ([]*models.Scen
 
 func (r *playlistResolver) SceneCount(ctx context.Context, obj *models.Playlist) (n int, err error) {
 	err = r.withReadTxn(ctx, func(ctx context.Context) error {
-		n, err = r.repository.Playlist.SceneCount(ctx, obj.ID)
+		n, err = r.playlistSceneCount(ctx, obj)
 		return err
 	})
 	return n, err
@@ -52,7 +52,7 @@ func (r *playlistResolver) SceneCount(ctx context.Context, obj *models.Playlist)
 func (r *playlistResolver) Cover(ctx context.Context, obj *models.Playlist) (*models.Scene, error) {
 	var ret *models.Scene
 	err := r.withReadTxn(ctx, func(ctx context.Context) error {
-		ids, err := r.repository.Playlist.SceneIDs(ctx, obj.ID)
+		ids, err := r.playlistSceneIDs(ctx, obj, 1)
 		if err != nil || len(ids) == 0 {
 			return err
 		}
@@ -68,10 +68,14 @@ func (r *playlistResolver) Cover(ctx context.Context, obj *models.Playlist) (*mo
 	return ret, err
 }
 
-func (r *playlistResolver) Scenes(ctx context.Context, obj *models.Playlist) ([]*models.Scene, error) {
+func (r *playlistResolver) Scenes(ctx context.Context, obj *models.Playlist, limit *int) ([]*models.Scene, error) {
+	n := 0
+	if limit != nil && *limit > 0 {
+		n = *limit
+	}
 	var ret []*models.Scene
 	err := r.withReadTxn(ctx, func(ctx context.Context) error {
-		ids, err := r.repository.Playlist.SceneIDs(ctx, obj.ID)
+		ids, err := r.playlistSceneIDs(ctx, obj, n)
 		if err != nil {
 			return err
 		}
@@ -218,6 +222,12 @@ func (r *mutationResolver) PlaylistCreate(ctx context.Context, input PlaylistCre
 	if input.Description != nil {
 		p.Description = strings.TrimSpace(*input.Description)
 	}
+	if input.SmartRule != nil {
+		if p.RuleJSON, err = smartRuleJSON(input.SmartRule); err != nil {
+			return nil, err
+		}
+		sceneIDs = nil
+	}
 	err = r.withTxn(ctx, func(ctx context.Context) error {
 		if err := r.repository.Playlist.Create(ctx, p); err != nil {
 			return err
@@ -265,6 +275,14 @@ func (r *mutationResolver) PlaylistUpdate(ctx context.Context, input PlaylistUpd
 		if input.Description != nil {
 			p.Description = strings.TrimSpace(*input.Description)
 		}
+		if input.SmartRule != nil {
+			if !p.IsSmart() {
+				return errors.New("only smart playlists have a filter")
+			}
+			if p.RuleJSON, err = smartRuleJSON(input.SmartRule); err != nil {
+				return err
+			}
+		}
 		return r.repository.Playlist.Update(ctx, p)
 	})
 	return p, err
@@ -295,6 +313,9 @@ func (r *mutationResolver) playlistChange(ctx context.Context, id string, sceneI
 		p, err = r.ownPlaylist(ctx, id)
 		if err != nil {
 			return err
+		}
+		if p.IsSmart() {
+			return errSmartPlaylist
 		}
 		if err := fn(ctx, p, ids); err != nil {
 			return err

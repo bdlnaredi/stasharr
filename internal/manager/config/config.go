@@ -2197,3 +2197,84 @@ func (i *Config) GetAudioExtensions() []string {
 	}
 	return ret
 }
+
+// Stasharr: notifications, scheduled backups and metadata refresh
+
+const (
+	NotifyTargets = "stasharr.notify.targets"
+
+	MaintenanceHour = "stasharr.maintenance.hour"
+
+	BackupScheduleEnabled = "stasharr.backup.enabled"
+	BackupKeep            = "stasharr.backup.keep"
+	BackupIncludeBlobs    = "stasharr.backup.include_blobs"
+	BackupLastRun         = "stasharr.backup.last_run"
+
+	ResyncEnabled      = "stasharr.resync.enabled"
+	ResyncIntervalDays = "stasharr.resync.interval_days"
+	ResyncScenes       = "stasharr.resync.scenes"
+	ResyncPerformers   = "stasharr.resync.performers"
+	ResyncStudios      = "stasharr.resync.studios"
+	ResyncLastRun      = "stasharr.resync.last_run"
+)
+
+// GetNotifyTargetsJSON returns the notification targets as saved.
+func (i *Config) GetNotifyTargetsJSON() string { return i.getString(NotifyTargets) }
+
+// GetMaintenanceHour returns the hour of the day (0-23) when scheduled
+// backups and metadata refreshes run.
+func (i *Config) GetMaintenanceHour() int {
+	v := i.forKey(MaintenanceHour)
+	if !v.Exists(MaintenanceHour) {
+		return 4
+	}
+	h := v.Int(MaintenanceHour)
+	if h < 0 || h > 23 {
+		return 4
+	}
+	return h
+}
+
+func (i *Config) GetBackupScheduleEnabled() bool {
+	return i.getBoolDefault(BackupScheduleEnabled, false)
+}
+
+// GetBackupKeep returns how many scheduled backups to keep.
+func (i *Config) GetBackupKeep() int {
+	v := i.getInt(BackupKeep)
+	if v < 1 || v > 365 {
+		return 7
+	}
+	return v
+}
+
+func (i *Config) GetBackupIncludeBlobs() bool { return i.getBoolDefault(BackupIncludeBlobs, false) }
+
+func (i *Config) GetResyncEnabled() bool { return i.getBoolDefault(ResyncEnabled, false) }
+
+// GetResyncIntervalDays returns how many days pass between metadata refreshes.
+func (i *Config) GetResyncIntervalDays() int {
+	v := i.getInt(ResyncIntervalDays)
+	if v < 1 || v > 365 {
+		return 7
+	}
+	return v
+}
+
+func (i *Config) GetResyncScenes() bool     { return i.getBoolDefault(ResyncScenes, true) }
+func (i *Config) GetResyncPerformers() bool { return i.getBoolDefault(ResyncPerformers, true) }
+func (i *Config) GetResyncStudios() bool    { return i.getBoolDefault(ResyncStudios, true) }
+
+// GetLastRun reads a time saved with SetLastRun.
+func (i *Config) GetLastRun(key string) time.Time {
+	t, err := time.Parse(time.RFC3339, i.getString(key))
+	if err != nil {
+		return time.Time{}
+	}
+	return t
+}
+
+// SetLastRun saves when a scheduled task last ran.
+func (i *Config) SetLastRun(key string, t time.Time) {
+	i.SetString(key, t.Format(time.RFC3339))
+}

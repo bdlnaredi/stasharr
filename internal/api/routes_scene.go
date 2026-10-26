@@ -70,6 +70,9 @@ func (rs sceneRoutes) Routes() chi.Router {
 		r.Get("/stream.mpd/{segment}_v.webm", rs.StreamDASHVideoSegment)
 		r.Get("/stream.mpd/{segment}_a.webm", rs.StreamDASHAudioSegment)
 
+		// Stasharr: offline downloads for the phone app
+		r.Get("/offline.mp4", rs.Offline)
+
 		r.Get("/screenshot", rs.Screenshot)
 		r.Get("/preview", rs.Preview)
 		r.Get("/webp", rs.Webp)
