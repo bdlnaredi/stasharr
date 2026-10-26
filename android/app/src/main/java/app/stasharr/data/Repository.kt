@@ -15,7 +15,7 @@ private const val SCENE_CARD = """
 fragment SceneCard on Scene {
   id title date rating100 resume_time play_count
   files { duration width height video_codec audio_codec }
-  paths { screenshot }
+  paths { screenshot preview }
   studio { id name }
   performers { id name }
 }
@@ -115,6 +115,63 @@ class Repository(private val api: Api) {
         )
         val res = data.obj("findScenes") ?: return Page(0, emptyList())
         return Page(res.int("count"), res["scenes"].decode(emptyList()))
+    }
+
+    /** Scenes with a sort and filters, for Browse. */
+    suspend fun findScenes(sort: SortState, page: Int, perPage: Int, q: String?, filter: JsonObject?): Page<Scene> {
+        val v = vars {
+            put("filter", findFilter(page, perPage, sort.serverKey, sort.desc, q))
+            if (filter != null && filter.isNotEmpty()) put("scene_filter", filter)
+        }
+        val data = api.gql(
+            """query(${'$'}filter: FindFilterType, ${'$'}scene_filter: SceneFilterType) {
+              findScenes(filter: ${'$'}filter, scene_filter: ${'$'}scene_filter) { count scenes { ...SceneCard } }
+            }""" + SCENE_CARD, v
+        )
+        val res = data.obj("findScenes") ?: return Page(0, emptyList())
+        return Page(res.int("count"), res["scenes"].decode(emptyList()))
+    }
+
+    suspend fun findPerformers(sort: SortState, page: Int, perPage: Int, q: String?, filter: JsonObject?): Page<Performer> {
+        val v = vars {
+            put("filter", findFilter(page, perPage, sort.serverKey, sort.desc, q))
+            if (filter != null && filter.isNotEmpty()) put("pf", filter)
+        }
+        val data = api.gql(
+            """query(${'$'}filter: FindFilterType, ${'$'}pf: PerformerFilterType) {
+              findPerformers(filter: ${'$'}filter, performer_filter: ${'$'}pf) { count performers { $PERFORMER } }
+            }""", v
+        )
+        val res = data.obj("findPerformers") ?: return Page(0, emptyList())
+        return Page(res.int("count"), res["performers"].decode(emptyList()))
+    }
+
+    suspend fun findStudios(sort: SortState, page: Int, perPage: Int, q: String?, filter: JsonObject?): Page<Studio> {
+        val v = vars {
+            put("filter", findFilter(page, perPage, sort.serverKey, sort.desc, q))
+            if (filter != null && filter.isNotEmpty()) put("sf", filter)
+        }
+        val data = api.gql(
+            """query(${'$'}filter: FindFilterType, ${'$'}sf: StudioFilterType) {
+              findStudios(filter: ${'$'}filter, studio_filter: ${'$'}sf) { count studios { id name image_path scene_count } }
+            }""", v
+        )
+        val res = data.obj("findStudios") ?: return Page(0, emptyList())
+        return Page(res.int("count"), res["studios"].decode(emptyList()))
+    }
+
+    suspend fun findTags(sort: SortState, page: Int, perPage: Int, q: String?, filter: JsonObject?): Page<Tag> {
+        val v = vars {
+            put("filter", findFilter(page, perPage, sort.serverKey, sort.desc, q))
+            if (filter != null && filter.isNotEmpty()) put("tf", filter)
+        }
+        val data = api.gql(
+            """query(${'$'}filter: FindFilterType, ${'$'}tf: TagFilterType) {
+              findTags(filter: ${'$'}filter, tag_filter: ${'$'}tf) { count tags { id name scene_count } }
+            }""", v
+        )
+        val res = data.obj("findTags") ?: return Page(0, emptyList())
+        return Page(res.int("count"), res["tags"].decode(emptyList()))
     }
 
     suspend fun scene(id: String): Scene? {

@@ -1,6 +1,8 @@
 package app.stasharr.ui.components
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -40,7 +42,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -51,6 +55,8 @@ import app.stasharr.data.Performer
 import app.stasharr.data.PerformerRef
 import app.stasharr.data.Scene
 import app.stasharr.data.Studio
+import app.stasharr.player.PreviewPlayer
+import app.stasharr.player.ScenePreview
 import app.stasharr.ui.theme.Brand
 import coil.compose.AsyncImage
 
@@ -244,7 +250,12 @@ private val thumbScrim = Brush.verticalGradient(
 
 /** The 16:9 picture of a scene, with its length, quality and progress. */
 @Composable
-fun SceneThumb(scene: Scene, modifier: Modifier = Modifier, showProgress: Boolean = true) {
+fun SceneThumb(
+    scene: Scene,
+    modifier: Modifier = Modifier,
+    showProgress: Boolean = true,
+    preview: Boolean = false,
+) {
     Box(
         modifier
             .aspectRatio(16f / 9f)
@@ -259,6 +270,7 @@ fun SceneThumb(scene: Scene, modifier: Modifier = Modifier, showProgress: Boolea
                 modifier = Modifier.fillMaxSize(),
             )
         }
+        ScenePreview(scene.paths.preview, active = preview, modifier = Modifier.fillMaxSize())
         if (scene.isAudio) {
             Icon(
                 Icons.Rounded.MusicNote, null,
@@ -284,15 +296,32 @@ fun SceneThumb(scene: Scene, modifier: Modifier = Modifier, showProgress: Boolea
     }
 }
 
-/** A scene with its title underneath, for shelves and grids. */
+/**
+ * A scene with its title underneath, for shelves and grids. Press and hold
+ * to play its preview; press and hold again to stop.
+ */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SceneCard(scene: Scene, onClick: () -> Unit, modifier: Modifier = Modifier, width: Dp? = 240.dp) {
+    val haptics = LocalHapticFeedback.current
+    val previewing = PreviewPlayer.activeCardId == scene.id && scene.paths.preview != null
     Column(
         (if (width != null) modifier.width(width) else modifier.fillMaxWidth())
             .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = {
+                    PreviewPlayer.activeCardId = null
+                    onClick()
+                },
+                onLongClick = {
+                    if (scene.paths.preview != null) {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        PreviewPlayer.activeCardId = if (previewing) null else scene.id
+                    }
+                },
+            )
     ) {
-        SceneThumb(scene)
+        SceneThumb(scene, preview = previewing)
         Spacer(Modifier.height(8.dp))
         Text(
             scene.displayTitle,
