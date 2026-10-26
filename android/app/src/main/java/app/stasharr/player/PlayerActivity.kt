@@ -1,6 +1,12 @@
 package app.stasharr.player
 
+import android.app.PendingIntent
 import android.app.PictureInPictureParams
+import android.app.RemoteAction
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -19,6 +25,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -59,6 +66,11 @@ class PlayerActivity : ComponentActivity() {
         private const val EXTRA_ID = "id"
         private const val EXTRA_START = "start"
         private const val EXTRA_QUEUE = "queue"
+        private const val PIP_ACTION = "app.stasharr.PIP_CONTROL"
+        private const val PIP_CONTROL = "control"
+        private const val CONTROL_PLAY_PAUSE = 1
+        private const val CONTROL_BACK = 2
+        private const val CONTROL_FORWARD = 3
 
         fun intent(context: Context, id: String, startAt: Double, queue: List<String>): Intent =
             Intent(context, PlayerActivity::class.java)
@@ -96,6 +108,7 @@ class PlayerActivity : ComponentActivity() {
 
     private val listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
+            updatePipParams()
             if (isPlaying) {
                 playingSince = SystemClock.elapsedRealtime()
             } else {
@@ -135,6 +148,8 @@ class PlayerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         hideSystemBars()
+
+        ContextCompat.registerReceiver(this, pipReceiver, IntentFilter(PIP_ACTION), ContextCompat.RECEIVER_NOT_EXPORTED)
 
         prefs = PlayerPrefs(this)
         decoder = prefs.decoder
@@ -210,6 +225,7 @@ class PlayerActivity : ComponentActivity() {
             try {
                 val s = app.repo.scene(id) ?: throw IllegalStateException("This scene no longer exists")
                 scene = s
+                updatePipParams()
                 val f = s.file
                 requestedOrientation = when {
                     s.isAudio || f == null || f.width == 0 -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -488,12 +504,15 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        if (!inPip) player?.pause()
+        // ask Android, not our own flag: on many phones the switch to the
+        // small window is reported after onStop, which used to pause it
+        if (!isInPictureInPictureMode) player?.pause()
         addPlayTime()
         saveProgress()
     }
 
     override fun onDestroy() {
+        runCatching { unregisterReceiver(pipReceiver) }
         stopRewind()
         player?.removeListener(listener)
         player?.release()
@@ -501,9 +520,9 @@ class PlayerActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    internal fun enterPip() {
+    private fun pipRatio(): Rational {
         val f = scene?.file
-        val ratio = if (f != null && f.width > 0 && f.height > 0) {
+        return if (f != null && f.width > 0 && f.height > 0) {
             val r = f.width.toFloat() / f.height
             when {
                 r > 2.39f -> Rational(239, 100)
@@ -511,20 +530,67 @@ class PlayerActivity : ComponentActivity() {
                 else -> Rational(f.width, f.height)
             }
         } else Rational(16, 9)
-        runCatching {
-            enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(ratio).build())
+    }
+
+    private fun pipAction(icon: Int, title: String, control: Int): RemoteAction {
+        val intent = Intent(PIP_ACTION).setPackage(packageName).putExtra(PIP_CONTROL, control)
+        val pending = PendingIntent.getBroadcast(this, control, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        return RemoteAction(Icon.createWithResource(this, icon), title, title, pending)
+    }
+
+    /** The small window's settings: its shape, its buttons, and entering it automatically when going home. */
+    private fun pipParams(): PictureInPictureParams {
+        val playing = player?.isPlaying == true
+        val b = PictureInPictureParams.Builder()
+            .setAspectRatio(pipRatio())
+            .setActions(
+                listOf(
+                    pipAction(R.drawable.ic_pip_replay, "Back 10 seconds", CONTROL_BACK),
+                    if (playing) pipAction(R.drawable.ic_pip_pause, "Pause", CONTROL_PLAY_PAUSE)
+                    else pipAction(R.drawable.ic_pip_play, "Play", CONTROL_PLAY_PAUSE),
+                    pipAction(R.drawable.ic_pip_forward, "Forward 10 seconds", CONTROL_FORWARD),
+                )
+            )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            b.setAutoEnterEnabled(playing)
+            b.setSeamlessResizeEnabled(true)
+        }
+        return b.build()
+    }
+
+    internal fun updatePipParams() {
+        runCatching { setPictureInPictureParams(pipParams()) }
+    }
+
+    internal fun enterPip() {
+        runCatching { enterPictureInPictureMode(pipParams()) }
+    }
+
+    private val pipReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            when (intent.getIntExtra(PIP_CONTROL, 0)) {
+                CONTROL_PLAY_PAUSE -> togglePlay()
+                CONTROL_BACK -> seekBy(-10.0)
+                CONTROL_FORWARD -> seekBy(10.0)
+            }
+            updatePipParams()
         }
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        // keep playing in a small window when going home
-        if (player?.isPlaying == true) enterPip()
+        // Android 12 and later enter the small window by themselves (auto enter)
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S && player?.isPlaying == true) enterPip()
     }
 
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         inPip = isInPictureInPictureMode
-        if (!isInPictureInPictureMode) hideSystemBars()
+        if (isInPictureInPictureMode) {
+            // the small window keeps playing
+            player?.play()
+        } else {
+            hideSystemBars()
+        }
     }
 }
