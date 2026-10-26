@@ -1,6 +1,9 @@
 package app.stasharr.player
 
+import android.view.ContextThemeWrapper
 import android.view.View
+import androidx.mediarouter.app.MediaRouteButton
+import com.google.android.gms.cast.framework.CastButtonFactory
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -37,6 +40,7 @@ import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
 import androidx.compose.material.icons.rounded.AspectRatio
 import androidx.compose.material.icons.rounded.BrightnessMedium
+import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.FastForward
 import androidx.compose.material.icons.rounded.FastRewind
@@ -127,7 +131,7 @@ fun PlayerScreen(a: PlayerActivity) {
     var buffering by remember { mutableStateOf(false) }
     LaunchedEffect(player) {
         while (true) {
-            val p = a.player
+            val p = a.activePlayer()
             if (p != null) {
                 position = a.currentSeconds()
                 duration = a.durationSeconds()
@@ -201,6 +205,26 @@ fun PlayerScreen(a: PlayerActivity) {
                 },
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+
+        // casting: the picture shows on the TV
+        a.castingTo?.let { tv ->
+            Box(Modifier.fillMaxSize().background(Color.Black)) {
+                AsyncImage(
+                    model = scene?.paths?.screenshot,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.35f },
+                )
+                Column(
+                    Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(Icons.Rounded.Cast, null, tint = Brand.Orange, modifier = Modifier.size(56.dp))
+                    Spacer(Modifier.height(8.dp))
+                    Text("Playing on $tv", color = Color.White, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+            }
         }
 
         // ---------------------------------------------------------- gestures
@@ -324,7 +348,7 @@ fun PlayerScreen(a: PlayerActivity) {
                                 if (o.x >= wPx / 2) {
                                     holdSpeed = a.speed
                                     a.setPlaybackSpeed(2f)
-                                    a.player?.play()
+                                    a.activePlayer()?.play()
                                     hold = "2x"
                                 } else {
                                     a.startRewind()
@@ -461,7 +485,19 @@ fun PlayerScreen(a: PlayerActivity) {
                             .joinToString(" • ")
                         Text(sub, color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
-                    IconButton(onClick = { a.enterPip() }) { Icon(Icons.Rounded.PictureInPictureAlt, "Small window", tint = Color.White) }
+                    if (a.castAvailable) {
+                        AndroidView(
+                            factory = { ctx ->
+                                MediaRouteButton(ContextThemeWrapper(ctx, androidx.appcompat.R.style.Theme_AppCompat)).also {
+                                    CastButtonFactory.setUpMediaRouteButton(ctx.applicationContext, it)
+                                }
+                            },
+                            modifier = Modifier.size(48.dp),
+                        )
+                    }
+                    if (a.castingTo == null) {
+                        IconButton(onClick = { a.enterPip() }) { Icon(Icons.Rounded.PictureInPictureAlt, "Small window", tint = Color.White) }
+                    }
                     IconButton(onClick = { locked = true; poke() }) { Icon(Icons.Rounded.Lock, "Lock", tint = Color.White) }
                 }
 
