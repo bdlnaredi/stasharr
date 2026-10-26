@@ -675,7 +675,7 @@ private fun Pill(icon: ImageVector, text: String?, onClick: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@kotlin.OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun OptionSheet(title: String, onDismiss: () -> Unit, content: @Composable () -> Unit) {
     ModalBottomSheet(
