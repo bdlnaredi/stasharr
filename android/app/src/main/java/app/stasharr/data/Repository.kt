@@ -25,7 +25,8 @@ private const val SCENE_FULL = """
 fragment SceneFull on Scene {
   id title details date rating100 o_counter play_count resume_time in_watch_later
   files { path duration width height video_codec audio_codec size }
-  paths { screenshot preview stream }
+  paths { screenshot preview stream caption }
+  captions { language_code caption_type }
   studio { id name image_path }
   performers { id name image_path }
   tags { id name }

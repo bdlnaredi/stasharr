@@ -8,6 +8,13 @@ data class Paths(
     val screenshot: String? = null,
     val preview: String? = null,
     val stream: String? = null,
+    val caption: String? = null,
+)
+
+@Serializable
+data class Caption(
+    @SerialName("language_code") val lang: String = "",
+    @SerialName("caption_type") val type: String = "",
 )
 
 @Serializable
@@ -73,6 +80,7 @@ data class Scene(
     @SerialName("scene_markers") val markers: List<Marker> = emptyList(),
     @SerialName("sceneStreams") val streams: List<StreamEndpoint> = emptyList(),
     @SerialName("in_watch_later") val inWatchLater: Boolean = false,
+    val captions: List<Caption>? = null,
 ) {
     val file: MediaFile? get() = files.firstOrNull()
     val duration: Double get() = file?.duration ?: 0.0

@@ -5,96 +5,51 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.media.AudioManager
 import android.os.Bundle
 import android.os.SystemClock
+import android.provider.Settings
 import android.util.Rational
-import android.view.View
-import android.view.ViewGroup
+import android.view.LayoutInflater
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.OptIn
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DefaultDataSource
-import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.PlayerView
+import app.stasharr.R
 import app.stasharr.app
 import app.stasharr.data.Scene
-import app.stasharr.ui.components.GradientButton
-import app.stasharr.ui.theme.Brand
 import app.stasharr.ui.theme.StasharrTheme
-import coil.compose.AsyncImage
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-/** An ExoPlayer that uses the app's login for every request. */
-@OptIn(UnstableApi::class)
-fun newPlayer(context: Context): ExoPlayer {
-    val http = OkHttpDataSource.Factory(app.api.client)
-    val data = DefaultDataSource.Factory(context, http)
-    return ExoPlayer.Builder(context)
-        .setMediaSourceFactory(DefaultMediaSourceFactory(data))
-        .setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(C.USAGE_MEDIA)
-                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
-                .build(),
-            true,
-        )
-        .setSeekBackIncrementMs(10_000)
-        .setSeekForwardIncrementMs(10_000)
-        .build()
+/** One way of streaming a scene: the original file, or a conversion made by the server. */
+data class Source(val label: String, val url: String) {
+    val isDirect: Boolean get() = url.substringBefore('?').endsWith("/stream")
+    val isHls: Boolean get() = url.substringBefore('?').endsWith(".m3u8")
+    /** Whether the player can jump around in it; other conversions restart from a time. */
+    val seekable: Boolean get() = isDirect || isHls
 }
 
 @OptIn(UnstableApi::class)
@@ -112,19 +67,25 @@ class PlayerActivity : ComponentActivity() {
                 .putStringArrayListExtra(EXTRA_QUEUE, ArrayList(queue))
     }
 
-    private lateinit var player: ExoPlayer
-    private var playerView: PlayerView? = null
+    private lateinit var prefs: PlayerPrefs
+    internal var player by mutableStateOf<ExoPlayer?>(null)
+    internal var playerView: PlayerView? = null
 
-    private var scene by mutableStateOf<Scene?>(null)
-    private var error by mutableStateOf<String?>(null)
-    private var controlsVisible by mutableStateOf(true)
-    private var inPip by mutableStateOf(false)
-    private var upNext by mutableStateOf(0)
+    // what the screen shows
+    internal var scene by mutableStateOf<Scene?>(null)
+    internal var error by mutableStateOf<String?>(null)
+    internal var inPip by mutableStateOf(false)
+    internal var upNext by mutableIntStateOf(0)
+    internal var tracks by mutableStateOf(Tracks.EMPTY)
+    internal var sources by mutableStateOf<List<Source>>(emptyList())
+    internal var sourceIndex by mutableIntStateOf(0)
+    internal var decoder by mutableStateOf(Decoder.Hardware)
+    internal var aspect by mutableStateOf(Aspect.Fit)
+    internal var speed by mutableFloatStateOf(1f)
+    internal var subtitlesOn by mutableStateOf(false)
 
     private var sceneId = ""
     private var queue = ArrayList<String>()
-    private var sources: List<String> = emptyList()
-    private var sourceIndex = 0
     // transcoded streams start at the requested time, so their clock is offset
     private var offsetSeconds = 0.0
 
@@ -152,14 +113,20 @@ class PlayerActivity : ComponentActivity() {
             }
         }
 
+        override fun onTracksChanged(t: Tracks) {
+            tracks = t
+        }
+
         override fun onPlayerError(e: PlaybackException) {
-            // try the next way of streaming, from where we were
-            if (sourceIndex < sources.size - 1) {
-                val at = currentSeconds()
-                sourceIndex++
+            // the phone could not play it: let the server convert it, from where we were
+            val at = currentSeconds()
+            val next = sources.indexOfFirst { !it.isDirect }.takeIf { it > sourceIndex }
+                ?: (sourceIndex + 1).takeIf { it < sources.size }
+            if (next != null) {
+                sourceIndex = next
                 playSource(at)
             } else {
-                error = "This video can't be played on this phone.\n${e.errorCodeName}"
+                error = "This video can't be played.\n${e.errorCodeName}"
             }
         }
     }
@@ -169,14 +136,16 @@ class PlayerActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         hideSystemBars()
 
-        player = newPlayer(this)
-        player.addListener(listener)
+        prefs = PlayerPrefs(this)
+        decoder = prefs.decoder
+        aspect = prefs.aspect
+        createPlayer()
 
         readIntent(intent)
 
         setContent {
             StasharrTheme {
-                PlayerUi()
+                PlayerScreen(this)
             }
         }
 
@@ -184,7 +153,7 @@ class PlayerActivity : ComponentActivity() {
         lifecycleScope.launch {
             while (isActive) {
                 delay(15_000)
-                if (player.isPlaying) {
+                if (player?.isPlaying == true) {
                     addPlayTime()
                     playingSince = SystemClock.elapsedRealtime()
                     saveProgress()
@@ -192,6 +161,22 @@ class PlayerActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun createPlayer() {
+        val p = newPlayer(this, if (decoder == Decoder.Software) Decoder.Software else Decoder.Hardware)
+        p.addListener(listener)
+        p.setPlaybackSpeed(speed)
+        playerView?.player = p
+        player = p
+    }
+
+    /** Builds the video view; used once by the screen. */
+    internal fun makePlayerView(context: Context): PlayerView =
+        (LayoutInflater.from(context).inflate(R.layout.player_texture_view, null) as PlayerView).also {
+            it.player = player
+            it.resizeMode = aspect.resizeMode
+            playerView = it
+        }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -207,7 +192,7 @@ class PlayerActivity : ComponentActivity() {
         loadScene(id, intent.getDoubleExtra(EXTRA_START, 0.0))
     }
 
-    private fun hideSystemBars() {
+    internal fun hideSystemBars() {
         val c = WindowCompat.getInsetsController(window, window.decorView)
         c.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         c.hide(WindowInsetsCompat.Type.systemBars())
@@ -220,7 +205,7 @@ class PlayerActivity : ComponentActivity() {
         countedPlay = false
         watched = 0.0
         unsavedPlay = 0.0
-        player.stop()
+        player?.stop()
         lifecycleScope.launch {
             try {
                 val s = app.repo.scene(id) ?: throw IllegalStateException("This scene no longer exists")
@@ -232,7 +217,7 @@ class PlayerActivity : ComponentActivity() {
                     else -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
                 }
                 sources = buildSources(s)
-                sourceIndex = 0
+                sourceIndex = if (decoder == Decoder.Server) firstServerSource() else 0
                 if (sources.isEmpty()) {
                     error = "This scene has no file to play"
                 } else {
@@ -244,36 +229,58 @@ class PlayerActivity : ComponentActivity() {
         }
     }
 
-    private fun isDirect(url: String) = url.substringBefore('?').endsWith("/stream")
-    private fun isHls(url: String) = url.substringBefore('?').endsWith(".m3u8")
+    private fun firstServerSource(): Int = sources.indexOfFirst { !it.isDirect }.coerceAtLeast(0)
 
-    /** The original file first (this phone plays far more formats than a browser), then the server's conversions. */
-    private fun buildSources(s: Scene): List<String> {
-        val direct = s.paths.stream
-        val others = s.streams.map { it.url }.sortedBy { url ->
+    /** The original file first (the phone plays far more than a browser), then the server's conversions. */
+    private fun buildSources(s: Scene): List<Source> {
+        val list = mutableListOf<Source>()
+        s.paths.stream?.let { list += Source("Original", it) }
+        val streams = s.streams.filter { !it.url.substringBefore('?').endsWith(".mpd") }
+        // server conversions: HLS first as it can jump around, then MP4
+        streams.sortedBy {
+            val u = it.url.substringBefore('?')
             when {
-                isDirect(url) -> 0
-                isHls(url) -> 1
-                url.contains(".mp4") -> 2
-                url.contains(".mp3") -> 2
+                u.endsWith("/stream") -> 0
+                u.endsWith(".m3u8") -> 1
+                u.endsWith(".mp4") || u.endsWith(".mp3") -> 2
                 else -> 3
             }
+        }.forEach { st ->
+            val label = (st.label ?: "Server")
+                .replace("Direct stream", "Original")
+                .replace("HLS", "Server")
+                .replace("MP4", "Server MP4")
+                .replace("WEBM", "Server WebM")
+            list += Source(label, st.url)
         }
-        return (listOfNotNull(direct) + others).distinct()
+        return list.distinctBy { it.url }
     }
 
-    private fun playSource(startSeconds: Double) {
+    internal fun playSource(startSeconds: Double) {
         val s = scene ?: return
-        var url = sources.getOrNull(sourceIndex) ?: return
-        val seekable = isDirect(url) || isHls(url)
+        val p = player ?: return
+        val src = sources.getOrNull(sourceIndex) ?: return
+        var url = src.url
         offsetSeconds = 0.0
-        if (!seekable && startSeconds > 1) {
+        if (!src.seekable && startSeconds > 1) {
             url += (if (url.contains('?')) "&" else "?") + "start=" + startSeconds.toInt()
             offsetSeconds = startSeconds.toInt().toDouble()
         }
+
+        // subtitles from the server, if the scene has caption files
+        val subs = s.captions.orEmpty().mapNotNull { c ->
+            val base = s.paths.caption ?: return@mapNotNull null
+            MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse("$base?lang=${c.lang}&type=${c.type}"))
+                .setMimeType(MimeTypes.TEXT_VTT)
+                .setLanguage(c.lang.ifBlank { null })
+                .setLabel(c.lang.uppercase().ifBlank { "Subtitles" })
+                .build()
+        }
+
         val item = MediaItem.Builder()
             .setUri(url)
-            .apply { if (isHls(url)) setMimeType(MimeTypes.APPLICATION_M3U8) }
+            .apply { if (src.isHls) setMimeType(MimeTypes.APPLICATION_M3U8) }
+            .setSubtitleConfigurations(subs)
             .setMediaMetadata(
                 MediaMetadata.Builder()
                     .setTitle(s.displayTitle)
@@ -281,21 +288,173 @@ class PlayerActivity : ComponentActivity() {
                     .build()
             )
             .build()
-        val startMs = if (seekable) (startSeconds * 1000).toLong() else 0L
-        player.setMediaItem(item, startMs)
-        player.prepare()
-        player.play()
+        val startMs = if (src.seekable) (startSeconds * 1000).toLong() else 0L
+        p.setMediaItem(item, startMs)
+        p.prepare()
+        p.play()
         error = null
     }
 
-    private fun currentSeconds(): Double = offsetSeconds + player.currentPosition / 1000.0
+    // ---------------------------------------------------------------- controls
+
+    internal fun currentSeconds(): Double = offsetSeconds + (player?.currentPosition ?: 0L) / 1000.0
+
+    internal fun durationSeconds(): Double {
+        val d = scene?.duration ?: 0.0
+        if (d > 0) return d
+        val ms = player?.duration ?: C.TIME_UNSET
+        return if (ms == C.TIME_UNSET) 0.0 else ms / 1000.0
+    }
+
+    /** Jumps to a time in the scene, restarting a conversion there if needed. */
+    internal fun seekTo(seconds: Double) {
+        val p = player ?: return
+        val src = sources.getOrNull(sourceIndex) ?: return
+        val target = seconds.coerceIn(0.0, maxOf(0.0, durationSeconds() - 1))
+        if (src.seekable) {
+            p.seekTo((target * 1000).toLong())
+        } else {
+            playSource(target)
+        }
+    }
+
+    internal fun seekBy(seconds: Double) = seekTo(currentSeconds() + seconds)
+
+    internal fun togglePlay() {
+        val p = player ?: return
+        if (p.isPlaying) p.pause() else {
+            if (p.playbackState == Player.STATE_ENDED) seekTo(0.0)
+            p.play()
+        }
+    }
+
+    internal fun setPlaybackSpeed(s: Float) {
+        speed = s
+        player?.setPlaybackSpeed(s)
+    }
+
+    internal fun chooseAspect(a: Aspect) {
+        aspect = a
+        prefs.aspect = a
+        playerView?.resizeMode = a.resizeMode
+    }
+
+    internal fun chooseSource(index: Int) {
+        if (index == sourceIndex) return
+        val at = currentSeconds()
+        sourceIndex = index
+        if (!sources[index].isDirect && decoder != Decoder.Server) {
+            decoder = Decoder.Server
+        } else if (sources[index].isDirect && decoder == Decoder.Server) {
+            decoder = prefs.decoder.takeIf { it != Decoder.Server } ?: Decoder.Hardware
+        }
+        playSource(at)
+    }
+
+    /** Switches between the phone's hardware and software decoders, or the server. */
+    internal fun chooseDecoder(d: Decoder) {
+        if (d == decoder) return
+        val at = currentSeconds()
+        val wasPlaying = player?.playWhenReady ?: true
+        val rebuild = (d == Decoder.Software) != (decoder == Decoder.Software)
+        decoder = d
+        prefs.decoder = d
+        if (rebuild) {
+            player?.removeListener(listener)
+            player?.release()
+            createPlayer()
+        }
+        sourceIndex = if (d == Decoder.Server) firstServerSource() else 0
+        playSource(at)
+        if (!wasPlaying) player?.pause()
+    }
+
+    /** Picks an audio or subtitle track, or turns subtitles off with null. */
+    internal fun chooseTrack(type: Int, group: Tracks.Group?, index: Int = 0) {
+        val p = player ?: return
+        val b = p.trackSelectionParameters.buildUpon()
+        if (group == null) {
+            b.setTrackTypeDisabled(type, true)
+            if (type == C.TRACK_TYPE_TEXT) subtitlesOn = false
+        } else {
+            b.setTrackTypeDisabled(type, false)
+            b.setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, index))
+            if (type == C.TRACK_TYPE_TEXT) subtitlesOn = true
+        }
+        p.trackSelectionParameters = b.build()
+    }
+
+    // rewinding: the player cannot play backwards, so it steps back in jumps
+    private var rewindJob: Job? = null
+
+    internal fun startRewind() {
+        val p = player ?: return
+        val resume = p.playWhenReady
+        p.pause()
+        p.setSeekParameters(SeekParameters.CLOSEST_SYNC)
+        rewindJob?.cancel()
+        rewindJob = lifecycleScope.launch {
+            try {
+                while (isActive) {
+                    seekBy(-1.0)
+                    delay(500)
+                }
+            } finally {
+                p.setSeekParameters(SeekParameters.DEFAULT)
+                if (resume) p.play()
+            }
+        }
+    }
+
+    internal fun stopRewind() {
+        rewindJob?.cancel()
+        rewindJob = null
+    }
+
+    internal fun rotate() {
+        requestedOrientation = if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        }
+    }
+
+    // brightness and volume, for the swipe gestures
+
+    internal fun brightness(): Float {
+        val b = window.attributes.screenBrightness
+        if (b >= 0) return b
+        return runCatching {
+            Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS) / 255f
+        }.getOrDefault(0.5f)
+    }
+
+    internal fun setBrightness(value: Float) {
+        val attrs = window.attributes
+        attrs.screenBrightness = value.coerceIn(0.01f, 1f)
+        window.attributes = attrs
+    }
+
+    private val audio by lazy { getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+
+    internal fun volume(): Float {
+        val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
+        return audio.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / max
+    }
+
+    internal fun setVolume(value: Float) {
+        val max = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        audio.setStreamVolume(AudioManager.STREAM_MUSIC, (value.coerceIn(0f, 1f) * max).toInt(), 0)
+    }
+
+    // ---------------------------------------------------------------- progress
 
     private fun addPlayTime() {
         if (playingSince > 0) {
             val secs = (SystemClock.elapsedRealtime() - playingSince) / 1000.0
             unsavedPlay += secs
             watched += secs
-            playingSince = if (player.isPlaying) SystemClock.elapsedRealtime() else 0L
+            playingSince = if (player?.isPlaying == true) SystemClock.elapsedRealtime() else 0L
         }
     }
 
@@ -313,7 +472,9 @@ class PlayerActivity : ComponentActivity() {
         }
     }
 
-    private fun playNext() {
+    internal fun playNext() {
+        addPlayTime()
+        saveProgress()
         if (queue.isEmpty()) {
             finish()
             return
@@ -323,151 +484,47 @@ class PlayerActivity : ComponentActivity() {
         loadScene(next, 0.0)
     }
 
+    // ---------------------------------------------------------------- lifecycle
+
     override fun onStop() {
         super.onStop()
-        if (!inPip) player.pause()
+        if (!inPip) player?.pause()
         addPlayTime()
         saveProgress()
     }
 
     override fun onDestroy() {
-        player.removeListener(listener)
-        player.release()
+        stopRewind()
+        player?.removeListener(listener)
+        player?.release()
+        player = null
         super.onDestroy()
+    }
+
+    internal fun enterPip() {
+        val f = scene?.file
+        val ratio = if (f != null && f.width > 0 && f.height > 0) {
+            val r = f.width.toFloat() / f.height
+            when {
+                r > 2.39f -> Rational(239, 100)
+                r < 1 / 2.39f -> Rational(100, 239)
+                else -> Rational(f.width, f.height)
+            }
+        } else Rational(16, 9)
+        runCatching {
+            enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(ratio).build())
+        }
     }
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         // keep playing in a small window when going home
-        if (player.isPlaying) {
-            val f = scene?.file
-            val ratio = if (f != null && f.width > 0 && f.height > 0) {
-                val r = f.width.toFloat() / f.height
-                when {
-                    r > 2.39f -> Rational(239, 100)
-                    r < 1 / 2.39f -> Rational(100, 239)
-                    else -> Rational(f.width, f.height)
-                }
-            } else Rational(16, 9)
-            runCatching {
-                enterPictureInPictureMode(PictureInPictureParams.Builder().setAspectRatio(ratio).build())
-            }
-        }
+        if (player?.isPlaying == true) enterPip()
     }
 
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         inPip = isInPictureInPictureMode
-        playerView?.useController = !isInPictureInPictureMode
         if (!isInPictureInPictureMode) hideSystemBars()
-    }
-
-    @Composable
-    private fun PlayerUi() {
-        val s = scene
-        Box(Modifier.fillMaxSize().background(Color.Black)) {
-            // audio files show their cover behind the controls
-            if (s != null && s.isAudio) {
-                AsyncImage(
-                    model = s.paths.screenshot,
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-            AndroidView(
-                factory = { ctx ->
-                    PlayerView(ctx).apply {
-                        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-                        this.player = this@PlayerActivity.player
-                        setShowNextButton(false)
-                        setShowPreviousButton(false)
-                        setShowSubtitleButton(true)
-                        controllerShowTimeoutMs = 3500
-                        setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
-                        setControllerVisibilityListener(PlayerView.ControllerVisibilityListener { v ->
-                            controlsVisible = v == View.VISIBLE
-                        })
-                        playerView = this
-                    }
-                },
-                update = { view ->
-                    view.videoSurfaceView?.visibility = if (s?.isAudio == true) View.GONE else View.VISIBLE
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-
-            if (s == null && error == null) {
-                CircularProgressIndicator(color = Brand.Pink, modifier = Modifier.align(Alignment.Center))
-            }
-
-            AnimatedVisibility(
-                visible = controlsVisible && !inPip && s != null,
-                enter = fadeIn(),
-                exit = fadeOut(),
-                modifier = Modifier.align(Alignment.TopStart),
-            ) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent)))
-                        .safeDrawingPadding()
-                        .padding(horizontal = 4.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = { finish() }) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = Color.White)
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            s?.displayTitle.orEmpty(),
-                            color = Color.White,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        val sub = listOfNotNull(s?.studio?.name, s?.performers?.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name })
-                            .joinToString(" • ")
-                        if (sub.isNotEmpty()) {
-                            Text(sub, color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                    if (upNext > 0) {
-                        Row(
-                            Modifier
-                                .clip(RoundedCornerShape(50))
-                                .background(Color.White.copy(alpha = 0.15f))
-                                .padding(horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text("$upNext up next", color = Color.White, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 10.dp))
-                            IconButton(onClick = {
-                                addPlayTime()
-                                saveProgress()
-                                playNext()
-                            }) { Icon(Icons.Rounded.SkipNext, "Next", tint = Color.White) }
-                        }
-                        Spacer(Modifier.width(8.dp))
-                    }
-                }
-            }
-
-            error?.let { msg ->
-                Column(
-                    Modifier
-                        .align(Alignment.Center)
-                        .padding(32.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Brand.Surface.copy(alpha = 0.95f))
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(msg, color = Color.White, textAlign = TextAlign.Center)
-                    Spacer(Modifier.height(16.dp))
-                    GradientButton("Close", onClick = { finish() })
-                }
-            }
-        }
     }
 }
