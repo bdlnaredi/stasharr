@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import app.stasharr.app
 import app.stasharr.data.ApiException
 import app.stasharr.ui.theme.Brand
 import kotlinx.coroutines.CancellationException
@@ -111,7 +112,7 @@ fun ErrorBox(err: Load.Err, onRetry: () -> Unit, modifier: Modifier = Modifier) 
             TextButton(onClick = actions.signOut) { Text("Sign in again") }
         }
         val openDownloads = LocalOpenDownloads.current
-        if (openDownloads != null && app.stasharr.app.downloads.items.value.any { it.done }) {
+        if (openDownloads != null && app.downloads.items.value.any { it.done }) {
             TextButton(onClick = openDownloads) { Text("Watch your downloads") }
         }
     }

@@ -62,6 +62,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.app
+import app.stasharr.data.OfflineItem
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadDone
@@ -119,7 +120,7 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
     var showDownload by remember { mutableStateOf(false) }
     val offline by app.downloads.items.collectAsState()
     val downloaded = offline.any { it.sceneId == scene.id && it.done }
-    val downloading = offline.any { it.sceneId == scene.id && !it.done && it.state != app.stasharr.data.OfflineItem.FAILED }
+    val downloading = offline.any { it.sceneId == scene.id && !it.done && it.state != OfflineItem.FAILED }
     var expanded by remember { mutableStateOf(false) }
     val similar = rememberLoad(scene.id) { app.repo.similar(scene.id, 20) }
     val resume = scene.resumeTime ?: 0.0
