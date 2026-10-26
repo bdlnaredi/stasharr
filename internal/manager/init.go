@@ -256,6 +256,9 @@ func (s *Manager) postInit(ctx context.Context) error {
 	// start the library watcher once the database is ready
 	go s.Watcher.RestartWhenReady(s.Database)
 
+	// Stasharr: scheduled backups and metadata refresh
+	s.startMaintenanceLoop()
+
 	return nil
 }
 

@@ -97,7 +97,7 @@ export const PlaylistButtons: React.FC<{ sceneID: string }> = ({ sceneID }) => {
   const inWatchLater = data?.findScene?.in_watch_later ?? false;
   const inPlaylists = new Set(data?.findScene?.playlist_ids ?? []);
   const playlists = (playlistsData?.findPlaylists ?? []).filter(
-    (p) => !p.watch_later
+    (p) => !p.watch_later && !p.smart
   );
 
   async function onToggleWatchLater() {
@@ -210,7 +210,7 @@ export const AddToPlaylistDialog: React.FC<{
     }
   }
 
-  const playlists = data?.findPlaylists ?? [];
+  const playlists = (data?.findPlaylists ?? []).filter((p) => !p.smart);
 
   return (
     <Modal show onHide={() => onClose()}>

@@ -505,6 +505,8 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 		}
 	}
 
+	notifyNewScenes(ctx, intIDs, cfg.GetWatcherIdentify())
+
 	if cfg.GetRenamerEnabled() {
 		// jobs run in order, so the files are renamed before media is generated
 		mgr.JobManager.Add(ctx, "Auto-import: renaming files", &RenameJob{SceneIDs: intIDs})
@@ -725,4 +727,40 @@ func ReidentifyIncomplete(ctx context.Context, progress *job.Progress) error {
 	logger.Infof("[watcher] identifying %d scene(s) with no studio or performers", len(ids))
 	opts.SceneIDs = ids
 	return CreateIdentifyJob(opts).Execute(ctx, progress)
+}
+
+// notifyNewScenes tells the notification targets about new scenes, and about
+// the ones identify could not match.
+func notifyNewScenes(ctx context.Context, ids []int, identified bool) {
+	r := GetInstance().Repository
+	var all, unmatched []string
+	_ = r.WithReadTxn(ctx, func(ctx context.Context) error {
+		for _, id := range ids {
+			s, err := r.Scene.Find(ctx, id)
+			if err != nil || s == nil {
+				continue
+			}
+			if err := s.LoadFiles(ctx, r.Scene); err != nil {
+				continue
+			}
+			name := s.DisplayName()
+			all = append(all, name)
+			if !identified {
+				continue
+			}
+			if err := s.LoadStashIDs(ctx, r.Scene); err != nil {
+				continue
+			}
+			if s.StudioID == nil && len(s.StashIDs.List()) == 0 {
+				unmatched = append(unmatched, name)
+			}
+		}
+		return nil
+	})
+	if len(all) > 0 {
+		Notify(EventNewScenes, fmt.Sprintf("%d new scene(s) added", len(all)), listTitles(all, 15))
+	}
+	if len(unmatched) > 0 {
+		Notify(EventUnmatched, fmt.Sprintf("%d new scene(s) could not be identified", len(unmatched)), listTitles(unmatched, 15))
+	}
 }

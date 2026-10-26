@@ -147,6 +147,7 @@ fragment PlaylistData on Playlist {
   name
   description
   watch_later
+  smart
   scene_count
   updated_at
   cover {
@@ -155,4 +156,31 @@ fragment PlaylistData on Playlist {
       screenshot
     }
   }
+}
+
+fragment NotifyTargetData on NotifyTarget {
+  id
+  name
+  kind
+  enabled
+  url
+  token
+  chat_id
+  events
+}
+
+fragment MaintenanceConfigData on MaintenanceConfig {
+  hour
+  backup_enabled
+  backup_keep
+  backup_include_blobs
+  backup_dir
+  backup_last_run
+  resync_enabled
+  resync_interval_days
+  resync_scenes
+  resync_performers
+  resync_studios
+  resync_last_run
+  stash_boxes
 }

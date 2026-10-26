@@ -456,3 +456,37 @@ body.stasharr-no-download {
     }
   }
 }
+
+.stasharr-smart-badge {
+  background: linear-gradient(90deg, #ff5f6d, #ffc371);
+  border-radius: 999px;
+  color: #111;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.stasharr-notify-card {
+  margin-top: 1rem;
+}
+
+.stasharr-notify-row {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+
+  .form-control {
+    flex: 1;
+  }
+}
+
+.stasharr-notify-events {
+  display: grid;
+  gap: 0.25rem 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  margin: 0.75rem 0;
+}

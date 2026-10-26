@@ -1,0 +1,99 @@
+# Stasharr: notifications, scheduled backups and metadata refresh. Admin only.
+
+type NotifyTarget {
+  id: ID!
+  name: String!
+  "discord, telegram, ntfy, gotify or webhook"
+  kind: String!
+  enabled: Boolean!
+  "Discord webhook, ntfy topic, Gotify server or webhook address"
+  url: String!
+  "Telegram bot token, Gotify app token, or an ntfy or webhook access token"
+  token: String!
+  "Telegram chat id"
+  chat_id: String!
+  events: [String!]!
+}
+
+input NotifyTargetInput {
+  "Leave empty for a new target"
+  id: ID
+  name: String!
+  kind: String!
+  enabled: Boolean!
+  url: String
+  token: String
+  chat_id: String
+  events: [String!]!
+}
+
+type NotifyEvent {
+  id: String!
+  label: String!
+}
+
+type MaintenanceConfig {
+  "Hour of the day (0-23, server time) when backups and refreshes run"
+  hour: Int!
+  backup_enabled: Boolean!
+  "How many scheduled backups to keep"
+  backup_keep: Int!
+  "Also back up images stored on disk (a larger zip file)"
+  backup_include_blobs: Boolean!
+  backup_dir: String!
+  backup_last_run: Time
+  resync_enabled: Boolean!
+  resync_interval_days: Int!
+  resync_scenes: Boolean!
+  resync_performers: Boolean!
+  resync_studios: Boolean!
+  resync_last_run: Time
+  "Names of the configured stash-boxes"
+  stash_boxes: [String!]!
+}
+
+input MaintenanceConfigInput {
+  hour: Int
+  backup_enabled: Boolean
+  backup_keep: Int
+  backup_include_blobs: Boolean
+  resync_enabled: Boolean
+  resync_interval_days: Int
+  resync_scenes: Boolean
+  resync_performers: Boolean
+  resync_studios: Boolean
+}
+
+type DatabaseBackup {
+  id: ID!
+  name: String!
+  "Made by the backup schedule; old ones are deleted automatically"
+  scheduled: Boolean!
+  size: Int!
+  created_at: Time!
+  schema_version: Int!
+  includes_blobs: Boolean!
+}
+
+extend type Query {
+  notifyTargets: [NotifyTarget!]!
+  notifyEvents: [NotifyEvent!]!
+  maintenanceConfig: MaintenanceConfig!
+  "Scheduled and manual backups, newest first"
+  databaseBackups: [DatabaseBackup!]!
+}
+
+extend type Mutation {
+  "Replaces every notification target"
+  saveNotifyTargets(targets: [NotifyTargetInput!]!): [NotifyTarget!]!
+  "Sends a test message. Fails with the reason if it could not be sent."
+  testNotifyTarget(target: NotifyTargetInput!): Boolean!
+  configureMaintenance(input: MaintenanceConfigInput!): MaintenanceConfig!
+  "Makes a scheduled-style backup now. Returns the job id."
+  runScheduledBackup: ID!
+  "Replaces the database with a backup. The current database is backed up first."
+  restoreDatabaseBackup(id: ID!): Boolean!
+  deleteDatabaseBackup(id: ID!): Boolean!
+  "Refreshes metadata from stash-boxes now. Returns the job id."
+  runMetadataResync: ID!
+}

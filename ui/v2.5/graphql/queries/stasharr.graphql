@@ -93,7 +93,24 @@ query FindPlaylists {
 query FindPlaylist($id: ID!) {
   findPlaylist(id: $id) {
     ...PlaylistData
+    smart_rule {
+      filter
+      sort
+      direction
+      limit
+    }
     scenes {
+      ...SlimSceneData
+    }
+  }
+}
+
+query SmartPlaylistRows($limit: Int) {
+  findPlaylists {
+    id
+    name
+    smart
+    scenes(limit: $limit) {
       ...SlimSceneData
     }
   }
@@ -130,5 +147,30 @@ query FindSimilarScenes($scene_id: ID!, $limit: Int) {
 query RecommendedScenes($limit: Int) {
   recommendedScenes(limit: $limit) {
     ...SlimSceneData
+  }
+}
+
+query NotifySettings {
+  notifyTargets {
+    ...NotifyTargetData
+  }
+  notifyEvents {
+    id
+    label
+  }
+}
+
+query MaintenanceSettings {
+  maintenanceConfig {
+    ...MaintenanceConfigData
+  }
+  databaseBackups {
+    id
+    name
+    scheduled
+    size
+    created_at
+    schema_version
+    includes_blobs
   }
 }

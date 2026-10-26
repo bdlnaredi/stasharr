@@ -215,6 +215,9 @@ func (m *Manager) executeJob(ctx context.Context, j *Job, done chan struct{}) {
 	}
 }
 
+// OnJobFailed, when set, is called after a job fails, for notifications.
+var OnJobFailed func(description string, err string)
+
 func (m *Manager) onJobFinish(job *Job) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -226,6 +229,14 @@ func (m *Manager) onJobFinish(job *Job) {
 	}
 	t := time.Now()
 	job.EndTime = &t
+
+	if job.Status == StatusFailed && OnJobFailed != nil {
+		msg := "unexpected error"
+		if job.Error != nil {
+			msg = *job.Error
+		}
+		go OnJobFailed(job.Description, msg)
+	}
 }
 
 func (m *Manager) removeJob(job *Job) {

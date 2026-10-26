@@ -13,9 +13,24 @@ type Playlist struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	WatchLater  bool      `json:"watch_later"`
+	// RuleJSON is a JSON SmartRule. When set, the playlist's
+	// scenes come from the rule instead of being added by hand.
+	RuleJSON  string    `json:"smart_rule"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+// SmartRule picks the scenes of a smart playlist.
+type SmartRule struct {
+	Filter    *SceneFilterType `json:"filter,omitempty"`
+	Sort      string           `json:"sort,omitempty"`
+	Direction string           `json:"direction,omitempty"`
+	// Limit is the most scenes the playlist holds
+	Limit int `json:"limit,omitempty"`
+}
+
+// IsSmart reports whether the playlist fills itself from a rule.
+func (p *Playlist) IsSmart() bool { return p.RuleJSON != "" }
 
 // PlaylistReaderWriter stores playlists and their scenes.
 type PlaylistReaderWriter interface {
