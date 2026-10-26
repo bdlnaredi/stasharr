@@ -64,6 +64,7 @@ import androidx.compose.ui.unit.sp
 import app.stasharr.app
 import app.stasharr.data.Playlist
 import app.stasharr.data.Scene
+import app.stasharr.player.ScenePreview
 import app.stasharr.ui.LocalNav
 import app.stasharr.ui.components.Chip
 import app.stasharr.ui.components.GlassButton
@@ -158,6 +159,8 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
                     )
+                    // the moving preview, like Netflix
+                    ScenePreview(scene.paths.preview, active = true, modifier = Modifier.fillMaxSize(), delayMs = 600)
                     Box(
                         Modifier
                             .align(Alignment.Center)

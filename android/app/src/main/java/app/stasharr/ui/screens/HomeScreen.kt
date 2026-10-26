@@ -51,6 +51,7 @@ import app.stasharr.data.Scene
 import app.stasharr.data.SceneScope
 import app.stasharr.data.SceneSort
 import app.stasharr.data.Studio
+import app.stasharr.player.ScenePreview
 import app.stasharr.ui.LocalNav
 import app.stasharr.ui.components.Badge
 import app.stasharr.ui.components.GlassButton
@@ -244,6 +245,12 @@ private fun Hero(scenes: List<Scene>) {
                             scaleX = scale
                             scaleY = scale
                         },
+                )
+                ScenePreview(
+                    s.paths.preview,
+                    active = page == pager.settledPage && !pager.isScrollInProgress,
+                    modifier = Modifier.fillMaxSize(),
+                    delayMs = 1200,
                 )
                 Box(
                     Modifier
