@@ -8,16 +8,16 @@ import (
 // Playlist is a user's ordered list of scenes. Every user, including the
 // owner (UserID 0), has one Watch later playlist.
 type Playlist struct {
-	ID          int       `json:"id"`
-	UserID      int       `json:"user_id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	WatchLater  bool      `json:"watch_later"`
+	ID          int    `json:"id"`
+	UserID      int    `json:"user_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	WatchLater  bool   `json:"watch_later"`
 	// RuleJSON is a JSON SmartRule. When set, the playlist's
 	// scenes come from the rule instead of being added by hand.
 	RuleJSON  string    `json:"smart_rule"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // SmartRule picks the scenes of a smart playlist.

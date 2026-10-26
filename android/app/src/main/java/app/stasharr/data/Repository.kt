@@ -36,7 +36,7 @@ fragment SceneFull on Scene {
 """
 
 private const val PERFORMER = "id name image_path scene_count favorite disambiguation country birthdate details"
-private const val PLAYLIST = "id name description watch_later scene_count cover { paths { screenshot } }"
+private const val PLAYLIST = "id name description watch_later smart scene_count cover { paths { screenshot } }"
 
 /** A filter applied to scene lists. */
 sealed class SceneScope {
@@ -92,7 +92,7 @@ class Repository(private val api: Api) {
     }
 
     suspend fun me(): Me? {
-        val data = api.gql("query { me { username role can_view_reels multi_user_enabled } }")
+        val data = api.gql("query { me { username role can_view_reels multi_user_enabled can_download } }")
         return data["me"].decode<Me?>(null)
     }
 
@@ -263,6 +263,56 @@ class Repository(private val api: Api) {
         val obj = data.obj("findPlaylist") ?: return null
         val p = obj.decode<Playlist?>(null) ?: return null
         return p to obj["scenes"].decode(emptyList())
+    }
+
+    /** Every smart playlist with its first scenes, for the home page. */
+    suspend fun smartPlaylistRows(limit: Int = 20): List<Pair<Playlist, List<Scene>>> {
+        val data = api.gql(
+            "query(\$l: Int) { findPlaylists { $PLAYLIST scenes(limit: \$l) { ...SceneCard } } }$SCENE_CARD",
+            vars { put("l", limit) }
+        )
+        return data.arr("findPlaylists").objects()
+            .mapNotNull { o -> o.decode<Playlist?>(null)?.let { it to o["scenes"].decode<List<Scene>>(emptyList()) } }
+            .filter { it.first.smart }
+    }
+
+    /** Saves a scene filter and sort as a smart playlist. */
+    suspend fun createSmartPlaylist(name: String, filter: JsonObject?, sort: String, desc: Boolean, limit: Int = 100): Playlist? {
+        val input = buildJsonObject {
+            put("name", name)
+            put("smart_rule", buildJsonObject {
+                put("scene_filter", filter ?: JsonObject(emptyMap()))
+                put("sort", sort)
+                put("direction", if (desc) "DESC" else "ASC")
+                put("limit", limit)
+            })
+        }
+        val data = api.gql(
+            "mutation(\$input: PlaylistCreateInput!) { playlistCreate(input: \$input) { $PLAYLIST } }",
+            vars { put("input", input) }
+        )
+        return data["playlistCreate"].decode<Playlist?>(null)
+    }
+
+    suspend fun offlineQualities(): List<OfflineQuality> {
+        val data = api.gql("query { offlineQualities { id label height } }")
+        return data["offlineQualities"].decode(emptyList())
+    }
+
+    suspend fun prepareOfflineDownload(sceneId: String, quality: String): OfflineDownload {
+        val data = api.gql(
+            "mutation(\$id: ID!, \$q: String!) { prepareOfflineDownload(scene_id: \$id, quality: \$q) { status progress size error url } }",
+            vars { put("id", sceneId); put("q", quality) }
+        )
+        return data["prepareOfflineDownload"].decode(OfflineDownload())
+    }
+
+    suspend fun offlineDownload(sceneId: String, quality: String): OfflineDownload {
+        val data = api.gql(
+            "query(\$id: ID!, \$q: String!) { offlineDownload(scene_id: \$id, quality: \$q) { status progress size error url } }",
+            vars { put("id", sceneId); put("q", quality) }
+        )
+        return data["offlineDownload"].decode(OfflineDownload())
     }
 
     suspend fun watchLaterScenes(): List<Scene> {

@@ -108,12 +108,12 @@ func (r *Resolver) playlistSceneCount(ctx context.Context, p *models.Playlist) (
 		return r.repository.Playlist.SceneCount(ctx, p.ID)
 	}
 	one := 1
-	res, max, err := r.smartQuery(ctx, p, one, true)
+	res, limit, err := r.smartQuery(ctx, p, one, true)
 	if err != nil {
 		return 0, err
 	}
-	if res.Count > max {
-		return max, nil
+	if res.Count > limit {
+		return limit, nil
 	}
 	return res.Count, nil
 }

@@ -78,6 +78,9 @@ class AppActions(
 
 val LocalAppActions = compositionLocalOf { AppActions(signOut = {}) }
 
+/** Opens the Downloads screen, where one is available. */
+val LocalOpenDownloads = compositionLocalOf<(() -> Unit)?> { null }
+
 @Composable
 fun LoadingBox(modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -106,6 +109,10 @@ fun ErrorBox(err: Load.Err, onRetry: () -> Unit, modifier: Modifier = Modifier) 
         GradientButton(text = "Try again", onClick = onRetry)
         if (err.unauthorized) {
             TextButton(onClick = actions.signOut) { Text("Sign in again") }
+        }
+        val openDownloads = LocalOpenDownloads.current
+        if (openDownloads != null && app.stasharr.app.downloads.items.value.any { it.done }) {
+            TextButton(onClick = openDownloads) { Text("Watch your downloads") }
         }
     }
 }

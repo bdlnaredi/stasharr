@@ -46,6 +46,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.app
+import app.stasharr.data.Playlist
+import androidx.compose.material.icons.rounded.DownloadForOffline
 import app.stasharr.data.Performer
 import app.stasharr.data.Scene
 import app.stasharr.data.SceneScope
@@ -81,6 +83,7 @@ private data class HomeData(
     val studios: List<Studio>,
     val performers: List<Performer>,
     val audio: List<Scene>,
+    val smart: List<Pair<Playlist, List<Scene>>>,
 )
 
 private suspend fun loadHome(): HomeData = coroutineScope {
@@ -96,6 +99,7 @@ private suspend fun loadHome(): HomeData = coroutineScope {
     val studios = async { safe { repo.studios(perPage = 16).items.filter { it.sceneCount > 0 } } }
     val perf = async { safe { repo.performers(perPage = 20).items.filter { it.sceneCount > 0 } } }
     val audio = async { safe { repo.scenes(SceneSort.RecentlyAdded, perPage = 12, scope = SceneScope.Audio).items } }
+    val smart = async { runCatching { repo.smartPlaylistRows(20) }.getOrDefault(emptyList()) }
 
     val recentList = recent.await()
     val recList = rec.await()
@@ -114,6 +118,7 @@ private suspend fun loadHome(): HomeData = coroutineScope {
         studios = studios.await(),
         performers = perf.await(),
         audio = audio.await(),
+        smart = smart.await().filter { it.second.isNotEmpty() },
     )
 }
 
@@ -159,6 +164,13 @@ fun HomeScreen() {
                             SceneCard(it, onClick = { nav.scene(it.id) })
                         }
                     }
+                    data.smart.forEach { (p, scenes) ->
+                        item(key = "smart-${p.id}") {
+                            Shelf(p.name, scenes, key = { it.id }, onSeeAll = { nav.playlist(p.id) }) {
+                                SceneCard(it, onClick = { nav.scene(it.id) })
+                            }
+                        }
+                    }
                     item(key = "performers") {
                         Shelf("Popular performers", data.performers, key = { it.id }) {
                             PerformerBubble(it, onClick = { nav.performer(it.id) })
@@ -183,12 +195,12 @@ fun HomeScreen() {
                 }
             }
         }
-        TopBar(solid = scrolled, onSearch = { nav.tab("browse") })
+        TopBar(solid = scrolled, onSearch = { nav.tab("browse") }, onDownloads = { nav.downloads() })
     }
 }
 
 @Composable
-private fun TopBar(solid: Boolean, onSearch: () -> Unit) {
+private fun TopBar(solid: Boolean, onSearch: () -> Unit, onDownloads: () -> Unit) {
     val bg by animateColorAsState(if (solid) Brand.Background.copy(alpha = 0.94f) else Color.Transparent, label = "bar")
     Row(
         Modifier
@@ -202,6 +214,9 @@ private fun TopBar(solid: Boolean, onSearch: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         GradientText("stasharr", fontSize = 24.sp, modifier = Modifier.weight(1f))
+        IconButton(onClick = onDownloads) {
+            Icon(Icons.Rounded.DownloadForOffline, "Downloads", tint = Color.White)
+        }
         IconButton(onClick = onSearch) {
             Icon(Icons.Rounded.Search, "Search", tint = Color.White)
         }

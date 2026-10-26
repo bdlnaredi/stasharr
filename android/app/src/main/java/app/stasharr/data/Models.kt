@@ -141,6 +141,7 @@ data class Playlist(
     val name: String,
     val description: String = "",
     @SerialName("watch_later") val watchLater: Boolean = false,
+    val smart: Boolean = false,
     @SerialName("scene_count") val sceneCount: Int = 0,
     val cover: PlaylistCover? = null,
 )
@@ -175,6 +176,21 @@ data class Me(
     val role: String = "ADMIN",
     @SerialName("can_view_reels") val canViewReels: Boolean = true,
     @SerialName("multi_user_enabled") val multiUserEnabled: Boolean = false,
+    @SerialName("can_download") val canDownload: Boolean = true,
+)
+
+/** A size a scene can be downloaded in. */
+@Serializable
+data class OfflineQuality(val id: String, val label: String, val height: Int = 0)
+
+/** The server's progress getting a download ready. */
+@Serializable
+data class OfflineDownload(
+    val status: String = "NONE",
+    val progress: Double = 0.0,
+    val size: Long = 0,
+    val error: String? = null,
+    val url: String? = null,
 )
 
 data class Page<T>(val count: Int, val items: List<T>)

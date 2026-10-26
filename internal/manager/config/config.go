@@ -2235,7 +2235,9 @@ func (i *Config) GetMaintenanceHour() int {
 	return h
 }
 
-func (i *Config) GetBackupScheduleEnabled() bool { return i.getBoolDefault(BackupScheduleEnabled, false) }
+func (i *Config) GetBackupScheduleEnabled() bool {
+	return i.getBoolDefault(BackupScheduleEnabled, false)
+}
 
 // GetBackupKeep returns how many scheduled backups to keep.
 func (i *Config) GetBackupKeep() int {

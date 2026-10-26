@@ -2,6 +2,7 @@ package app.stasharr
 
 import android.app.Application
 import app.stasharr.data.Api
+import app.stasharr.data.Downloads
 import app.stasharr.data.Repository
 import app.stasharr.data.Session
 import coil.ImageLoader
@@ -19,6 +20,8 @@ class StasharrApp : Application(), ImageLoaderFactory {
         private set
     lateinit var repo: Repository
         private set
+    lateinit var downloads: Downloads
+        private set
 
     /** For work that must finish even when a screen closes, like saving the play position. */
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -29,6 +32,7 @@ class StasharrApp : Application(), ImageLoaderFactory {
         session = Session(this)
         api = Api(session)
         repo = Repository(api)
+        downloads = Downloads(this, repo, api.client, appScope)
     }
 
     // images use the same connection and login as everything else

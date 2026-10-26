@@ -185,20 +185,24 @@ func SendNotification(ctx context.Context, t NotifyTarget, event, title, message
 	if message != "" {
 		text = title + "\n" + message
 	}
-	jsonBody := func(v interface{}) io.Reader {
-		b, _ := json.Marshal(v)
+	jsonBody := func(v map[string]interface{}) io.Reader {
+		b, err := json.Marshal(v)
+		if err != nil {
+			return bytes.NewReader([]byte("{}"))
+		}
 		return bytes.NewReader(b)
 	}
 
 	switch t.Kind {
 	case NotifyDiscord:
 		// Discord limits messages to 2000 characters
-		if len(text) > 1900 {
-			text = text[:1900] + "…"
+		content := "**" + title + "**\n" + message
+		if len(content) > 1900 {
+			content = content[:1900] + "…"
 		}
-		req, err = http.NewRequestWithContext(ctx, http.MethodPost, t.URL, jsonBody(map[string]string{
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, t.URL, jsonBody(map[string]interface{}{
 			"username": "Stasharr",
-			"content":  "**" + title + "**\n" + message,
+			"content":  content,
 		}))
 		if req != nil {
 			req.Header.Set("Content-Type", "application/json")
@@ -269,11 +273,11 @@ func SendNotification(ctx context.Context, t NotifyTarget, event, title, message
 }
 
 // listTitles joins up to max titles for a message.
-func listTitles(titles []string, max int) string {
-	if len(titles) <= max {
+func listTitles(titles []string, limit int) string {
+	if len(titles) <= limit {
 		return "• " + strings.Join(titles, "\n• ")
 	}
-	return "• " + strings.Join(titles[:max], "\n• ") + fmt.Sprintf("\n…and %d more", len(titles)-max)
+	return "• " + strings.Join(titles[:limit], "\n• ") + fmt.Sprintf("\n…and %d more", len(titles)-limit)
 }
 
 func init() {
