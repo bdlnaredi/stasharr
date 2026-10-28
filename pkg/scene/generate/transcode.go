@@ -7,11 +7,16 @@ import (
 	"github.com/stashapp/stash/pkg/ffmpeg/transcoder"
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/logger"
+	"github.com/stashapp/stash/pkg/models"
 )
 
 type TranscodeOptions struct {
 	Width  int
 	Height int
+
+	// VideoFile is optional. When set, the transcode can decode, scale and
+	// encode entirely on the GPU if hardware acceleration is enabled.
+	VideoFile *models.VideoFile
 }
 
 func (g Generator) Transcode(ctx context.Context, input string, hash string, options TranscodeOptions) error {
@@ -66,6 +71,10 @@ func (g Generator) makeTranscode(lockCtx *fsutil.LockContext, hash string, gener
 
 func (g Generator) transcode(input string, options TranscodeOptions) generateFn {
 	return func(lockCtx *fsutil.LockContext, tmpFn string) error {
+		if done, err := g.tryHWTranscode(lockCtx, input, tmpFn, options, true); done || err != nil {
+			return err
+		}
+
 		var videoArgs ffmpeg.Args
 		if options.Width != 0 && options.Height != 0 {
 			var videoFilter ffmpeg.VideoFilter
@@ -97,6 +106,10 @@ func (g Generator) transcode(input string, options TranscodeOptions) generateFn 
 
 func (g Generator) transcodeVideo(input string, options TranscodeOptions) generateFn {
 	return func(lockCtx *fsutil.LockContext, tmpFn string) error {
+		if done, err := g.tryHWTranscode(lockCtx, input, tmpFn, options, false); done || err != nil {
+			return err
+		}
+
 		var videoArgs ffmpeg.Args
 		if options.Width != 0 && options.Height != 0 {
 			var videoFilter ffmpeg.VideoFilter

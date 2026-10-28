@@ -115,3 +115,16 @@ func HWQualityArgs(codec VideoCodec, crf int) Args {
 	}
 	return nil
 }
+
+// HWEncoderArgs returns the encoder options (without the leading "-c:v <codec>")
+// for a hardware encode with the given x264-style CRF, ready to be placed
+// after the video codec argument.
+func HWEncoderArgs(codec VideoCodec, crf int) Args {
+	args := CodecInit(codec)
+	// CodecInit starts with "-c:v <codec>", which the caller adds itself
+	if len(args) >= 2 && args[0] == "-c:v" {
+		args = args[2:]
+	}
+	args = append(args, HWQualityArgs(codec, crf)...)
+	return append(args, "-profile:v", "high")
+}

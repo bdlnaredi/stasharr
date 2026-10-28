@@ -86,8 +86,9 @@ func (t *GenerateTranscodeTask) Start(ctx context.Context) {
 		}
 	} else {
 		options := generate.TranscodeOptions{
-			Width:  w,
-			Height: h,
+			Width:     w,
+			Height:    h,
+			VideoFile: f,
 		}
 
 		if audioCodec == ffmpeg.MissingUnsupported {

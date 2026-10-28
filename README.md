@@ -78,7 +78,7 @@ An Unraid template is in [`unraid/stasharr.xml`](unraid/stasharr.xml).
 
 ## Hardware acceleration
 
-Stasharr can use your GPU to decode and encode video for live transcoding, reels and phone app downloads. With an Intel iGPU or Arc card (VAAPI / Quick Sync):
+Stasharr can use your GPU to decode and encode video for live transcoding, generated transcodes (Settings → Tasks → Generate → Transcodes), reels and phone app downloads. With an Intel iGPU or Arc card (VAAPI / Quick Sync):
 
 1. Pass the GPU into the container by adding `devices: - /dev/dri:/dev/dri` to the service (see `docker-compose.yml`).
 2. Turn on **Settings → System → Transcoding → FFmpeg hardware encoding**.
