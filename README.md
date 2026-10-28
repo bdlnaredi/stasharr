@@ -76,6 +76,16 @@ that the database can no longer be opened by upstream Stash.
 
 An Unraid template is in [`unraid/stasharr.xml`](unraid/stasharr.xml).
 
+## Hardware acceleration
+
+Stasharr can use your GPU to decode and encode video for live transcoding, reels and phone app downloads. With an Intel iGPU or Arc card (VAAPI / Quick Sync):
+
+1. Pass the GPU into the container by adding `devices: - /dev/dri:/dev/dri` to the service (see `docker-compose.yml`).
+2. Turn on **Settings → System → Transcoding → FFmpeg hardware encoding**.
+3. Restart and check the log for `Supported HW codecs`. If it lists none, run `docker exec stasharr vainfo` to see why.
+
+Live transcoding keeps decoding, scaling and encoding on the GPU when the source allows it. Reels and phone downloads decode and encode on the GPU, and if ffmpeg cannot do that for a file they quietly fall back to software encoding. Set `STASH_HW_DRI_DEVICE` if your render node is not `/dev/dri/renderD128`.
+
 ## Users, roles and tiers
 
 1. Go to **Settings → Security** and set a username and password. This is the

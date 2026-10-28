@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stashapp/stash/pkg/ffmpeg"
 	"github.com/stashapp/stash/pkg/file/video"
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/job"
@@ -612,7 +613,10 @@ func lastLines(s string, n int) string {
 // reelFilterGraph letterboxes one clip onto a blurred vertical canvas. The
 // background is blurred at a small size, which costs far less than blurring
 // at full size.
-func reelFilterGraph(length float64, hasAudio bool) string {
+//
+// hwTail, when set, is appended to the video chain so the finished frames can
+// be uploaded to a hardware encoder.
+func reelFilterGraph(length float64, hasAudio bool, hwTail string) string {
 	const fade = 0.3
 	fadeOut := math.Max(length-fade, 0)
 	var b strings.Builder
@@ -620,7 +624,11 @@ func reelFilterGraph(length float64, hasAudio bool) string {
 	fmt.Fprintf(&b, "[bg]scale=%d:%d:force_original_aspect_ratio=increase,crop=%d:%d,boxblur=6:2,scale=%d:%d[bgb];",
 		reelWidth/4, reelHeight/4, reelWidth/4, reelHeight/4, reelWidth, reelHeight)
 	fmt.Fprintf(&b, "[fg]scale=%d:%d:force_original_aspect_ratio=decrease[fgs];", reelWidth, reelHeight)
-	fmt.Fprintf(&b, "[bgb][fgs]overlay=(W-w)/2:(H-h)/2,setsar=1,format=yuv420p,fade=t=in:st=0:d=%.2f,fade=t=out:st=%.2f:d=%.2f[v]", fade, fadeOut, fade)
+	fmt.Fprintf(&b, "[bgb][fgs]overlay=(W-w)/2:(H-h)/2,setsar=1,format=yuv420p,fade=t=in:st=0:d=%.2f,fade=t=out:st=%.2f:d=%.2f", fade, fadeOut, fade)
+	if hwTail != "" {
+		b.WriteString("," + hwTail)
+	}
+	b.WriteString("[v]")
 	if hasAudio {
 		fmt.Fprintf(&b, ";[0:a]asetpts=PTS-STARTPTS,aresample=44100,aformat=channel_layouts=stereo,afade=t=in:st=0:d=%.2f,afade=t=out:st=%.2f:d=%.2f[a]", fade, fadeOut, fade)
 	}
@@ -633,25 +641,75 @@ func renderReel(ctx context.Context, vf *models.VideoFile, clip models.ReelSegme
 		return errors.New("empty clip")
 	}
 	hasAudio := vf.AudioCodec != ""
-	args := []string{"-hide_banner", "-nostats", "-v", "error", "-y",
-		"-ss", strconv.FormatFloat(clip.Start, 'f', 2, 64),
-		"-t", strconv.FormatFloat(length, 'f', 2, 64),
-		"-i", vf.Path,
-		"-filter_complex", reelFilterGraph(length, hasAudio),
-		"-map", "[v]",
+
+	// Try the GPU first (hardware decode + encode, filters in system memory),
+	// and fall back to software if ffmpeg cannot do it.
+	if codec, inputArgs, tail, ok := reelHWPlan(); ok {
+		args := reelArgs(vf, clip, length, hasAudio, inputArgs, tail)
+		args = append(args, ffmpeg.CodecInit(codec)...)
+		args = append(args, ffmpeg.HWQualityArgs(codec, reelCRF)...)
+		args = append(args, "-profile:v", "high", "-movflags", "+faststart", out)
+		_, err := runFFmpegCapture(ctx, args)
+		if err == nil {
+			return nil
+		}
+		if ctx.Err() != nil {
+			return fmt.Errorf("rendering reel: %w", ctx.Err())
+		}
+		logger.Warnf("[reels] hardware encoding with %s failed, using software: %v", codec.CodeName, err)
+		_ = os.Remove(out)
 	}
-	if hasAudio {
-		args = append(args, "-map", "[a]", "-c:a", "aac", "-b:a", "128k")
-	} else {
-		args = append(args, "-an")
-	}
+
+	args := reelArgs(vf, clip, length, hasAudio, nil, "")
 	args = append(args,
 		// two encoder threads keep the server responsive while reels are made
-		"-c:v", "libx264", "-preset", "veryfast", "-crf", "24", "-profile:v", "high", "-threads", "2",
+		"-c:v", "libx264", "-preset", "veryfast", "-crf", strconv.Itoa(reelCRF), "-profile:v", "high", "-threads", "2",
 		"-movflags", "+faststart",
 		out)
 	if _, err := runFFmpegCapture(ctx, args); err != nil {
 		return fmt.Errorf("rendering reel: %w", err)
 	}
 	return nil
+}
+
+const reelCRF = 24
+
+// reelHWPlan returns the hardware encoder, the input arguments and the filter
+// tail for a hybrid GPU reel render. ok is false when hardware acceleration is
+// off or no usable hardware encoder was found.
+func reelHWPlan() (codec ffmpeg.VideoCodec, inputArgs ffmpeg.Args, tail string, ok bool) {
+	m := GetInstance()
+	if m.FFMpeg == nil || !m.Config.GetTranscodeHardwareAcceleration() {
+		return codec, nil, "", false
+	}
+	c := m.FFMpeg.HWBatchCodec()
+	if c == nil {
+		return codec, nil, "", false
+	}
+	inputArgs, ok1 := m.FFMpeg.HWHybridInputArgs(*c)
+	tail, ok2 := m.FFMpeg.HWHybridFilterTail(*c)
+	if !ok1 || !ok2 {
+		return codec, nil, "", false
+	}
+	return *c, inputArgs, tail, true
+}
+
+// reelArgs builds the part of the ffmpeg command shared by the hardware and
+// software renders: input, filter graph and audio, but no video encoder.
+func reelArgs(vf *models.VideoFile, clip models.ReelSegment, length float64, hasAudio bool, inputArgs ffmpeg.Args, hwTail string) []string {
+	args := []string{"-hide_banner", "-nostats", "-v", "error", "-y"}
+	args = append(args, inputArgs...)
+	args = append(args,
+		"-ss", strconv.FormatFloat(clip.Start, 'f', 2, 64),
+		"-t", strconv.FormatFloat(length, 'f', 2, 64),
+		"-i", vf.Path,
+		"-filter_complex", reelFilterGraph(length, hasAudio, hwTail),
+		"-map", "[v]",
+	)
+	if hasAudio {
+		args = append(args, "-map", "[a]", "-c:a", "aac", "-b:a", "128k")
+	} else {
+		args = append(args, "-an")
+	}
+	return args
 }

@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/stashapp/stash/pkg/ffmpeg"
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/models"
@@ -70,6 +71,7 @@ type offlineJob struct {
 	quality  OfflineQuality
 	input    string
 	duration float64
+	vf       *models.VideoFile
 }
 
 // how long converted files are kept after their last download
@@ -162,7 +164,7 @@ func PrepareOffline(scene *models.Scene, quality string) (*OfflineState, error) 
 
 	st := &OfflineState{Status: OfflineQueued}
 	select {
-	case offline.queue <- offlineJob{sceneID: scene.ID, quality: q, input: f.Path, duration: f.Duration}:
+	case offline.queue <- offlineJob{sceneID: scene.ID, quality: q, input: f.Path, duration: f.Duration, vf: f}:
 	default:
 		return nil, errors.New("too many downloads are being prepared; try again later")
 	}
@@ -214,51 +216,26 @@ func convertOffline(j offlineJob, progress func(float64)) (int64, error) {
 	tmp := out + ".part.mp4"
 	_ = os.Remove(tmp)
 
-	scale := fmt.Sprintf("scale=-2:'min(%d,ih)'", j.quality.Height)
-	args := []string{
-		"-hide_banner", "-nostats", "-v", "error", "-y",
-		"-i", j.input,
-		"-map", "0:v:0", "-map", "0:a:0?",
-		"-sn", "-dn",
-		"-vf", scale,
-		"-c:v", "libx264", "-preset", "veryfast", "-crf", strconv.Itoa(j.quality.CRF),
-		"-profile:v", "high", "-pix_fmt", "yuv420p",
-		"-c:a", "aac", "-b:a", j.quality.Audio, "-ac", "2",
-		"-movflags", "+faststart",
-		"-progress", "pipe:1",
-		tmp,
+	// Try the GPU first (full hardware, then hybrid), and fall back to
+	// software if ffmpeg cannot do it.
+	done := false
+	for _, mode := range offlineHWModes(j) {
+		args := offlineArgs(j, tmp, mode)
+		if err := runOffline(ff, args, j.duration, progress); err != nil {
+			logger.Warnf("[offline] scene %d: hardware encoding (%s) failed, trying another way: %v", j.sceneID, mode.name, err)
+			_ = os.Remove(tmp)
+			continue
+		}
+		done = true
+		break
 	}
-	cmd := ff.Command(context.Background(), args)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return 0, err
-	}
-	var stderr strings.Builder
-	cmd.Stderr = &stderr
-	if err := cmd.Start(); err != nil {
-		return 0, err
-	}
-	sc := bufio.NewScanner(stdout)
-	for sc.Scan() {
-		line := sc.Text()
-		if v, ok := strings.CutPrefix(line, "out_time_us="); ok && j.duration > 0 {
-			us, err := strconv.ParseFloat(v, 64)
-			if err == nil {
-				progress(math.Min(0.99, us/1e6/j.duration))
-			}
+	if !done {
+		if err := runOffline(ff, offlineArgs(j, tmp, offlineMode{}), j.duration, progress); err != nil {
+			_ = os.Remove(tmp)
+			return 0, err
 		}
 	}
-	if err := cmd.Wait(); err != nil {
-		_ = os.Remove(tmp)
-		msg := strings.TrimSpace(stderr.String())
-		if len(msg) > 300 {
-			msg = msg[len(msg)-300:]
-		}
-		if msg == "" {
-			msg = err.Error()
-		}
-		return 0, errors.New(msg)
-	}
+
 	if err := os.Rename(tmp, out); err != nil {
 		return 0, err
 	}
@@ -267,6 +244,112 @@ func convertOffline(j offlineJob, progress func(float64)) (int64, error) {
 		return 0, err
 	}
 	return info.Size(), nil
+}
+
+// offlineMode describes how a conversion uses the GPU. The zero value is software only.
+type offlineMode struct {
+	name   string
+	codec  ffmpeg.VideoCodec
+	full   bool // decode, scale and encode on the GPU
+	hybrid bool // decode and encode on the GPU, scale on the CPU
+}
+
+// offlineHWModes lists the hardware modes to try, best first. It is empty
+// when hardware acceleration is off or no hardware encoder was found.
+func offlineHWModes(j offlineJob) []offlineMode {
+	m := GetInstance()
+	if m.FFMpeg == nil || !m.Config.GetTranscodeHardwareAcceleration() {
+		return nil
+	}
+	c := m.FFMpeg.HWBatchCodec()
+	if c == nil {
+		return nil
+	}
+
+	var modes []offlineMode
+	if j.vf != nil && j.vf.BaseFile != nil && m.FFMpeg.HWCanFullHW(context.Background(), *c, j.vf, j.quality.Height) {
+		modes = append(modes, offlineMode{name: "full " + c.CodeName, codec: *c, full: true})
+	}
+	if _, ok := m.FFMpeg.HWHybridInputArgs(*c); ok {
+		modes = append(modes, offlineMode{name: "hybrid " + c.CodeName, codec: *c, hybrid: true})
+	}
+	return modes
+}
+
+func offlineArgs(j offlineJob, tmp string, mode offlineMode) []string {
+	ff := GetInstance().FFMpeg
+	args := []string{"-hide_banner", "-nostats", "-v", "error", "-y"}
+
+	scale := fmt.Sprintf("scale=-2:'min(%d,ih)'", j.quality.Height)
+	vfilter := scale
+	switch {
+	case mode.full:
+		args = append(args, ff.HWFullInputArgs(mode.codec)...)
+		vfilter = string(ff.HWFullFilter(mode.codec, j.vf, j.quality.Height))
+	case mode.hybrid:
+		in, _ := ff.HWHybridInputArgs(mode.codec)
+		args = append(args, in...)
+		if tail, ok := ff.HWHybridFilterTail(mode.codec); ok {
+			vfilter = scale + "," + tail
+		}
+	}
+
+	args = append(args, "-i", j.input, "-map", "0:v:0", "-map", "0:a:0?", "-sn", "-dn")
+	if vfilter != "" {
+		args = append(args, "-vf", vfilter)
+	}
+
+	if mode.full || mode.hybrid {
+		args = append(args, ffmpeg.CodecInit(mode.codec)...)
+		args = append(args, ffmpeg.HWQualityArgs(mode.codec, j.quality.CRF)...)
+		args = append(args, "-profile:v", "high")
+	} else {
+		args = append(args,
+			"-c:v", "libx264", "-preset", "veryfast", "-crf", strconv.Itoa(j.quality.CRF),
+			"-profile:v", "high", "-pix_fmt", "yuv420p")
+	}
+
+	args = append(args,
+		"-c:a", "aac", "-b:a", j.quality.Audio, "-ac", "2",
+		"-movflags", "+faststart",
+		"-progress", "pipe:1",
+		tmp)
+	return args
+}
+
+// runOffline runs ffmpeg, reporting progress from its -progress output.
+func runOffline(ff *ffmpeg.FFMpeg, args []string, duration float64, progress func(float64)) error {
+	cmd := ff.Command(context.Background(), args)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	var stderr strings.Builder
+	cmd.Stderr = &stderr
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	sc := bufio.NewScanner(stdout)
+	for sc.Scan() {
+		line := sc.Text()
+		if v, ok := strings.CutPrefix(line, "out_time_us="); ok && duration > 0 {
+			us, err := strconv.ParseFloat(v, 64)
+			if err == nil {
+				progress(math.Min(0.99, us/1e6/duration))
+			}
+		}
+	}
+	if err := cmd.Wait(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if len(msg) > 300 {
+			msg = msg[len(msg)-300:]
+		}
+		if msg == "" {
+			msg = err.Error()
+		}
+		return errors.New(msg)
+	}
+	return nil
 }
 
 // TouchOffline marks a converted file as used, so it is kept longer.

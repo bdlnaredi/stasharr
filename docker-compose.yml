@@ -10,6 +10,11 @@ services:
       - "2704:2704"
     ## If you intend to use stash's DLNA functionality uncomment the below network mode and comment out the above ports section
     # network_mode: host
+    ## Hardware acceleration (Intel iGPU / Arc via VAAPI or QSV): pass the GPU into the container,
+    ## then turn on Settings -> System -> Transcoding -> "FFmpeg hardware encoding".
+    ## Reels and phone-app downloads use the same setting. Check the log for "Supported HW codecs".
+    devices:
+      - /dev/dri:/dev/dri
     logging:
       driver: "json-file"
       options:
@@ -25,6 +30,8 @@ services:
       ## Set your timezone, e.g. America/New_York or Europe/Berlin
       ## see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
       - TZ=Etc/UTC
+      ## If your GPU's render node is not /dev/dri/renderD128 (e.g. a second GPU), set it here:
+      # - STASH_HW_DRI_DEVICE=/dev/dri/renderD129
     volumes:
       ## Adjust below paths (the left part) to your liking.
       ## E.g. you can change ./config:/root/.stash to ./stash:/root/.stash

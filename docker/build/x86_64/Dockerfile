@@ -37,7 +37,17 @@ RUN make flags-release flags-pie stash
 
 # Final Runnable Image
 FROM alpine:latest
-RUN apk add --no-cache ca-certificates vips-tools ffmpeg
+# vips-tools and ffmpeg are required.
+# intel-media-driver (Broadwell and newer, incl. Arc), libva-intel-driver (older
+# iGPUs) and libva-utils (`vainfo`) give ffmpeg VAAPI access to Intel GPUs when
+# /dev/dri is passed into the container. They are inert without a GPU.
+RUN apk add --no-cache ca-certificates vips-tools ffmpeg \
+    intel-media-driver libva-intel-driver libva-utils
+# Runtime for Intel Quick Sync (QSV). The package names differ between Alpine
+# releases, so a miss here must not fail the build: VAAPI works without it.
+RUN apk add --no-cache libvpl vpl-gpu-rt \
+    || apk add --no-cache libvpl onevpl-intel-gpu \
+    || echo "QSV runtime not available on this Alpine release; VAAPI will be used"
 COPY --from=backend /stash/stash /usr/bin/
 ENV STASH_CONFIG_FILE=/root/.stash/config.yml
 EXPOSE 2704

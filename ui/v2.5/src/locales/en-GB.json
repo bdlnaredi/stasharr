@@ -379,7 +379,7 @@
           "heading": "FFprobe executable path"
         },
         "hardware_acceleration": {
-          "desc": "Uses available hardware to encode video for live transcoding.",
+          "desc": "Uses available hardware to decode and encode video for live transcoding, reels and phone app downloads.",
           "heading": "FFmpeg hardware encoding"
         },
         "live_transcode": {
