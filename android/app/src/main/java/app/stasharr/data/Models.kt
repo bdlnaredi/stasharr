@@ -179,6 +179,22 @@ data class Me(
     @SerialName("can_download") val canDownload: Boolean = true,
 )
 
+/** How the site front end is set up, for the app's storefront look. */
+@Serializable
+data class SiteLook(
+    val enabled: Boolean = false,
+    val style: String = "velvet",
+    val name: String = "",
+    val accent: String = "",
+    @SerialName("models_gender") val modelsGender: String = "FEMALE",
+    @SerialName("applies_to_me") val appliesToMe: Boolean = false,
+    @SerialName("app_look") val appLook: Boolean = true,
+) {
+    /** Whether this user gets the storefront look in the app. */
+    val active: Boolean get() = enabled && appliesToMe && appLook
+    val femaleOnly: Boolean get() = modelsGender == "FEMALE"
+}
+
 /** A size a scene can be downloaded in. */
 @Serializable
 data class OfflineQuality(val id: String, val label: String, val height: Int = 0)

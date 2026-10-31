@@ -227,6 +227,7 @@ func Initialize() (*Server, error) {
 	r.HandleFunc("/css", cssHandler(cfg))
 	r.HandleFunc("/javascript", javascriptHandler(cfg))
 	r.HandleFunc("/customlocales", customLocalesHandler(cfg))
+	r.Get("/site-logo", siteLogoHandler)
 
 	staticLoginUI := statigz.FileServer(ui.LoginUIBox.(fs.ReadDirFS))
 

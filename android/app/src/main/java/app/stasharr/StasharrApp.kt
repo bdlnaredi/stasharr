@@ -5,6 +5,7 @@ import app.stasharr.data.Api
 import app.stasharr.data.Downloads
 import app.stasharr.data.Repository
 import app.stasharr.data.Session
+import app.stasharr.ui.SiteMode
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
@@ -33,6 +34,7 @@ class StasharrApp : Application(), ImageLoaderFactory {
         api = Api(session)
         repo = Repository(api)
         downloads = Downloads(this, repo, api.client, appScope)
+        SiteMode.restore(this)
     }
 
     // images use the same connection and login as everything else

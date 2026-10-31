@@ -90,6 +90,7 @@ fun StasharrRoot() {
     var signedIn by remember { mutableStateOf(app.session.isSetUp && !app.session.loggedOut) }
     val actions = remember {
         AppActions(signOut = {
+            SiteMode.clear(app)
             val server = app.session.serverUrl
             app.session.clear()
             app.session.serverUrl = server
@@ -117,6 +118,10 @@ private fun MainScaffold() {
     val context = LocalContext.current
     val navigator = remember(nav) { Navigator(nav, context) }
     val me = rememberLoad(Unit) { app.repo.me() }
+    // the site's look, for users the site front end is set up for
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        runCatching { app.repo.siteLook() }.onSuccess { SiteMode.apply(context, it) }
+    }
     val canViewReels = me.value?.canViewReels ?: true
 
     val tabs = buildList {
