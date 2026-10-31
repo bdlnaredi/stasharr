@@ -82,6 +82,7 @@ const Reels = lazyComponent(() => import("./components/Stasharr/Reels"));
 const Playlists = lazyComponent(
   () => import("./components/Stasharr/Playlists")
 );
+const Site = lazyComponent(() => import("./components/Site/Site"));
 const Setup = lazyComponent(() => import("./components/Setup/Setup"));
 const Migrate = lazyComponent(() => import("./components/Setup/Migrate"));
 
@@ -215,6 +216,19 @@ export const App: React.FC = () => {
   const location = useLocation();
   const history = useHistory();
   const setupMatch = useRouteMatch(["/setup", "/migrate", "/welcome"]);
+  const siteMatch = useRouteMatch("/site");
+  const siteConfig = GQL.useSiteConfigQuery({
+    fetchPolicy: "cache-first",
+    skip: !!setupMatch,
+  });
+  const sendToSite = !!siteConfig.data?.siteConfig.applies_to_me;
+
+  // users the site applies to only ever see the site
+  useEffect(() => {
+    if (sendToSite && !siteMatch && !setupMatch) {
+      history.replace("/site");
+    }
+  }, [sendToSite, siteMatch, setupMatch, history]);
 
   // dispatch event when location changes
   useEffect(() => {
@@ -394,8 +408,16 @@ export const App: React.FC = () => {
                           {...titleProps}
                           htmlAttributes={htmlAttributes}
                         />
-                        {maybeRenderNavbar()}
-                        <MainContainer>{renderContent()}</MainContainer>
+                        {siteMatch ? (
+                          <ErrorBoundary>
+                            <Site />
+                          </ErrorBoundary>
+                        ) : (
+                          <>
+                            {maybeRenderNavbar()}
+                            <MainContainer>{renderContent()}</MainContainer>
+                          </>
+                        )}
                       </InteractiveProvider>
                     </ManualProvider>
                   </LightboxProvider>

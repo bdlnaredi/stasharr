@@ -38,11 +38,13 @@ import {
   faTimes,
   faUser,
   faUserCircle,
+  faStore,
   faVideo,
   faListUl,
   faMusic,
 } from "@fortawesome/free-solid-svg-icons";
 import { baseURL } from "src/core/createClient";
+import * as GQL from "src/core/generated-graphql";
 import { PatchComponent } from "src/patch";
 import { useCurrentUser } from "./Stasharr/CurrentUser";
 import { audioScenesLink } from "./Stasharr/audio";
@@ -233,7 +235,9 @@ export const MainNavbar: React.FC = () => {
   const location = useLocation();
   const { configuration } = useConfigurationContext();
   const { openManual } = React.useContext(ManualStateContext);
-  const { canViewReels, isEditor, me } = useCurrentUser();
+  const { canViewReels, isEditor, isAdmin, me } = useCurrentUser();
+  const siteConfig = GQL.useSiteConfigQuery({ fetchPolicy: "cache-first", skip: !isAdmin });
+  const siteOn = !!siteConfig.data?.siteConfig.enabled;
 
   const [expanded, setExpanded] = useState(false);
 
@@ -385,6 +389,21 @@ export const MainNavbar: React.FC = () => {
             </span>
           </Button>
         </Nav.Link>
+        {isAdmin && siteOn && (
+          <NavLink
+            className="nav-utility"
+            to="/site"
+            onClick={handleDismiss}
+          >
+            <Button
+              className="minimal d-flex align-items-center h-100"
+              title="Open the site, as viewers see it"
+            >
+              <Icon icon={faStore} />
+              <span className="d-none d-md-inline ml-1">Site</span>
+            </Button>
+          </NavLink>
+        )}
         <NavLink
           className="nav-utility"
           exact

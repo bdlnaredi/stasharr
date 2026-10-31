@@ -2278,3 +2278,69 @@ func (i *Config) GetLastRun(key string) time.Time {
 func (i *Config) SetLastRun(key string, t time.Time) {
 	i.SetString(key, t.Format(time.RFC3339))
 }
+
+// Stasharr: site front end
+
+const (
+	SiteEnabled      = "stasharr.site.enabled"
+	SiteAudience     = "stasharr.site.audience"
+	SiteStyle        = "stasharr.site.style"
+	SiteName         = "stasharr.site.name"
+	SiteTagline      = "stasharr.site.tagline"
+	SiteFeatured     = "stasharr.site.featured"
+	SiteFeaturedTag  = "stasharr.site.featured_tag"
+	SiteModelsGender = "stasharr.site.models_gender"
+)
+
+// SiteStyles are the looks the site can have.
+var SiteStyles = []string{"velvet", "neon", "crimson", "blush", "onyx"}
+
+func (i *Config) GetSiteEnabled() bool { return i.getBoolDefault(SiteEnabled, false) }
+
+func (i *Config) GetSiteAudience() string {
+	if v := i.getString(SiteAudience); v == "non_admins" {
+		return v
+	}
+	return "viewers"
+}
+
+func (i *Config) GetSiteStyle() string {
+	v := i.getString(SiteStyle)
+	for _, s := range SiteStyles {
+		if s == v {
+			return v
+		}
+	}
+	return "velvet"
+}
+
+func (i *Config) GetSiteName() string {
+	if v := i.getString(SiteName); v != "" {
+		return v
+	}
+	return "Stasharr"
+}
+
+func (i *Config) GetSiteTagline() string {
+	if v := i.getString(SiteTagline); v != "" {
+		return v
+	}
+	return "Premium scenes, updated daily"
+}
+
+func (i *Config) GetSiteFeatured() string {
+	switch v := i.getString(SiteFeatured); v {
+	case "top_rated", "popular", "recent", "random", "tag":
+		return v
+	}
+	return "top_rated"
+}
+
+func (i *Config) GetSiteFeaturedTag() int { return i.getInt(SiteFeaturedTag) }
+
+func (i *Config) GetSiteModelsGender() string {
+	if i.getString(SiteModelsGender) == "ALL" {
+		return "ALL"
+	}
+	return "FEMALE"
+}

@@ -1,0 +1,57 @@
+# Stasharr site: a storefront style front end for viewers
+
+enum SiteSceneKind {
+  "Chosen by the admin's featured setting"
+  FEATURED
+  "Most watched by everyone, all time"
+  POPULAR
+  "Most watched by everyone in the last two weeks"
+  TRENDING
+  "Best average rating across everyone"
+  TOP_RATED
+}
+
+type SiteSceneResult {
+  count: Int!
+  scenes: [Scene!]!
+}
+
+type SiteConfig {
+  "Whether the site front end is on"
+  enabled: Boolean!
+  "viewers: users with the Viewer role; non_admins: viewers and editors"
+  audience: String!
+  "The look: velvet, neon, crimson, blush or onyx"
+  style: String!
+  name: String!
+  tagline: String!
+  "top_rated, popular, recent, random or tag"
+  featured: String!
+  "With featured = tag, the tag whose scenes are featured"
+  featured_tag: Tag
+  "FEMALE shows only women on the models pages; ALL shows everyone"
+  models_gender: String!
+  "Whether the current user is sent to the site"
+  applies_to_me: Boolean!
+}
+
+input SiteConfigInput {
+  enabled: Boolean
+  audience: String
+  style: String
+  name: String
+  tagline: String
+  featured: String
+  featured_tag_id: ID
+  models_gender: String
+}
+
+extend type Query {
+  siteConfig: SiteConfig!
+  siteScenes(kind: SiteSceneKind!, page: Int, per_page: Int): SiteSceneResult!
+}
+
+extend type Mutation {
+  "Admin only"
+  configureSite(input: SiteConfigInput!): SiteConfig!
+}
