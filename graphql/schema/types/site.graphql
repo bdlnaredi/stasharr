@@ -33,9 +33,80 @@ type SiteConfig {
   models_gender: String!
   "Whether the current user is sent to the site"
   applies_to_me: Boolean!
+  "The rows on the home page, in order"
+  home_rows: [SiteHomeRow!]!
+  promo: SitePromo!
+  "Ask visitors to confirm they are adults before the site opens"
+  age_gate: Boolean!
+  "Accent colour (#rrggbb) used instead of the style's own; empty for the style's"
+  accent: String!
+  "Address of the uploaded logo image, if any"
+  logo_url: String
+  "Give site users the site's name, colours and rows in the Android app too"
+  app_look: Boolean!
+}
+
+type SiteHomeRow {
+  "continue, latest, models, trending, popular, recommended, top_rated, favorites, liked, reels, categories, channels or tag"
+  type: String!
+  "Heading; empty uses the default for the type"
+  title: String!
+  "For type tag"
+  tag: Tag
+  enabled: Boolean!
+}
+
+input SiteHomeRowInput {
+  type: String!
+  title: String
+  tag_id: ID
+  enabled: Boolean!
+}
+
+type SitePromo {
+  enabled: Boolean!
+  text: String!
+  "Where the banner goes when clicked, for example /site/category/12"
+  link: String!
+  "Background picture address"
+  image: String!
+}
+
+input SitePromoInput {
+  enabled: Boolean!
+  text: String!
+  link: String!
+  image: String!
+}
+
+type SiteRating {
+  "Average of every user's rating, 1-100; null when nobody has rated"
+  average: Float
+  count: Int!
+}
+
+type SiteCoStar {
+  performer: Performer!
+  scenes: Int!
+}
+
+extend type Scene {
+  "Whether the current user liked the scene on the site"
+  site_liked: Boolean!
+  site_rating: SiteRating!
+}
+
+extend type Performer {
+  "Whether the current user follows this model on the site"
+  site_favorite: Boolean!
 }
 
 input SiteConfigInput {
+  home_rows: [SiteHomeRowInput!]
+  promo: SitePromoInput
+  age_gate: Boolean
+  accent: String
+  app_look: Boolean
   enabled: Boolean
   audience: String
   style: String
@@ -48,10 +119,24 @@ input SiteConfigInput {
 
 extend type Query {
   siteConfig: SiteConfig!
-  siteScenes(kind: SiteSceneKind!, page: Int, per_page: Int): SiteSceneResult!
+  siteScenes(kind: SiteSceneKind!, page: Int, per_page: Int, performer_id: ID): SiteSceneResult!
+  "The current user's liked scenes, most recent first"
+  siteLikedScenes(page: Int, per_page: Int): SiteSceneResult!
+  "The current user's favourite models"
+  siteFavoriteModels: [Performer!]!
+  "Newest scenes with the current user's favourite models"
+  siteFromFavorites(page: Int, per_page: Int): SiteSceneResult!
+  "Models who most often appear with the given one"
+  siteCoStars(performer_id: ID!, limit: Int): [SiteCoStar!]!
 }
 
 extend type Mutation {
   "Admin only"
   configureSite(input: SiteConfigInput!): SiteConfig!
+  "Admin only. A data: URL of a PNG, JPEG, WebP or SVG image, or empty to remove the logo."
+  siteSetLogo(data: String!): SiteConfig!
+  "Likes or unlikes a scene. Returns whether it is now liked."
+  siteToggleLike(scene_id: ID!): Boolean!
+  "Follows or unfollows a model. Returns whether they are now a favourite."
+  siteToggleFavoriteModel(performer_id: ID!): Boolean!
 }

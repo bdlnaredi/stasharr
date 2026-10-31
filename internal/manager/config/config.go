@@ -2290,7 +2290,23 @@ const (
 	SiteFeatured     = "stasharr.site.featured"
 	SiteFeaturedTag  = "stasharr.site.featured_tag"
 	SiteModelsGender = "stasharr.site.models_gender"
+	SiteHomeRows     = "stasharr.site.home_rows"
+	SitePromo        = "stasharr.site.promo"
+	SiteAgeGate      = "stasharr.site.age_gate"
+	SiteAccent       = "stasharr.site.accent"
+	SiteAppLook      = "stasharr.site.app_look"
 )
+
+func (i *Config) GetSiteHomeRowsJSON() string { return i.getString(SiteHomeRows) }
+func (i *Config) GetSitePromoJSON() string    { return i.getString(SitePromo) }
+func (i *Config) GetSiteAgeGate() bool        { return i.getBoolDefault(SiteAgeGate, false) }
+func (i *Config) GetSiteAccent() string       { return i.getString(SiteAccent) }
+func (i *Config) GetSiteAppLook() bool        { return i.getBoolDefault(SiteAppLook, true) }
+
+// SiteLogoPath is where an uploaded site logo is kept, without the extension.
+func (i *Config) SiteLogoPath() string {
+	return filepath.Join(i.GetConfigPath(), "site-logo")
+}
 
 // SiteStyles are the looks the site can have.
 var SiteStyles = []string{"velvet", "neon", "crimson", "blush", "onyx"}

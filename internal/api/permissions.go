@@ -40,6 +40,9 @@ var viewerMutations = map[string]bool{
 	"playlistRemoveScenes": true,
 	"playlistReorder":      true,
 	"watchLaterToggle":     true,
+	// site likes and favourite models
+	"siteToggleLike":          true,
+	"siteToggleFavoriteModel": true,
 	// accepted but ignored for non-admins, see ConfigureUI
 	"configureUI":        true,
 	"configureUISetting": true,
@@ -53,7 +56,8 @@ var adminMutations = map[string]bool{
 	"configureGeneral": true, "configureInterface": true, "configureDLNA": true,
 	"configureScraping": true, "configureDefaults": true, "configurePlugin": true,
 	"generateAPIKey": true,
-	"exportObjects":  true, "importObjects": true, "metadataImport": true, "metadataExport": true,
+	"configureSite":  true, "siteSetLogo": true,
+	"exportObjects": true, "importObjects": true, "metadataImport": true, "metadataExport": true,
 	"metadataClean": true, "metadataCleanGenerated": true,
 	"migrateHashNaming": true, "migrateSceneScreenshots": true, "migrateBlobs": true,
 	"anonymiseDatabase": true, "optimiseDatabase": true, "backupDatabase": true,
