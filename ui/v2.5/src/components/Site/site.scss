@@ -624,9 +624,11 @@ body.site-mode {
 
   img {
     height: 100%;
+    left: 0;
     object-fit: cover;
     opacity: 0.85;
     position: absolute;
+    top: 0;
     transition: opacity 0.2s, transform 0.4s;
     width: 100%;
   }
@@ -1276,9 +1278,11 @@ body.site-mode {
 
   img {
     height: 100%;
+    left: 0;
     object-fit: cover;
     opacity: 0.7;
     position: absolute;
+    top: 0;
     transition: transform 0.5s, opacity 0.3s;
     width: 100%;
   }
