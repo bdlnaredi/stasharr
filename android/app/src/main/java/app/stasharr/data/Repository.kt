@@ -294,6 +294,41 @@ class Repository(private val api: Api) {
         return data["playlistCreate"].decode<Playlist?>(null)
     }
 
+    suspend fun siteLook(): SiteLook? {
+        val data = api.gql("query { siteConfig { enabled style name accent models_gender applies_to_me app_look } }")
+        return data["siteConfig"].decode<SiteLook?>(null)
+    }
+
+    /** Site lists counted across every user: TRENDING, POPULAR or TOP_RATED. */
+    suspend fun siteScenes(kind: String, perPage: Int = 20): List<Scene> {
+        val data = api.gql(
+            "query(\$k: SiteSceneKind!, \$n: Int) { siteScenes(kind: \$k, per_page: \$n) { scenes { ...SceneCard } } }$SCENE_CARD",
+            vars { put("k", kind); put("n", perPage) }
+        )
+        return data.obj("siteScenes")?.get("scenes").decode(emptyList())
+    }
+
+    /** Pornstars with the most scenes, women only when the site says so. */
+    suspend fun topModels(femaleOnly: Boolean, perPage: Int = 20): List<Performer> {
+        val data = api.gql(
+            "query(\$f: FindFilterType, \$p: PerformerFilterType) { findPerformers(filter: \$f, performer_filter: \$p) { performers { $PERFORMER } } }",
+            vars {
+                put("f", buildJsonObject { put("per_page", perPage); put("sort", "scenes_count"); put("direction", "DESC") })
+                if (femaleOnly) put("p", buildJsonObject { putJsonObject("gender") { put("value", "FEMALE"); put("modifier", "EQUALS") } })
+            }
+        )
+        return data.obj("findPerformers")?.get("performers").decode(emptyList())
+    }
+
+    /** The most used tags, for a categories row. */
+    suspend fun topTags(perPage: Int = 16): List<Tag> {
+        val data = api.gql(
+            "query(\$f: FindFilterType) { findTags(filter: \$f) { tags { id name scene_count } } }",
+            vars { put("f", buildJsonObject { put("per_page", perPage); put("sort", "scenes_count"); put("direction", "DESC") }) }
+        )
+        return data.obj("findTags")?.get("tags").decode<List<Tag>>(emptyList()).filter { it.sceneCount > 0 }
+    }
+
     suspend fun offlineQualities(): List<OfflineQuality> {
         val data = api.gql("query { offlineQualities { id label height } }")
         return data["offlineQualities"].decode(emptyList())

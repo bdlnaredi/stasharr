@@ -150,10 +150,12 @@ fun GlassButton(
 }
 
 @Composable
-fun GradientText(text: String, modifier: Modifier = Modifier, fontSize: TextUnit = 26.sp) {
+fun GradientText(text: String, modifier: Modifier = Modifier, fontSize: TextUnit = 26.sp, maxLines: Int = Int.MAX_VALUE) {
     Text(
         text,
         modifier = modifier,
+        maxLines = maxLines,
+        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
         style = MaterialTheme.typography.headlineMedium.copy(
             brush = Brand.GradientHorizontal,
             fontSize = fontSize,

@@ -46,6 +46,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.app
+import app.stasharr.ui.SiteMode
+import app.stasharr.data.Tag
+import androidx.compose.foundation.clickable
 import app.stasharr.data.Playlist
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import app.stasharr.data.Performer
@@ -84,9 +87,12 @@ private data class HomeData(
     val performers: List<Performer>,
     val audio: List<Scene>,
     val smart: List<Pair<Playlist, List<Scene>>>,
+    // storefront rows, for users the site front end is set up for
+    val trending: List<Scene> = emptyList(),
+    val categories: List<Tag> = emptyList(),
 )
 
-private suspend fun loadHome(): HomeData = coroutineScope {
+private suspend fun loadHome(site: Boolean, femaleOnly: Boolean): HomeData = coroutineScope {
     val repo = app.repo
     // each shelf loads on its own; one failing does not empty the page
     suspend fun <T> safe(block: suspend () -> List<T>): List<T> = runCatching { block() }.getOrDefault(emptyList())
@@ -95,9 +101,22 @@ private suspend fun loadHome(): HomeData = coroutineScope {
     val rec = async { safe { repo.recommended(20) } }
     val recent = async { repo.scenes(SceneSort.RecentlyAdded, perPage = 20).items }
     val wl = async { safe { repo.watchLaterScenes() } }
-    val top = async { safe { repo.scenes(SceneSort.TopRated, perPage = 20).items.filter { (it.rating100 ?: 0) > 0 } } }
+    // ratings are kept per user, so the storefront ranks by everyone's
+    val top = async {
+        safe {
+            if (site) repo.siteScenes("TOP_RATED", 20)
+            else repo.scenes(SceneSort.TopRated, perPage = 20).items.filter { (it.rating100 ?: 0) > 0 }
+        }
+    }
+    val trending = async { if (site) safe { repo.siteScenes("TRENDING", 20) } else emptyList() }
+    val cats = async { if (site) safe { repo.topTags(16) } else emptyList() }
     val studios = async { safe { repo.studios(perPage = 16).items.filter { it.sceneCount > 0 } } }
-    val perf = async { safe { repo.performers(perPage = 20).items.filter { it.sceneCount > 0 } } }
+    val perf = async {
+        safe {
+            if (site) repo.topModels(femaleOnly, 20).filter { it.sceneCount > 0 }
+            else repo.performers(perPage = 20).items.filter { it.sceneCount > 0 }
+        }
+    }
     val audio = async { safe { repo.scenes(SceneSort.RecentlyAdded, perPage = 12, scope = SceneScope.Audio).items } }
     val smart = async { runCatching { repo.smartPlaylistRows(20) }.getOrDefault(emptyList()) }
 
@@ -119,13 +138,17 @@ private suspend fun loadHome(): HomeData = coroutineScope {
         performers = perf.await(),
         audio = audio.await(),
         smart = smart.await().filter { it.second.isNotEmpty() },
+        trending = trending.await(),
+        categories = cats.await(),
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
-    val loader = rememberLoad(Unit) { loadHome() }
+    val site = SiteMode.active
+    val femaleOnly = SiteMode.look?.femaleOnly ?: false
+    val loader = rememberLoad(site, femaleOnly) { loadHome(site, femaleOnly) }
     val nav = LocalNav.current
     val listState = rememberLazyListState()
     val scrolled by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 200 } }
@@ -147,6 +170,11 @@ fun HomeScreen() {
                     item(key = "continue") {
                         Shelf("Continue watching", data.continueWatching, key = { it.id }, onSeeAll = { nav.list(SceneListKind.Continue) }) {
                             SceneCard(it, onClick = { nav.play(it.id, it.resumeTime ?: 0.0) }, width = 260.dp)
+                        }
+                    }
+                    item(key = "trending") {
+                        Shelf("Trending now", data.trending, key = { it.id }) {
+                            SceneCard(it, onClick = { nav.scene(it.id) })
                         }
                     }
                     item(key = "recommended") {
@@ -172,13 +200,26 @@ fun HomeScreen() {
                         }
                     }
                     item(key = "performers") {
-                        Shelf("Popular performers", data.performers, key = { it.id }) {
+                        Shelf(
+                            when {
+                                !site -> "Popular performers"
+                                femaleOnly -> "Top pornstars"
+                                else -> "Top models"
+                            },
+                            data.performers,
+                            key = { it.id },
+                        ) {
                             PerformerBubble(it, onClick = { nav.performer(it.id) })
                         }
                     }
                     item(key = "toprated") {
                         Shelf("Top rated", data.topRated, key = { it.id }, onSeeAll = { nav.list(SceneListKind.TopRated) }) {
                             SceneCard(it, onClick = { nav.scene(it.id) })
+                        }
+                    }
+                    item(key = "categories") {
+                        Shelf("Categories", data.categories, key = { it.id }) {
+                            CategoryChip(it.name, it.sceneCount) { nav.tag(it.id, it.name) }
                         }
                     }
                     item(key = "studios") {
@@ -195,12 +236,17 @@ fun HomeScreen() {
                 }
             }
         }
-        TopBar(solid = scrolled, onSearch = { nav.tab("browse") }, onDownloads = { nav.downloads() })
+        TopBar(
+            title = SiteMode.look?.name?.takeIf { site && it.isNotBlank() } ?: "stasharr",
+            solid = scrolled,
+            onSearch = { nav.tab("browse") },
+            onDownloads = { nav.downloads() },
+        )
     }
 }
 
 @Composable
-private fun TopBar(solid: Boolean, onSearch: () -> Unit, onDownloads: () -> Unit) {
+private fun TopBar(title: String, solid: Boolean, onSearch: () -> Unit, onDownloads: () -> Unit) {
     val bg by animateColorAsState(if (solid) Brand.Background.copy(alpha = 0.94f) else Color.Transparent, label = "bar")
     Row(
         Modifier
@@ -213,7 +259,7 @@ private fun TopBar(solid: Boolean, onSearch: () -> Unit, onDownloads: () -> Unit
             .padding(start = 18.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        GradientText("stasharr", fontSize = 24.sp, modifier = Modifier.weight(1f))
+        GradientText(title, fontSize = 24.sp, modifier = Modifier.weight(1f), maxLines = 1)
         IconButton(onClick = onDownloads) {
             Icon(Icons.Rounded.DownloadForOffline, "Downloads", tint = Color.White)
         }
@@ -336,6 +382,27 @@ private fun Hero(scenes: List<Scene>) {
                         .background(if (selected) Brand.GradientHorizontal else Brush.linearGradient(listOf(Color.White.copy(alpha = 0.35f), Color.White.copy(alpha = 0.35f))))
                 )
             }
+        }
+    }
+}
+
+/** A coloured category tile for the storefront's Categories row. */
+@Composable
+private fun CategoryChip(name: String, count: Int, onClick: () -> Unit) {
+    val hue = (name.hashCode() and 0xffff) % 360
+    val tint = Color.hsv(hue.toFloat(), 0.5f, 0.5f)
+    Box(
+        Modifier
+            .width(150.dp)
+            .height(84.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
+            .background(Brush.linearGradient(listOf(tint, Brand.SurfaceHigh)))
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+    ) {
+        Column(Modifier.align(Alignment.BottomStart)) {
+            Text(name, style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            Text("$count scenes", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
         }
     }
 }
