@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, Route, Switch, useHistory, useLocation } from "react-router-dom";
+import { Link, NavLink, Route, Switch, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import * as GQL from "src/core/generated-graphql";
 import { baseURL } from "src/core/createClient";
@@ -8,6 +8,7 @@ import { AccountPanel } from "src/components/Stasharr/AccountPanel";
 import { Loading } from "./SiteCards";
 import { SiteContext } from "./SiteContext";
 import { SiteHome } from "./SiteHome";
+import { SiteSearch } from "./SiteSearch";
 import {
   CategoriesPage,
   CategoryPage,
@@ -24,10 +25,8 @@ import { findSiteStyle, siteStyles } from "./siteStyles";
 import "./site.scss";
 
 const SiteHeader: React.FC<{ name: string; female: boolean }> = ({ name, female }) => {
-  const history = useHistory();
   const location = useLocation();
   const { isAdmin, me } = useCurrentUser();
-  const [q, setQ] = useState("");
   const [menu, setMenu] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -43,12 +42,6 @@ const SiteHeader: React.FC<{ name: string; female: boolean }> = ({ name, female 
     setMenu(false);
     setMobile(false);
   }, [location.pathname]);
-
-  function search(e: React.FormEvent) {
-    e.preventDefault();
-    const text = q.trim();
-    if (text) history.push(`/site/search?q=${encodeURIComponent(text)}`);
-  }
 
   const words = name.trim().split(/\s+/);
   const first = words.length > 1 ? words.slice(0, -1).join(" ") : name;
@@ -74,17 +67,7 @@ const SiteHeader: React.FC<{ name: string; female: boolean }> = ({ name, female 
           <NavLink to="/site/channels">Channels</NavLink>
           <NavLink to="/site/my-list">My list</NavLink>
         </nav>
-        <form className="site-search" onSubmit={search}>
-          <input
-            type="search"
-            placeholder="Search scenes and stars"
-            value={q}
-            onChange={(e) => setQ(e.currentTarget.value)}
-          />
-          <button type="submit" aria-label="Search">
-            ⌕
-          </button>
-        </form>
+        <SiteSearch />
         <div className="site-account">
           <button type="button" className="site-avatar" onClick={() => setMenu(!menu)}>
             {(me?.username ?? "Me").slice(0, 1).toUpperCase()}
