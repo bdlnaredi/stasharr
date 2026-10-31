@@ -160,3 +160,9 @@ mutation DeleteDatabaseBackup($id: ID!) {
 mutation RunMetadataResync {
   runMetadataResync
 }
+
+mutation ConfigureSite($input: SiteConfigInput!) {
+  configureSite(input: $input) {
+    ...SiteConfigData
+  }
+}

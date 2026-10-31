@@ -27,6 +27,7 @@ import { DuplicateCleanupPanel } from "../Stasharr/DuplicateCleanupPanel";
 import { RenamerPanel } from "../Stasharr/RenamerPanel";
 import { NotificationsPanel } from "../Stasharr/NotificationsPanel";
 import { MaintenancePanel } from "../Stasharr/MaintenancePanel";
+import { SitePanel } from "../Stasharr/SitePanel";
 import { TroubleshootingModeButton } from "../TroubleshootingMode/TroubleshootingModeButton";
 import { useTroubleshootingMode } from "../TroubleshootingMode/useTroubleshootingMode";
 
@@ -42,6 +43,7 @@ const validTabs = [
   "renamer",
   "notifications",
   "maintenance",
+  "site",
   "account",
   "metadata-providers",
   "services",
@@ -131,6 +133,7 @@ function tabsForRole(isAdmin: boolean, isEditor: boolean): ISettingsTab[] {
     { key: "renamer", label: "File renamer" },
     { key: "notifications", label: "Notifications" },
     { key: "maintenance", label: "Backups & refresh" },
+    { key: "site", label: "Site look" },
     { key: "account", label: "Account" },
   ];
   // new tabs go after Security
@@ -223,6 +226,9 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
             </Tab.Pane>
             <Tab.Pane eventKey="maintenance" unmountOnExit>
               <MaintenancePanel />
+            </Tab.Pane>
+            <Tab.Pane eventKey="site" unmountOnExit>
+              <SitePanel />
             </Tab.Pane>
             <Tab.Pane eventKey="account" unmountOnExit>
               <AccountPanel />

@@ -1,0 +1,181 @@
+fragment SiteSceneCard on Scene {
+  id
+  title
+  date
+  created_at
+  details
+  resume_time
+  in_watch_later
+  files {
+    path
+    duration
+    width
+    height
+  }
+  paths {
+    screenshot
+    preview
+  }
+  studio {
+    id
+    name
+    image_path
+  }
+  performers {
+    id
+    name
+    gender
+    image_path
+  }
+}
+
+fragment SiteModelCard on Performer {
+  id
+  name
+  disambiguation
+  gender
+  image_path
+  scene_count
+  favorite
+  country
+  birthdate
+}
+
+fragment SiteConfigData on SiteConfig {
+  enabled
+  audience
+  style
+  name
+  tagline
+  featured
+  featured_tag {
+    id
+    name
+  }
+  models_gender
+  applies_to_me
+}
+
+query SiteConfig {
+  siteConfig {
+    ...SiteConfigData
+  }
+}
+
+query SiteSceneList($kind: SiteSceneKind!, $page: Int, $per_page: Int) {
+  siteScenes(kind: $kind, page: $page, per_page: $per_page) {
+    count
+    scenes {
+      ...SiteSceneCard
+    }
+  }
+}
+
+query SiteScenes($filter: FindFilterType, $scene_filter: SceneFilterType) {
+  findScenes(filter: $filter, scene_filter: $scene_filter) {
+    count
+    scenes {
+      ...SiteSceneCard
+    }
+  }
+}
+
+query SiteModels($filter: FindFilterType, $performer_filter: PerformerFilterType) {
+  findPerformers(filter: $filter, performer_filter: $performer_filter) {
+    count
+    performers {
+      ...SiteModelCard
+    }
+  }
+}
+
+query SiteModel($id: ID!) {
+  findPerformer(id: $id) {
+    ...SiteModelCard
+    alias_list
+    ethnicity
+    hair_color
+    eye_color
+    height_cm
+    measurements
+    fake_tits
+    career_start
+    career_end
+    tattoos
+    piercings
+    details
+    tags {
+      id
+      name
+    }
+  }
+}
+
+query SiteStudios($filter: FindFilterType, $studio_filter: StudioFilterType) {
+  findStudios(filter: $filter, studio_filter: $studio_filter) {
+    count
+    studios {
+      id
+      name
+      image_path
+      scene_count
+    }
+  }
+}
+
+query SiteStudio($id: ID!) {
+  findStudio(id: $id) {
+    id
+    name
+    image_path
+    scene_count
+    details
+  }
+}
+
+query SiteTags($filter: FindFilterType, $tag_filter: TagFilterType) {
+  findTags(filter: $filter, tag_filter: $tag_filter) {
+    count
+    tags {
+      id
+      name
+      image_path
+      scene_count
+    }
+  }
+}
+
+query SiteTag($id: ID!) {
+  findTag(id: $id) {
+    id
+    name
+    image_path
+    scene_count
+    description
+  }
+}
+
+query SiteHomeExtras {
+  continueWatching(limit: 12) {
+    ...SiteSceneCard
+  }
+  recommendedScenes(limit: 12) {
+    ...SiteSceneCard
+  }
+}
+
+query SiteSimilar($scene_id: ID!) {
+  findSimilarScenes(scene_id: $scene_id, limit: 12) {
+    ...SiteSceneCard
+  }
+}
+
+query SiteMyList {
+  findPlaylists {
+    id
+    watch_later
+    scenes {
+      ...SiteSceneCard
+    }
+  }
+}
