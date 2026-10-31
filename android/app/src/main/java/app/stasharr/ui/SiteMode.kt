@@ -10,23 +10,41 @@ import app.stasharr.data.SiteLook
 import app.stasharr.ui.theme.Brand
 import app.stasharr.ui.theme.DefaultPalette
 import app.stasharr.ui.theme.SitePalettes
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
- * The site front end's look in the app: for users the site is set up for,
- * the app takes the site's name, colours and storefront rows.
+ * The site front end in the app. Users the site is set up for get the
+ * storefront: the site's name, colours, home rows and pages. Anyone else can
+ * switch it on under You to preview it.
  */
 object SiteMode {
     var look by mutableStateOf<SiteLook?>(null)
         private set
 
-    val active: Boolean get() = look?.active == true
+    /** The storefront switched on by hand, for admins to preview it. */
+    var preview by mutableStateOf(false)
+        private set
+
+    /** Whether the person confirmed they are an adult (asked once). */
+    var adultOk by mutableStateOf(false)
+        private set
+
+    /** Whether the app shows the storefront. */
+    val storefront: Boolean get() = look?.let { it.enabled && (it.active || preview) } == true
+
+    /** Kept for older screens: the storefront is on. */
+    val active: Boolean get() = storefront
+
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
 
     private fun prefs(context: Context) = context.getSharedPreferences("site_look", Context.MODE_PRIVATE)
 
     private fun parse(hex: String): Color? = runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrNull()
 
-    private fun paint(l: SiteLook?) {
-        if (l == null || !l.active) {
+    private fun paint() {
+        val l = look
+        if (l == null || !storefront) {
             Brand.use(DefaultPalette)
             return
         }
@@ -35,34 +53,36 @@ object SiteMode {
         Brand.use(p)
     }
 
-    /** Uses the look saved last time, so the app opens in the right colours. */
+    /** Uses the look saved last time, so the app opens as it was. */
     fun restore(context: Context) {
         val p = prefs(context)
-        if (!p.getBoolean("active", false)) return
-        val l = SiteLook(
-            enabled = true,
-            style = p.getString("style", "velvet") ?: "velvet",
-            name = p.getString("name", "") ?: "",
-            accent = p.getString("accent", "") ?: "",
-            modelsGender = p.getString("gender", "FEMALE") ?: "FEMALE",
-            appliesToMe = true,
-            appLook = true,
-        )
-        look = l
-        paint(l)
+        preview = p.getBoolean("preview", false)
+        adultOk = p.getBoolean("adult_ok", false)
+        look = p.getString("look", null)?.let { runCatching { json.decodeFromString<SiteLook>(it) }.getOrNull() }
+        paint()
     }
 
     fun apply(context: Context, l: SiteLook?) {
         look = l
-        paint(l)
-        prefs(context).edit()
-            .putBoolean("active", l?.active == true)
-            .putString("style", l?.style)
-            .putString("name", l?.name)
-            .putString("accent", l?.accent)
-            .putString("gender", l?.modelsGender)
-            .apply()
+        paint()
+        prefs(context).edit().putString("look", l?.let { json.encodeToString(it) }).apply()
     }
 
-    fun clear(context: Context) = apply(context, null)
+    fun setPreview(context: Context, on: Boolean) {
+        preview = on
+        paint()
+        prefs(context).edit().putBoolean("preview", on).apply()
+    }
+
+    fun confirmAdult(context: Context) {
+        adultOk = true
+        prefs(context).edit().putBoolean("adult_ok", true).apply()
+    }
+
+    fun clear(context: Context) {
+        look = null
+        preview = false
+        paint()
+        prefs(context).edit().clear().apply()
+    }
 }

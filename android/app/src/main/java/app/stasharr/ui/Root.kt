@@ -59,17 +59,48 @@ import app.stasharr.ui.screens.SceneScreen
 import app.stasharr.ui.screens.StudioScreen
 import app.stasharr.ui.screens.TagScreen
 import app.stasharr.ui.theme.Brand
+import app.stasharr.ui.store.AgeGate
+import app.stasharr.ui.store.StoreHome
+import app.stasharr.ui.store.StoreModel
+import app.stasharr.ui.store.StoreModels
+import app.stasharr.ui.store.StoreMyList
+import app.stasharr.ui.store.StoreScenes
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.VideoLibrary
 
 /** Moves between screens. */
 class Navigator(private val nav: NavHostController, private val context: Context) {
     fun scene(id: String) = nav.navigate("scene/$id")
-    fun performer(id: String) = nav.navigate("performer/$id")
+    fun performer(id: String) = nav.navigate(if (SiteMode.storefront) "model/$id" else "performer/$id")
     fun studio(id: String) = nav.navigate("studio/$id")
     fun tag(id: String, name: String) = nav.navigate("tag/$id/${Uri.encode(name)}")
     fun playlist(id: String) = nav.navigate("playlist/$id")
     fun list(kind: SceneListKind) = nav.navigate("list/${kind.name}")
     fun downloads() = nav.navigate("downloads")
     fun back() = nav.popBackStack()
+
+    /** Opens a website address such as /site/model/12 in the app. */
+    fun siteLink(link: String) {
+        val l = link.trim()
+        if (l.startsWith("http://") || l.startsWith("https://")) {
+            runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(l))) }
+            return
+        }
+        val parts = l.substringBefore('?').trim('/').split('/')
+        if (parts.firstOrNull() != "site") return
+        val id = parts.getOrNull(2).orEmpty()
+        when (parts.getOrNull(1)) {
+            "scene" -> if (id.isNotBlank()) scene(id)
+            "model" -> if (id.isNotBlank()) performer(id)
+            "studio" -> if (id.isNotBlank()) studio(id)
+            "category" -> if (id.isNotBlank()) tag(id, "")
+            "scenes", "search", "categories", "channels" -> tab("scenes")
+            "models" -> tab("models")
+            "reels" -> tab("reels")
+            "my-list" -> tab("mylist")
+        }
+    }
 
     fun tab(route: String) = nav.navigate(route) {
         popUpTo(nav.graph.findStartDestination().id) { saveState = true }
@@ -123,13 +154,28 @@ private fun MainScaffold() {
         runCatching { app.repo.siteLook() }.onSuccess { SiteMode.apply(context, it) }
     }
     val canViewReels = me.value?.canViewReels ?: true
+    val store = SiteMode.storefront
 
     val tabs = buildList {
-        add(Tab("home", "Home", Icons.Rounded.Home))
-        add(Tab("browse", "Browse", Icons.Rounded.Search))
-        if (canViewReels) add(Tab("reels", "Reels", Icons.Rounded.SmartDisplay))
-        add(Tab("playlists", "Playlists", Icons.AutoMirrored.Rounded.PlaylistPlay))
-        add(Tab("profile", "You", Icons.Rounded.Person))
+        if (store) {
+            add(Tab("home", "Home", Icons.Rounded.Home))
+            add(Tab("scenes", "Scenes", Icons.Rounded.VideoLibrary))
+            add(Tab("models", if (SiteMode.look?.femaleOnly != false) "Pornstars" else "Models", Icons.Rounded.Star))
+            if (canViewReels) add(Tab("reels", "Reels", Icons.Rounded.SmartDisplay))
+            add(Tab("mylist", "My list", Icons.Rounded.Favorite))
+        } else {
+            add(Tab("home", "Home", Icons.Rounded.Home))
+            add(Tab("browse", "Browse", Icons.Rounded.Search))
+            if (canViewReels) add(Tab("reels", "Reels", Icons.Rounded.SmartDisplay))
+            add(Tab("playlists", "Playlists", Icons.AutoMirrored.Rounded.PlaylistPlay))
+            add(Tab("profile", "You", Icons.Rounded.Person))
+        }
+    }
+
+    // the age check, when the admin turned it on
+    if (store && SiteMode.look?.ageGate == true && !SiteMode.adultOk) {
+        AgeGate(onEnter = { SiteMode.confirmAdult(context) })
+        return
     }
 
     val backStack by nav.currentBackStackEntryAsState()
@@ -167,7 +213,11 @@ private fun MainScaffold() {
                     enterTransition = { fadeIn() },
                     exitTransition = { fadeOut() },
                 ) {
-                    composable("home") { HomeScreen() }
+                    composable("home") { if (store) StoreHome() else HomeScreen() }
+                    composable("scenes") { StoreScenes() }
+                    composable("models") { StoreModels() }
+                    composable("mylist") { StoreMyList() }
+                    composable("model/{id}") { StoreModel(it.arguments?.getString("id").orEmpty()) }
                     composable("browse") { BrowseScreen() }
                     composable("reels") { ReelsScreen() }
                     composable("playlists") { PlaylistsScreen() }

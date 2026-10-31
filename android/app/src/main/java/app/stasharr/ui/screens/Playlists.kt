@@ -64,6 +64,7 @@ import androidx.compose.material.icons.rounded.DownloadForOffline
 import app.stasharr.data.Me
 import app.stasharr.data.Playlist
 import app.stasharr.ui.LocalNav
+import app.stasharr.ui.SiteMode
 import app.stasharr.ui.components.GlassButton
 import app.stasharr.ui.components.GradientButton
 import app.stasharr.ui.components.GradientText
@@ -307,6 +308,27 @@ fun ProfileScreen(me: Me?) {
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
         Spacer(Modifier.height(16.dp))
+        val look = SiteMode.look
+        if (look?.enabled == true && !look.active) {
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Site layout", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "Use the website's storefront look in the app, as site users see it",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Brand.TextMuted,
+                    )
+                }
+                androidx.compose.material3.Switch(
+                    checked = SiteMode.preview,
+                    onCheckedChange = { SiteMode.setPreview(ctx, it) },
+                )
+            }
+        }
         InfoRow(Icons.Rounded.Dns, "Server", app.session.serverUrl.orEmpty())
         InfoRow(Icons.Rounded.VerifiedUser, "App version", BuildConfig.VERSION_NAME)
         Spacer(Modifier.height(24.dp))

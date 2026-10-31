@@ -41,7 +41,10 @@ data class PerformerRef(
     val id: String,
     val name: String,
     @SerialName("image_path") val imagePath: String? = null,
-)
+    val gender: String? = null,
+) {
+    val isMale: Boolean get() = gender == "MALE"
+}
 
 @Serializable
 data class TagRef(val id: String, val name: String)
@@ -82,7 +85,18 @@ data class Scene(
     @SerialName("sceneStreams") val streams: List<StreamEndpoint> = emptyList(),
     @SerialName("in_watch_later") val inWatchLater: Boolean = false,
     val captions: List<Caption>? = null,
+    @SerialName("created_at") val createdAt: String? = null,
 ) {
+    /** Added in the last week. */
+    val isNew: Boolean
+        get() = createdAt?.let {
+            runCatching { java.time.OffsetDateTime.parse(it).toInstant() }.getOrNull()
+        }?.let { java.time.Duration.between(it, java.time.Instant.now()).toDays() < 7 } ?: false
+
+    /** The women in it, or everyone when there are none listed as women. */
+    val stars: List<PerformerRef>
+        get() = performers.filter { !it.isMale }.ifEmpty { performers }
+
     val file: MediaFile? get() = files.firstOrNull()
     val duration: Double get() = file?.duration ?: 0.0
     val isAudio: Boolean
@@ -179,21 +193,81 @@ data class Me(
     @SerialName("can_download") val canDownload: Boolean = true,
 )
 
+@Serializable
+data class SiteHomeRow(
+    val type: String,
+    val title: String = "",
+    val enabled: Boolean = true,
+    val tag: TagRef? = null,
+)
+
+@Serializable
+data class SitePromo(
+    val enabled: Boolean = false,
+    val text: String = "",
+    val link: String = "",
+    val image: String = "",
+)
+
 /** How the site front end is set up, for the app's storefront look. */
 @Serializable
 data class SiteLook(
     val enabled: Boolean = false,
     val style: String = "velvet",
     val name: String = "",
+    val tagline: String = "",
     val accent: String = "",
     @SerialName("models_gender") val modelsGender: String = "FEMALE",
     @SerialName("applies_to_me") val appliesToMe: Boolean = false,
     @SerialName("app_look") val appLook: Boolean = true,
+    @SerialName("home_rows") val homeRows: List<SiteHomeRow> = emptyList(),
+    val promo: SitePromo = SitePromo(),
+    @SerialName("age_gate") val ageGate: Boolean = false,
+    @SerialName("logo_url") val logoUrl: String? = null,
 ) {
     /** Whether this user gets the storefront look in the app. */
     val active: Boolean get() = enabled && appliesToMe && appLook
     val femaleOnly: Boolean get() = modelsGender == "FEMALE"
 }
+
+/** A model's page on the storefront. */
+@Serializable
+data class ModelProfile(
+    val id: String,
+    val name: String,
+    val gender: String? = null,
+    @SerialName("image_path") val imagePath: String? = null,
+    @SerialName("scene_count") val sceneCount: Int = 0,
+    val country: String? = null,
+    val birthdate: String? = null,
+    val ethnicity: String? = null,
+    @SerialName("hair_color") val hairColor: String? = null,
+    @SerialName("eye_color") val eyeColor: String? = null,
+    @SerialName("height_cm") val heightCm: Int? = null,
+    val measurements: String? = null,
+    @SerialName("career_start") val careerStart: String? = null,
+    @SerialName("career_end") val careerEnd: String? = null,
+    val tattoos: String? = null,
+    val piercings: String? = null,
+    val details: String? = null,
+    @SerialName("alias_list") val aliases: List<String> = emptyList(),
+    @SerialName("site_favorite") val following: Boolean = false,
+)
+
+@Serializable
+data class CoStar(val performer: Performer, val scenes: Int = 0)
+
+@Serializable
+data class SiteRating(val average: Double? = null, val count: Int = 0)
+
+/** The current user's like, rating and everyone's average for a scene. */
+@Serializable
+data class SceneExtras(
+    val id: String,
+    val rating100: Int? = null,
+    @SerialName("site_liked") val liked: Boolean = false,
+    @SerialName("site_rating") val siteRating: SiteRating = SiteRating(),
+)
 
 /** A size a scene can be downloaded in. */
 @Serializable
