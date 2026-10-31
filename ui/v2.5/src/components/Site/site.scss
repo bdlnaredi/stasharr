@@ -428,16 +428,41 @@ body.site-mode {
   animation: site-rise 0.7s ease both;
   bottom: 12%;
   left: clamp(16px, 4vw, 72px);
-  max-width: min(640px, 88vw);
+  max-width: min(720px, 88vw);
   position: absolute;
+  z-index: 2;
 
   h1 {
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
     color: #fff;
+    display: -webkit-box;
     font-size: clamp(30px, 4.6vw, 64px);
-    line-height: 1.05;
+    line-height: 1.08;
     margin: 10px 0 12px;
+    overflow: hidden;
+    overflow-wrap: anywhere;
     text-shadow: 0 2px 24px rgba(0, 0, 0, 0.5);
+
+    &.site-title-long {
+      font-size: clamp(26px, 3.2vw, 46px);
+      letter-spacing: min(var(--site-heading-spacing), 0.04em);
+    }
+
+    &.site-title-xlong {
+      font-size: clamp(22px, 2.4vw, 34px);
+      letter-spacing: min(var(--site-heading-spacing), 0.02em);
+    }
   }
+}
+
+// with the header bar over the full banner, keep the text below it
+.site-hero-full .site-hero-text {
+  max-height: calc(100% - 110px);
+}
+
+.site-hero-split .site-hero-text {
+  bottom: 9%;
 }
 
 @keyframes site-rise {
@@ -915,6 +940,7 @@ body.site-mode {
 }
 
 .site-scene-title {
+  overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   display: -webkit-box;
@@ -1445,6 +1471,12 @@ body.site-mode {
   h1 {
     font-size: clamp(24px, 3vw, 40px);
     margin: 6px 0 10px;
+    overflow-wrap: anywhere;
+
+    &.site-title-long,
+    &.site-title-xlong {
+      font-size: clamp(20px, 2.2vw, 30px);
+    }
   }
 }
 

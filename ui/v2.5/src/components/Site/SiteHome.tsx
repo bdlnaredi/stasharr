@@ -15,6 +15,7 @@ import {
   formatTime,
   qualityBadge,
   sceneTitle,
+  titleSize,
 } from "./SiteCards";
 import { ISiteStyle } from "./siteStyles";
 import { useSite } from "./SiteContext";
@@ -54,7 +55,9 @@ const HeroText: React.FC<{ scene: SiteScene }> = ({ scene }) => {
         <span>Featured</span>
         {scene.studio && <Link to={`/site/studio/${scene.studio.id}`}>{scene.studio.name}</Link>}
       </div>
-      <h1>{sceneTitle(scene)}</h1>
+      <h1 className={titleSize(sceneTitle(scene))} title={sceneTitle(scene)}>
+        {sceneTitle(scene)}
+      </h1>
       {(models.length > 0 || scene.performers.length > 0) && (
         <div className="site-hero-models">
           Starring{" "}

@@ -18,6 +18,7 @@ import {
   formatTime,
   resolutionBadge,
   sceneTitle,
+  titleSize,
 } from "./SiteCards";
 import { useSite } from "./SiteContext";
 
@@ -240,7 +241,7 @@ export const ScenePage: React.FC = () => {
                 {scene.studio.name}
               </Link>
             )}
-            <h1>{sceneTitle(scene)}</h1>
+            <h1 className={titleSize(sceneTitle(scene))}>{sceneTitle(scene)}</h1>
             <div className="site-hero-meta">
               {scene.date && <span>{formatDate(scene.date)}</span>}
               {f?.duration ? <span>{formatTime(f.duration)}</span> : null}
