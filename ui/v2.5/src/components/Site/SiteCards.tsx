@@ -9,7 +9,24 @@ export function sceneTitle(s: Pick<SiteScene, "title" | "files">): string {
   if (s.title) return s.title;
   const path = s.files[0]?.path ?? "";
   const base = path.split(/[\\/]/).pop() ?? "";
-  return base.replace(/\.[^.]+$/, "") || "Untitled";
+  return tidyFileName(base.replace(/\.[^.]+$/, "")) || "Untitled";
+}
+
+// Turns a release file name such as
+// "Studio.26.10.31.Jane.Doe.XXX.1080p.MP4-GROUP" into "Studio 26 10 31 Jane Doe".
+export function tidyFileName(name: string): string {
+  let s = name.replace(/[._]+/g, " ").replace(/\s+/g, " ").trim();
+  // drop everything from the usual release tags onwards
+  const cut = s.search(/\b(XXX|\d{3,4}p|4K|2160p|WEB-?DL|WEBRIP|HEVC|x26[45]|h26[45]|MP4|MKV)\b/i);
+  if (cut > 3) s = s.slice(0, cut).trim();
+  return s.replace(/[-\s]+$/, "");
+}
+
+// A size class for a banner title, so long titles stay readable.
+export function titleSize(title: string): string {
+  if (title.length > 90) return "site-title-xlong";
+  if (title.length > 45) return "site-title-long";
+  return "";
 }
 
 export function formatTime(seconds?: number | null): string {
