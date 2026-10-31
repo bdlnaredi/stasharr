@@ -17,7 +17,8 @@ fragment SceneCard on Scene {
   files { duration width height video_codec audio_codec }
   paths { screenshot preview }
   studio { id name }
-  performers { id name }
+  performers { id name gender }
+  created_at
 }
 """
 
@@ -28,7 +29,7 @@ fragment SceneFull on Scene {
   paths { screenshot preview stream caption }
   captions { language_code caption_type }
   studio { id name image_path }
-  performers { id name image_path }
+  performers { id name image_path gender }
   tags { id name }
   scene_markers { id title seconds primary_tag { id name } }
   sceneStreams { url mime_type label }
@@ -295,8 +296,107 @@ class Repository(private val api: Api) {
     }
 
     suspend fun siteLook(): SiteLook? {
-        val data = api.gql("query { siteConfig { enabled style name accent models_gender applies_to_me app_look } }")
+        val data = api.gql(
+            """query { siteConfig { enabled style name tagline accent models_gender applies_to_me app_look age_gate logo_url
+              home_rows { type title enabled tag { id name } } promo { enabled text link image } } }"""
+        )
         return data["siteConfig"].decode<SiteLook?>(null)
+    }
+
+    /** A page of a site list: FEATURED, TRENDING, POPULAR or TOP_RATED, optionally for one model. */
+    suspend fun sitePage(kind: String, page: Int, perPage: Int, performerId: String? = null): Page<Scene> {
+        val data = api.gql(
+            "query(\$k: SiteSceneKind!, \$p: Int, \$n: Int, \$m: ID) { siteScenes(kind: \$k, page: \$p, per_page: \$n, performer_id: \$m) { count scenes { ...SceneCard } } }$SCENE_CARD",
+            vars { put("k", kind); put("p", page); put("n", perPage); if (performerId != null) put("m", performerId) }
+        )
+        val res = data.obj("siteScenes") ?: return Page(0, emptyList())
+        return Page(res.int("count"), res["scenes"].decode(emptyList()))
+    }
+
+    /** Scenes in any order with a scene filter, for the storefront lists. */
+    suspend fun storeScenes(sort: String, desc: Boolean, page: Int, perPage: Int, filter: JsonObject?, q: String? = null): Page<Scene> {
+        val v = vars {
+            put("filter", findFilter(page, perPage, sort, desc, q))
+            if (filter != null && filter.isNotEmpty()) put("scene_filter", filter)
+        }
+        val data = api.gql(
+            """query(${'$'}filter: FindFilterType, ${'$'}scene_filter: SceneFilterType) {
+              findScenes(filter: ${'$'}filter, scene_filter: ${'$'}scene_filter) { count scenes { ...SceneCard } }
+            }""" + SCENE_CARD, v
+        )
+        val res = data.obj("findScenes") ?: return Page(0, emptyList())
+        return Page(res.int("count"), res["scenes"].decode(emptyList()))
+    }
+
+    suspend fun models(femaleOnly: Boolean, sort: String, desc: Boolean, page: Int, perPage: Int, q: String? = null, letter: String? = null): Page<Performer> {
+        val pf = buildJsonObject {
+            putJsonObject("scene_count") { put("value", 0); put("modifier", "GREATER_THAN") }
+            if (femaleOnly) putJsonObject("gender") { put("value", "FEMALE"); put("modifier", "EQUALS") }
+            if (!letter.isNullOrBlank()) putJsonObject("name") { put("value", "^$letter"); put("modifier", "MATCHES_REGEX") }
+        }
+        val data = api.gql(
+            "query(\$f: FindFilterType, \$p: PerformerFilterType) { findPerformers(filter: \$f, performer_filter: \$p) { count performers { $PERFORMER } } }",
+            vars { put("f", findFilter(page, perPage, sort, desc, q)); put("p", pf) }
+        )
+        val res = data.obj("findPerformers") ?: return Page(0, emptyList())
+        return Page(res.int("count"), res["performers"].decode(emptyList()))
+    }
+
+    suspend fun modelProfile(id: String): ModelProfile? {
+        val data = api.gql(
+            """query(${'$'}id: ID!) { findPerformer(id: ${'$'}id) { id name gender image_path scene_count country birthdate ethnicity
+              hair_color eye_color height_cm measurements career_start career_end tattoos piercings details alias_list site_favorite } }""",
+            vars { put("id", id) }
+        )
+        return data["findPerformer"].decode<ModelProfile?>(null)
+    }
+
+    suspend fun coStars(id: String): List<CoStar> {
+        val data = api.gql(
+            "query(\$id: ID!) { siteCoStars(performer_id: \$id, limit: 12) { scenes performer { $PERFORMER } } }",
+            vars { put("id", id) }
+        )
+        return data["siteCoStars"].decode(emptyList())
+    }
+
+    suspend fun sceneExtras(id: String): SceneExtras? {
+        val data = api.gql(
+            "query(\$id: ID!) { findScene(id: \$id) { id rating100 site_liked site_rating { average count } } }",
+            vars { put("id", id) }
+        )
+        return data["findScene"].decode<SceneExtras?>(null)
+    }
+
+    suspend fun toggleLike(sceneId: String): Boolean {
+        val data = api.gql("mutation(\$id: ID!) { siteToggleLike(scene_id: \$id) }", vars { put("id", sceneId) })
+        return data["siteToggleLike"]?.jsonPrimitive?.content == "true"
+    }
+
+    suspend fun toggleFavoriteModel(id: String): Boolean {
+        val data = api.gql("mutation(\$id: ID!) { siteToggleFavoriteModel(performer_id: \$id) }", vars { put("id", id) })
+        return data["siteToggleFavoriteModel"]?.jsonPrimitive?.content == "true"
+    }
+
+    suspend fun likedScenes(page: Int = 1, perPage: Int = 40): Page<Scene> {
+        val data = api.gql(
+            "query(\$p: Int, \$n: Int) { siteLikedScenes(page: \$p, per_page: \$n) { count scenes { ...SceneCard } } }$SCENE_CARD",
+            vars { put("p", page); put("n", perPage) }
+        )
+        val res = data.obj("siteLikedScenes") ?: return Page(0, emptyList())
+        return Page(res.int("count"), res["scenes"].decode(emptyList()))
+    }
+
+    suspend fun fromFavorites(perPage: Int = 20): List<Scene> {
+        val data = api.gql(
+            "query(\$n: Int) { siteFromFavorites(per_page: \$n) { scenes { ...SceneCard } } }$SCENE_CARD",
+            vars { put("n", perPage) }
+        )
+        return data.obj("siteFromFavorites")?.get("scenes").decode(emptyList())
+    }
+
+    suspend fun favoriteModels(): List<Performer> {
+        val data = api.gql("query { siteFavoriteModels { $PERFORMER } }")
+        return data["siteFavoriteModels"].decode(emptyList())
     }
 
     /** Site lists counted across every user: TRENDING, POPULAR or TOP_RATED. */

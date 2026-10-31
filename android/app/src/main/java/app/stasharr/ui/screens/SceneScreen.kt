@@ -62,6 +62,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.app
+import app.stasharr.ui.SiteMode
+import app.stasharr.ui.store.AverageStars
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.runtime.LaunchedEffect
 import app.stasharr.data.OfflineItem
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.rounded.Download
@@ -118,6 +123,10 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
     var oCount by remember(scene.id) { mutableIntStateOf(scene.oCounter ?: 0) }
     var showPlaylists by remember { mutableStateOf(false) }
     var showDownload by remember { mutableStateOf(false) }
+    val store = SiteMode.storefront
+    val extras = rememberLoad(scene.id, store) { if (store) app.repo.sceneExtras(scene.id) else null }
+    var liked by remember(scene.id) { mutableStateOf(false) }
+    LaunchedEffect(extras.value) { extras.value?.let { liked = it.liked } }
     val offline by app.downloads.items.collectAsState()
     val downloaded = offline.any { it.sceneId == scene.id && it.done }
     val downloading = offline.any { it.sceneId == scene.id && !it.done && it.state != OfflineItem.FAILED }
@@ -233,6 +242,21 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
                                 .onFailure { toast(it.message ?: "Couldn't update") }
                         }
                     }
+                    if (store) {
+                        RoundAction(
+                            if (liked) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
+                            if (liked) "Liked" else "Like",
+                            active = liked,
+                        ) {
+                            val was = liked
+                            liked = !was
+                            scope.launch {
+                                runCatching { app.repo.toggleLike(scene.id) }
+                                    .onSuccess { liked = it }
+                                    .onFailure { liked = was; toast(it.message ?: "Couldn't update") }
+                            }
+                        }
+                    }
                     RoundAction(Icons.AutoMirrored.Rounded.PlaylistAdd, "Playlist") { showPlaylists = true }
                     RoundAction(
                         when {
@@ -253,6 +277,11 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
                     }
                 }
 
+                val avg = extras.value?.siteRating
+                if (store && avg?.average != null) {
+                    Spacer(Modifier.height(10.dp))
+                    AverageStars(avg.average, avg.count)
+                }
                 Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Your rating", color = Brand.TextMuted, style = MaterialTheme.typography.labelLarge, modifier = Modifier.width(100.dp))
