@@ -18,6 +18,12 @@ const defaultConfig: GQL.SiteConfigDataFragment = {
   featured_tag: null,
   models_gender: "FEMALE",
   applies_to_me: false,
+  home_rows: [],
+  promo: { __typename: "SitePromo", enabled: false, text: "", link: "", image: "" },
+  age_gate: false,
+  accent: "",
+  logo_url: null,
+  app_look: true,
 };
 
 export const SiteContext = React.createContext<ISiteContext>({
