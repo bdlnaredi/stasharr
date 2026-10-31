@@ -6,6 +6,7 @@ import { useToast } from "src/hooks/Toast";
 import { baseURL } from "src/core/createClient";
 import { siteStyles } from "src/components/Site/siteStyles";
 import { SettingRow } from "./util";
+import { BrandingEditor, HomeRowsEditor, PromoEditor } from "./SitePanelExtras";
 
 const featuredOptions = [
   { id: "top_rated", label: "Top rated by everyone" },
@@ -163,7 +164,35 @@ export const SitePanel: React.FC = () => {
             <option value="ALL">Everyone</option>
           </Form.Control>
         </SettingRow>
+
+        <SettingRow
+          heading="Age check"
+          sub="Visitors confirm they are 18 or older before the site opens. Asked once per browser."
+        >
+          <Form.Switch
+            id="site-age-gate"
+            disabled={saving}
+            checked={cfg.age_gate}
+            onChange={() => save({ age_gate: !cfg.age_gate })}
+          />
+        </SettingRow>
+
+        <SettingRow
+          heading="Same look in the Android app"
+          sub="Site users get the site's name, colours, top pornstars and site rows on the app's home screen."
+        >
+          <Form.Switch
+            id="site-app-look"
+            disabled={saving}
+            checked={cfg.app_look}
+            onChange={() => save({ app_look: !cfg.app_look })}
+          />
+        </SettingRow>
       </div>
+
+      <HomeRowsEditor cfg={cfg} tags={tags.data?.findTags.tags ?? []} save={save} />
+      <PromoEditor cfg={cfg} save={save} />
+      <BrandingEditor cfg={cfg} save={save} />
 
       <div className="setting-section">
         <h1>Style</h1>

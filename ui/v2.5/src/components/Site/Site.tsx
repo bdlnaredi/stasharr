@@ -9,6 +9,7 @@ import { Loading } from "./SiteCards";
 import { SiteContext } from "./SiteContext";
 import { SiteHome } from "./SiteHome";
 import { SiteSearch } from "./SiteSearch";
+import { ReelsPage } from "./SiteReels";
 import {
   CategoriesPage,
   CategoryPage,
@@ -24,9 +25,13 @@ import {
 import { findSiteStyle, siteStyles } from "./siteStyles";
 import "./site.scss";
 
-const SiteHeader: React.FC<{ name: string; female: boolean }> = ({ name, female }) => {
+const SiteHeader: React.FC<{ name: string; female: boolean; logo?: string | null }> = ({
+  name,
+  female,
+  logo,
+}) => {
   const location = useLocation();
-  const { isAdmin, me } = useCurrentUser();
+  const { isAdmin, me, canViewReels } = useCurrentUser();
   const [menu, setMenu] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -53,9 +58,15 @@ const SiteHeader: React.FC<{ name: string; female: boolean }> = ({ name, female 
         <button type="button" className="site-burger" onClick={() => setMobile(!mobile)} aria-label="Menu">
           ☰
         </button>
-        <Link to="/site" className="site-logo">
-          {first}
-          {last && <span>{last}</span>}
+        <Link to="/site" className={`site-logo ${logo ? "site-logo-image" : ""}`}>
+          {logo ? (
+            <img src={logo} alt={name} />
+          ) : (
+            <>
+              {first}
+              {last && <span>{last}</span>}
+            </>
+          )}
         </Link>
         <nav className={`site-nav ${mobile ? "open" : ""}`}>
           <NavLink exact to="/site">
@@ -65,6 +76,7 @@ const SiteHeader: React.FC<{ name: string; female: boolean }> = ({ name, female 
           <NavLink to="/site/models">{female ? "Pornstars" : "Models"}</NavLink>
           <NavLink to="/site/categories">Categories</NavLink>
           <NavLink to="/site/channels">Channels</NavLink>
+          {canViewReels && <NavLink to="/site/reels">Reels</NavLink>}
           <NavLink to="/site/my-list">My list</NavLink>
         </nav>
         <SiteSearch />
@@ -112,6 +124,57 @@ const AccountPage: React.FC = () => (
   </div>
 );
 
+const AGE_KEY = "stasharr-site-adult-ok";
+
+function ageConfirmed(): boolean {
+  try {
+    return localStorage.getItem(AGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+const AgeGate: React.FC<{ name: string; logo?: string | null; onEnter: () => void }> = ({ name, logo, onEnter }) => (
+  <div className="site-age-gate">
+    <div className="site-age-card">
+      {logo ? <img src={logo} alt={name} className="site-age-logo" /> : <div className="site-logo">{name}</div>}
+      <h2>This is an adult website</h2>
+      <p>
+        It contains sexually explicit material. Only continue if you are at least 18 years old, or the age of
+        majority where you live, and you want to see it.
+      </p>
+      <div className="site-age-actions">
+        <button
+          type="button"
+          className="site-btn site-btn-primary"
+          onClick={() => {
+            try {
+              localStorage.setItem(AGE_KEY, "1");
+            } catch {
+              // private window: asked again next time
+            }
+            onEnter();
+          }}
+        >
+          I am 18 or older — Enter
+        </button>
+        <a className="site-btn site-btn-ghost" href="https://www.google.com" rel="noreferrer">
+          Leave
+        </a>
+      </div>
+    </div>
+  </div>
+);
+
+// Readable text colour on top of an accent colour.
+function textOn(hex: string): string {
+  const n = Number.parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? "#111111" : "#ffffff";
+}
+
 const Site: React.FC = () => {
   const location = useLocation();
   const { data, loading } = GQL.useSiteConfigQuery({ fetchPolicy: "cache-and-network" });
@@ -128,6 +191,7 @@ const Site: React.FC = () => {
   }, [preview]);
 
   const style = findSiteStyle(previewStyle ?? config?.style);
+  const [adult, setAdult] = useState(ageConfirmed);
 
   useEffect(() => {
     document.body.classList.add("site-mode", `site-body-${style.id}`);
@@ -148,10 +212,20 @@ const Site: React.FC = () => {
   if (!config) return null;
 
   const female = config.models_gender === "FEMALE";
+  const accentVars = config.accent
+    ? ({
+        "--site-accent": config.accent,
+        "--site-accent-2": config.accent,
+        "--site-on-accent": textOn(config.accent),
+      } as React.CSSProperties)
+    : undefined;
 
   return (
     <SiteContext.Provider value={{ config, style }}>
-      <div className={`site-root site-style-${style.id}`}>
+      <div className={`site-root site-style-${style.id}`} style={accentVars}>
+        {config.age_gate && !adult && (
+          <AgeGate name={config.name} logo={config.logo_url} onEnter={() => setAdult(true)} />
+        )}
         <Helmet>
           <title>{config.name}</title>
         </Helmet>
@@ -163,7 +237,7 @@ const Site: React.FC = () => {
             </button>
           </div>
         )}
-        <SiteHeader name={config.name} female={female} />
+        <SiteHeader name={config.name} female={female} logo={config.logo_url} />
         <main className="site-main">
           <Switch>
             <Route exact path="/site" component={SiteHome} />
@@ -177,6 +251,7 @@ const Site: React.FC = () => {
             <Route path="/site/category/:id" component={CategoryPage} />
             <Route path="/site/search" component={SearchPage} />
             <Route path="/site/my-list" component={MyListPage} />
+            <Route path="/site/reels" component={ReelsPage} />
             <Route path="/site/account" component={AccountPage} />
             <Route component={SiteHome} />
           </Switch>

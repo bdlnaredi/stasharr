@@ -576,3 +576,70 @@ body.stasharr-no-download {
     height: 22px;
   }
 }
+
+.stasharr-site-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 1rem 0;
+}
+
+.stasharr-site-row {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  display: flex;
+  gap: 8px;
+  padding: 6px 10px;
+
+  &.off {
+    opacity: 0.55;
+  }
+}
+
+.stasharr-site-row-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stasharr-site-row-spacer {
+  width: 38px;
+}
+
+.stasharr-site-row-add {
+  display: flex;
+  gap: 8px;
+  max-width: 480px;
+}
+
+.stasharr-site-logo-edit {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  img {
+    background: #000;
+    border-radius: 4px;
+    max-height: 48px;
+    max-width: 200px;
+    padding: 6px;
+  }
+}
+
+.stasharr-site-accent {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+
+  input[type="color"] {
+    background: none;
+    border: 0;
+    height: 36px;
+    padding: 0;
+    width: 48px;
+  }
+}

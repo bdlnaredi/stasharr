@@ -166,3 +166,24 @@ mutation ConfigureSite($input: SiteConfigInput!) {
     ...SiteConfigData
   }
 }
+
+mutation SiteSetLogo($data: String!) {
+  siteSetLogo(data: $data) {
+    ...SiteConfigData
+  }
+}
+
+mutation SiteToggleLike($scene_id: ID!) {
+  siteToggleLike(scene_id: $scene_id)
+}
+
+mutation SiteToggleFavoriteModel($performer_id: ID!) {
+  siteToggleFavoriteModel(performer_id: $performer_id)
+}
+
+mutation SiteRateScene($id: ID!, $rating100: Int) {
+  sceneUpdate(input: { id: $id, rating100: $rating100 }) {
+    id
+    rating100
+  }
+}

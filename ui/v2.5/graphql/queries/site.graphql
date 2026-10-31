@@ -54,6 +54,25 @@ fragment SiteConfigData on SiteConfig {
   }
   models_gender
   applies_to_me
+  home_rows {
+    type
+    title
+    enabled
+    tag {
+      id
+      name
+    }
+  }
+  promo {
+    enabled
+    text
+    link
+    image
+  }
+  age_gate
+  accent
+  logo_url
+  app_look
 }
 
 query SiteConfig {
@@ -62,8 +81,8 @@ query SiteConfig {
   }
 }
 
-query SiteSceneList($kind: SiteSceneKind!, $page: Int, $per_page: Int) {
-  siteScenes(kind: $kind, page: $page, per_page: $per_page) {
+query SiteSceneList($kind: SiteSceneKind!, $page: Int, $per_page: Int, $performer_id: ID) {
+  siteScenes(kind: $kind, page: $page, per_page: $per_page, performer_id: $performer_id) {
     count
     scenes {
       ...SiteSceneCard
@@ -92,6 +111,7 @@ query SiteModels($filter: FindFilterType, $performer_filter: PerformerFilterType
 query SiteModel($id: ID!) {
   findPerformer(id: $id) {
     ...SiteModelCard
+    site_favorite
     alias_list
     ethnicity
     hair_color
@@ -176,6 +196,73 @@ query SiteMyList {
     watch_later
     scenes {
       ...SiteSceneCard
+    }
+  }
+}
+
+query SiteSceneExtras($id: ID!) {
+  findScene(id: $id) {
+    id
+    rating100
+    site_liked
+    in_watch_later
+    site_rating {
+      average
+      count
+    }
+  }
+}
+
+query SiteLiked($page: Int, $per_page: Int) {
+  siteLikedScenes(page: $page, per_page: $per_page) {
+    count
+    scenes {
+      ...SiteSceneCard
+    }
+  }
+}
+
+query SiteFromFavorites($page: Int, $per_page: Int) {
+  siteFromFavorites(page: $page, per_page: $per_page) {
+    count
+    scenes {
+      ...SiteSceneCard
+    }
+  }
+}
+
+query SiteFavoriteModels {
+  siteFavoriteModels {
+    ...SiteModelCard
+  }
+}
+
+query SiteCoStars($performer_id: ID!) {
+  siteCoStars(performer_id: $performer_id, limit: 12) {
+    scenes
+    performer {
+      ...SiteModelCard
+    }
+  }
+}
+
+query SiteFilterOptions {
+  findTags(
+    filter: { per_page: 150, sort: "scenes_count", direction: DESC }
+    tag_filter: { scene_count: { value: 0, modifier: GREATER_THAN } }
+  ) {
+    tags {
+      id
+      name
+    }
+  }
+  findStudios(
+    filter: { per_page: 150, sort: "scenes_count", direction: DESC }
+    studio_filter: { scene_count: { value: 0, modifier: GREATER_THAN } }
+  ) {
+    studios {
+      id
+      name
     }
   }
 }
