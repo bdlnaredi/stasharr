@@ -370,17 +370,22 @@ body.site-mode {
 
 // hero
 
+// The banner grows to fit its text: the text sits in the normal flow at
+// the bottom of the stage, so it can never slide up under the menu bar,
+// whatever the screen shape.
 .site-hero {
   display: flex;
-  height: var(--site-hero-height);
   margin-top: -68px;
-  min-height: 460px;
   position: relative;
 }
 
 .site-hero-stage {
+  align-items: flex-end;
+  display: flex;
   flex: 1;
+  min-height: max(var(--site-hero-height), 420px);
   overflow: hidden;
+  padding: 96px clamp(16px, 4vw, 72px) calc(40px + 5vh);
   position: relative;
 }
 
@@ -426,10 +431,9 @@ body.site-mode {
 
 .site-hero-text {
   animation: site-rise 0.7s ease both;
-  bottom: 12%;
-  left: clamp(16px, 4vw, 72px);
-  max-width: min(720px, 88vw);
-  position: absolute;
+  max-width: min(720px, 100%);
+  position: relative;
+  width: 100%;
   z-index: 2;
 
   h1 {
@@ -456,14 +460,6 @@ body.site-mode {
   }
 }
 
-// with the header bar over the full banner, keep the text below it
-.site-hero-full .site-hero-text {
-  max-height: calc(100% - 110px);
-}
-
-.site-hero-split .site-hero-text {
-  bottom: 9%;
-}
 
 @keyframes site-rise {
   from {
@@ -583,10 +579,11 @@ body.site-mode {
 }
 
 .site-hero-dots {
-  bottom: 28px;
+  bottom: 18px;
   display: flex;
   gap: 8px;
   position: absolute;
+  z-index: 2;
   right: clamp(16px, 4vw, 72px);
 
   button {
@@ -614,10 +611,10 @@ body.site-mode {
   padding: 18px clamp(16px, 3vw, 48px) 0;
 
   .site-hero-stage {
-    aspect-ratio: 16 / 7.5;
     border-radius: var(--site-radius);
     box-shadow: var(--site-glow);
-    max-height: 72vh;
+    min-height: min(72vh, 46vw);
+    padding-top: 48px;
   }
 }
 
@@ -1694,12 +1691,12 @@ body.site-mode {
     margin-right: auto;
   }
 
-  .site-hero {
+  .site-hero-stage {
     min-height: 420px;
   }
 
   .site-hero-split .site-hero-stage {
-    aspect-ratio: 4 / 5;
+    min-height: 110vw;
   }
 
   .site-hero-text h1 {
@@ -1708,6 +1705,11 @@ body.site-mode {
 
   .site-hero-details {
     display: none;
+  }
+
+  .site-hero-actions .site-btn {
+    font-size: 12px;
+    padding: 11px 16px;
   }
 
   .site-scene-grid,
@@ -1729,5 +1731,61 @@ body.site-mode {
 
   .site-scene-header {
     flex-direction: column;
+  }
+}
+
+// phones held sideways and other short screens: a compact banner
+@media (max-height: 560px) and (orientation: landscape) {
+  .site-hero-stage,
+  .site-hero-split .site-hero-stage {
+    min-height: 100vh;
+    padding-bottom: 36px;
+    padding-top: 80px;
+  }
+
+  .site-hero-split {
+    padding-top: 10px;
+
+    .site-hero-stage {
+      min-height: calc(100vh - 88px);
+      padding-top: 40px;
+    }
+  }
+
+  .site-hero-side {
+    display: none;
+  }
+
+  .site-hero-text {
+    max-width: min(560px, 100%);
+
+    h1,
+    h1.site-title-long,
+    h1.site-title-xlong {
+      -webkit-line-clamp: 2;
+      font-size: clamp(20px, 4.2vh + 1vw, 30px);
+      margin: 6px 0 6px;
+    }
+  }
+
+  .site-hero-models {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .site-hero-details {
+    display: none;
+  }
+
+  .site-hero-actions {
+    margin-top: 12px;
+  }
+
+  .site-btn {
+    padding: 9px 18px;
+  }
+
+  .site-hero-dots {
+    bottom: 12px;
   }
 }
