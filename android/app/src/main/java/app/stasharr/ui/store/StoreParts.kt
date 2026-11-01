@@ -65,7 +65,10 @@ import app.stasharr.app
 import app.stasharr.data.Performer
 import app.stasharr.data.Scene
 import app.stasharr.data.SitePromo
+import app.stasharr.player.AutoPreview
 import app.stasharr.player.PreviewPlayer
+import app.stasharr.player.previewSpot
+import app.stasharr.player.rememberPreviewKey
 import app.stasharr.player.ScenePreview
 import app.stasharr.ui.LocalNav
 import app.stasharr.ui.SiteMode
@@ -167,7 +170,8 @@ fun StoreHeader(title: String, onAll: (() -> Unit)? = null, allText: String = "V
 fun StoreSceneCard(scene: Scene, modifier: Modifier = Modifier, width: Dp? = 260.dp, onClick: (() -> Unit)? = null) {
     val nav = LocalNav.current
     val haptics = LocalHapticFeedback.current
-    val previewing = PreviewPlayer.activeCardId == scene.id && scene.paths.preview != null
+    val key = rememberPreviewKey("card")
+    val previewing = PreviewPlayer.activeCardId == key && scene.paths.preview != null
     Column(
         (if (width != null) modifier.width(width) else modifier.fillMaxWidth())
             .clip(RoundedCornerShape(12.dp))
@@ -179,13 +183,13 @@ fun StoreSceneCard(scene: Scene, modifier: Modifier = Modifier, width: Dp? = 260
                 onLongClick = {
                     if (scene.paths.preview != null) {
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        PreviewPlayer.activeCardId = if (previewing) null else scene.id
+                        PreviewPlayer.activeCardId = if (previewing) null else key
                     }
                 },
             )
     ) {
         Box {
-            SceneThumb(scene, preview = previewing)
+            SceneThumb(scene, preview = previewing, modifier = Modifier.previewSpot(key, AutoPreview.enabled && scene.paths.preview != null))
             if (scene.isNew) {
                 Badge("NEW", Modifier.align(Alignment.TopStart).padding(6.dp), gradient = true)
             }
@@ -310,9 +314,21 @@ fun StoreHero(scenes: List<Scene>) {
     Box(Modifier.fillMaxWidth().height(560.dp)) {
         HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { page ->
             val s = scenes[page]
-            Box(Modifier.fillMaxSize().clickable { nav.scene(s.id) }) {
+            val key = rememberPreviewKey("hero")
+            val current = pager.currentPage == page && !pager.isScrollInProgress
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .previewSpot(key, AutoPreview.enabled && current && s.paths.preview != null)
+                    .clickable { nav.scene(s.id) }
+            ) {
                 AsyncImage(s.paths.screenshot, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-                ScenePreview(s.paths.preview, active = pager.currentPage == page, modifier = Modifier.fillMaxSize(), delayMs = 900)
+                ScenePreview(
+                    s.paths.preview,
+                    active = if (AutoPreview.enabled) PreviewPlayer.activeCardId == key else current,
+                    modifier = Modifier.fillMaxSize(),
+                    delayMs = 300,
+                )
                 Box(
                     Modifier.fillMaxSize().background(
                         Brush.verticalGradient(

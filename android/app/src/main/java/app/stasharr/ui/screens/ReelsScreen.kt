@@ -56,6 +56,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import app.stasharr.R
 import app.stasharr.app
 import app.stasharr.data.Reel
 import app.stasharr.player.newPlayer
@@ -98,14 +99,18 @@ fun ReelsScreen() {
     LaunchedEffect(muted) { player.volume = if (muted) 0f else 1f }
 
     // play the reel on screen; load more near the end
-    LaunchedEffect(pager.settledPage, reels.items.size) {
-        val i = pager.settledPage
-        val reel = reels.items.getOrNull(i) ?: return@LaunchedEffect
+    val onScreen = reels.items.getOrNull(pager.settledPage)?.id
+    LaunchedEffect(onScreen) {
+        val reel = reels.items.getOrNull(pager.settledPage) ?: return@LaunchedEffect
         player.setMediaItem(MediaItem.fromUri(reel.stream))
         player.prepare()
         paused = false
+        player.playWhenReady = true
         player.play()
-        if (i >= reels.items.size - 4) reels.loadMore()
+    }
+    // load more near the end, without restarting the reel on screen
+    LaunchedEffect(pager.settledPage, reels.items.size) {
+        if (reels.items.isNotEmpty() && pager.settledPage >= reels.items.size - 4) reels.loadMore()
     }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -183,10 +188,12 @@ private fun ReelPage(
         if (active) {
             AndroidView(
                 factory = { ctx ->
-                    PlayerView(ctx).apply {
+                    // a TextureView, not the default SurfaceView: a SurfaceView sits
+                    // behind the screen and the screenshot covered it until the next
+                    // redraw, so reels looked stopped until the screen was touched
+                    (android.view.LayoutInflater.from(ctx).inflate(R.layout.player_texture_view, null) as PlayerView).apply {
                         useController = false
                         resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                        setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
                         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
                         this.player = player
                     }

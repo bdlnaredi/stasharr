@@ -59,6 +59,7 @@ import app.stasharr.ui.screens.SceneScreen
 import app.stasharr.ui.screens.StudioScreen
 import app.stasharr.ui.screens.TagScreen
 import app.stasharr.ui.theme.Brand
+import app.stasharr.player.AutoPreview
 import app.stasharr.ui.store.AgeGate
 import app.stasharr.ui.store.StoreHome
 import app.stasharr.ui.store.StoreModel
@@ -181,6 +182,7 @@ private fun MainScaffold() {
     val backStack by nav.currentBackStackEntryAsState()
     val current = backStack?.destination?.route
 
+    AutoPreview.Controller()
     CompositionLocalProvider(LocalNav provides navigator, LocalOpenDownloads provides { navigator.downloads() }) {
         Scaffold(
             containerColor = Brand.Background,
