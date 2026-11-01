@@ -46,6 +46,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.app
+import app.stasharr.player.AutoPreview
+import app.stasharr.player.PreviewPlayer
+import app.stasharr.player.previewSpot
+import app.stasharr.player.rememberPreviewKey
 import app.stasharr.ui.SiteMode
 import app.stasharr.data.Tag
 import androidx.compose.foundation.clickable
@@ -289,9 +293,12 @@ private fun Hero(scenes: List<Scene>) {
         HorizontalPager(state = pager, modifier = Modifier.fillMaxSize()) { page ->
             val s = scenes[page]
             val offset = (pager.currentPage - page + pager.currentPageOffsetFraction).absoluteValue
+            val key = rememberPreviewKey("hero")
+            val current = page == pager.settledPage && !pager.isScrollInProgress
             Box(
                 Modifier
                     .fillMaxSize()
+                    .previewSpot(key, AutoPreview.enabled && current && s.paths.preview != null)
                     .graphicsLayer { alpha = 1f - (offset * 0.6f).coerceIn(0f, 0.6f) }
             ) {
                 AsyncImage(
@@ -309,9 +316,9 @@ private fun Hero(scenes: List<Scene>) {
                 )
                 ScenePreview(
                     s.paths.preview,
-                    active = page == pager.settledPage && !pager.isScrollInProgress,
+                    active = if (AutoPreview.enabled) PreviewPlayer.activeCardId == key else current,
                     modifier = Modifier.fillMaxSize(),
-                    delayMs = 1200,
+                    delayMs = 300,
                 )
                 Box(
                     Modifier

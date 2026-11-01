@@ -62,6 +62,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.app
+import app.stasharr.player.AutoPreview
+import app.stasharr.player.PreviewPlayer
+import app.stasharr.player.previewSpot
+import app.stasharr.player.rememberPreviewKey
 import app.stasharr.ui.SiteMode
 import app.stasharr.ui.store.AverageStars
 import androidx.compose.material.icons.rounded.Favorite
@@ -123,6 +127,7 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
     var oCount by remember(scene.id) { mutableIntStateOf(scene.oCounter ?: 0) }
     var showPlaylists by remember { mutableStateOf(false) }
     var showDownload by remember { mutableStateOf(false) }
+    val pageKey = rememberPreviewKey("page")
     val store = SiteMode.storefront
     val extras = rememberLoad(scene.id, store) { if (store) app.repo.sceneExtras(scene.id) else null }
     var liked by remember(scene.id) { mutableStateOf(false) }
@@ -168,6 +173,7 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
                         .aspectRatio(16f / 9f)
                         .clip(RoundedCornerShape(18.dp))
                         .background(Brand.SurfaceHigh)
+                        .previewSpot(pageKey, AutoPreview.enabled && scene.paths.preview != null)
                         .clickable { nav.play(scene.id, if (canResume) resume else 0.0) }
                 ) {
                     AsyncImage(
@@ -177,7 +183,12 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                     )
                     // the moving preview, like Netflix
-                    ScenePreview(scene.paths.preview, active = true, modifier = Modifier.fillMaxSize(), delayMs = 600)
+                    ScenePreview(
+                        scene.paths.preview,
+                        active = if (AutoPreview.enabled) PreviewPlayer.activeCardId == pageKey else true,
+                        modifier = Modifier.fillMaxSize(),
+                        delayMs = 200,
+                    )
                     Box(
                         Modifier
                             .align(Alignment.Center)

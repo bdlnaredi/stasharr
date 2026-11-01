@@ -65,6 +65,7 @@ import app.stasharr.data.Me
 import app.stasharr.data.Playlist
 import app.stasharr.ui.LocalNav
 import app.stasharr.ui.SiteMode
+import app.stasharr.player.AutoPreview
 import app.stasharr.ui.components.GlassButton
 import app.stasharr.ui.components.GradientButton
 import app.stasharr.ui.components.GradientText
@@ -326,6 +327,26 @@ fun ProfileScreen(me: Me?) {
                 androidx.compose.material3.Switch(
                     checked = SiteMode.preview,
                     onCheckedChange = { SiteMode.setPreview(ctx, it) },
+                )
+            }
+        }
+        run {
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Play previews automatically", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "Banners and the scene at the top of the screen play a short muted preview. Turn off to save data; press and hold a scene to preview it.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Brand.TextMuted,
+                    )
+                }
+                androidx.compose.material3.Switch(
+                    checked = AutoPreview.enabled,
+                    onCheckedChange = { AutoPreview.setEnabled(ctx, it) },
                 )
             }
         }

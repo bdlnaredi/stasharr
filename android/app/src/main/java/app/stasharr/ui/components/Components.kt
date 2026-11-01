@@ -55,7 +55,10 @@ import app.stasharr.data.Performer
 import app.stasharr.data.PerformerRef
 import app.stasharr.data.Scene
 import app.stasharr.data.Studio
+import app.stasharr.player.AutoPreview
 import app.stasharr.player.PreviewPlayer
+import app.stasharr.player.previewSpot
+import app.stasharr.player.rememberPreviewKey
 import app.stasharr.player.ScenePreview
 import app.stasharr.ui.theme.Brand
 import coil.compose.AsyncImage
@@ -306,7 +309,8 @@ fun SceneThumb(
 @Composable
 fun SceneCard(scene: Scene, onClick: () -> Unit, modifier: Modifier = Modifier, width: Dp? = 240.dp) {
     val haptics = LocalHapticFeedback.current
-    val previewing = PreviewPlayer.activeCardId == scene.id && scene.paths.preview != null
+    val key = rememberPreviewKey("card")
+    val previewing = PreviewPlayer.activeCardId == key && scene.paths.preview != null
     Column(
         (if (width != null) modifier.width(width) else modifier.fillMaxWidth())
             .clip(RoundedCornerShape(12.dp))
@@ -318,12 +322,12 @@ fun SceneCard(scene: Scene, onClick: () -> Unit, modifier: Modifier = Modifier, 
                 onLongClick = {
                     if (scene.paths.preview != null) {
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        PreviewPlayer.activeCardId = if (previewing) null else scene.id
+                        PreviewPlayer.activeCardId = if (previewing) null else key
                     }
                 },
             )
     ) {
-        SceneThumb(scene, preview = previewing)
+        SceneThumb(scene, preview = previewing, modifier = Modifier.previewSpot(key, AutoPreview.enabled && scene.paths.preview != null))
         Spacer(Modifier.height(8.dp))
         Text(
             scene.displayTitle,
