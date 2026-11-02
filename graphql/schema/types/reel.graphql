@@ -92,7 +92,6 @@ extend type Scene {
   reels: [Reel!]!
 }
 
-extend type Query {
   "Reels, newest first"
   "Newest first, or shuffled with a seed (any number; keep it for the next pages). start_id puts that reel first."
   findReels(page: Int, per_page: Int, seed: Int, start_id: ID): FindReelsResultType!
