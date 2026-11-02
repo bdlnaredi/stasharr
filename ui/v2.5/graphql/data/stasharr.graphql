@@ -187,3 +187,24 @@ fragment MaintenanceConfigData on MaintenanceConfig {
   resync_last_run
   stash_boxes
 }
+
+fragment AIMarkerConfigData on AIMarkerConfig {
+  url
+  interval
+  min_confidence
+  min_seconds
+  auto
+  review
+  labels {
+    name
+    prompt
+    enabled
+    marker
+  }
+  default_labels {
+    name
+    prompt
+    enabled
+    marker
+  }
+}

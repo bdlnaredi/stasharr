@@ -43,3 +43,32 @@ services:
       - ./blobs:/blobs
       ## Where to store generated content (screenshots,previews,transcodes,sprites)
       - ./generated:/generated
+
+  ## Optional: Stasharr Tagger, for AI markers (Settings → AI markers,
+  ## tagger address http://stasharr-tagger:2705). Remove this block if you
+  ## do not want it.
+  stasharr-tagger:
+    ## :latest runs on the CPU. With an NVIDIA card use :cuda and uncomment
+    ## the "deploy" block below (needs the NVIDIA Container Toolkit).
+    image: ghcr.io/bdlnaredi/stasharr-tagger:latest
+    container_name: stasharr-tagger
+    restart: unless-stopped
+    environment:
+      ## processor threads it may use
+      - TAGGER_THREADS=2
+      ## ViT-B-32 is quick on a CPU; on a graphics card ViT-L-14 with
+      ## TAGGER_PRETRAINED=laion2b_s32b_b82k is more accurate
+      - TAGGER_MODEL=ViT-B-32
+      - TAGGER_PRETRAINED=laion2b_s34b_b79k
+      - TZ=Etc/UTC
+    volumes:
+      ## the model is downloaded here once
+      - ./tagger-models:/models
+    ## NVIDIA graphics card:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]

@@ -161,6 +161,37 @@ tab, for the whole library under Settings → Auto-import (**Make reels**, or
 Watch them on the **Reels** page, which plays one reel per screen as you
 scroll. Reels are stored in your generated folder under `reels/`.
 
+## AI markers
+
+Stasharr can look through your scenes and suggest markers (Kissing,
+Blowjob, Cowgirl, Doggy Style…) with the **Stasharr Tagger**, a small
+add-on container that recognises what is happening in video frames with
+an OpenCLIP model.
+
+1. Run the tagger next to Stasharr:
+   - `ghcr.io/bdlnaredi/stasharr-tagger:latest` on the processor, or
+   - `ghcr.io/bdlnaredi/stasharr-tagger:cuda` on an NVIDIA graphics card.
+
+   On Unraid use the `stasharr-tagger` or `stasharr-tagger-nvidia`
+   template in the `unraid` folder (the NVIDIA one needs the Nvidia-Driver
+   plugin and already has `--runtime=nvidia` set). With Docker Compose,
+   uncomment the tagger block in `docker-compose.yml`. The first start
+   downloads the model into `/models`.
+2. In Stasharr open **Settings → AI markers**, enter the tagger's address
+   (for example `http://192.168.0.10:2705`, or
+   `http://stasharr-tagger:2705` with Compose) and check it says Ready.
+3. Press **Look at the rest** to go through the library. New scenes are
+   looked at as they are imported.
+4. Suggestions wait under **Waiting for review**: play the moment, then
+   keep it (it becomes a marker with a tag of the same name) or throw it
+   away. Turn review off to save them straight away.
+
+You can rename, reword, add or turn off labels. Rough speed for a 30-minute
+scene, looking every 4 seconds: a minute or two on a recent desktop
+processor, 5–15 minutes on a low-power one, well under a minute on an
+NVIDIA card. The model is a general one, not trained for adult content, so
+expect some wrong suggestions; review catches them.
+
 ## Trash bin
 
 Files you delete from the library (scenes, images, galleries, or duplicates

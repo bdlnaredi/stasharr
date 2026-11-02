@@ -28,11 +28,13 @@ import { RenamerPanel } from "../Stasharr/RenamerPanel";
 import { NotificationsPanel } from "../Stasharr/NotificationsPanel";
 import { MaintenancePanel } from "../Stasharr/MaintenancePanel";
 import { SitePanel } from "../Stasharr/SitePanel";
+import { AIMarkersPanel } from "../Stasharr/AIMarkersPanel";
 import { TroubleshootingModeButton } from "../TroubleshootingMode/TroubleshootingModeButton";
 import { useTroubleshootingMode } from "../TroubleshootingMode/useTroubleshootingMode";
 
 const validTabs = [
   "tasks",
+  "ai-markers",
   "library",
   "interface",
   "security",
@@ -128,6 +130,7 @@ function tabsForRole(isAdmin: boolean, isEditor: boolean): ISettingsTab[] {
   const extra: ISettingsTab[] = [
     { key: "users", label: "Users & tiers" },
     { key: "auto-import", label: "Auto-import" },
+    { key: "ai-markers", label: "AI markers" },
     { key: "trash", label: "Trash bin" },
     { key: "duplicates", label: "Duplicate cleanup" },
     { key: "renamer", label: "File renamer" },
@@ -226,6 +229,9 @@ const SettingTabs: React.FC<{ tab: TabKey }> = ({ tab }) => {
             </Tab.Pane>
             <Tab.Pane eventKey="maintenance" unmountOnExit>
               <MaintenancePanel />
+            </Tab.Pane>
+            <Tab.Pane eventKey="ai-markers" unmountOnExit>
+              <AIMarkersPanel />
             </Tab.Pane>
             <Tab.Pane eventKey="site" unmountOnExit>
               <SitePanel />

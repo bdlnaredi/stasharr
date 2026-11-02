@@ -643,3 +643,145 @@ body.stasharr-no-download {
     width: 48px;
   }
 }
+
+// AI markers
+.stasharr-ai-status,
+.stasharr-ai-url,
+.stasharr-ai-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stasharr-ai-url .form-control {
+  min-width: 280px;
+}
+
+.stasharr-ai-actions {
+  margin-top: 10px;
+}
+
+.stasharr-ai-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stasharr-ai-label {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 34px minmax(110px, 1fr) minmax(200px, 3fr) 52px 36px;
+
+  &.head {
+    color: #8a9ba8;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+
+  &.off .form-control {
+    opacity: 0.5;
+  }
+}
+
+.stasharr-ai-scene {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 14px 0;
+}
+
+.stasharr-ai-scene-head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+
+  a {
+    font-weight: 600;
+  }
+}
+
+.stasharr-ai-suggestions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.stasharr-ai-suggestion {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.stasharr-ai-moment {
+  aspect-ratio: 16 / 9;
+  background: #000;
+  position: relative;
+
+  button {
+    background: none;
+    border: 0;
+    height: 100%;
+    padding: 0;
+    width: 100%;
+  }
+
+  img,
+  video {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  video {
+    object-fit: contain;
+  }
+
+  span {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 3px;
+    bottom: 6px;
+    color: #fff;
+    font-size: 12px;
+    left: 6px;
+    padding: 1px 6px;
+    position: absolute;
+  }
+}
+
+.stasharr-ai-suggestion-text {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px 0;
+
+  span {
+    color: #8a9ba8;
+    font-size: 12px;
+  }
+}
+
+.stasharr-ai-suggestion-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  padding: 6px 10px 10px;
+}
+
+@media (max-width: 640px) {
+  .stasharr-ai-label {
+    grid-template-columns: 30px 1fr 44px 34px;
+
+    > :nth-child(3) {
+      grid-column: 1 / -1;
+      order: 5;
+    }
+
+    &.head > :nth-child(3) {
+      display: none;
+    }
+  }
+}

@@ -2386,3 +2386,57 @@ func (i *Config) GetLoginBackdrop() string {
 // GetLoginBackdropTag limits the login backdrop to scenes with this tag; 0
 // for any scene.
 func (i *Config) GetLoginBackdropTag() int { return i.getInt(LoginBackdropTag) }
+
+// Stasharr: AI markers made with the Stasharr Tagger
+
+const (
+	AIURL           = "stasharr.ai.url"
+	AIInterval      = "stasharr.ai.interval"
+	AIMinConfidence = "stasharr.ai.min_confidence"
+	AIMinSeconds    = "stasharr.ai.min_seconds"
+	AIAuto          = "stasharr.ai.auto"
+	AIReview        = "stasharr.ai.review"
+	AILabels        = "stasharr.ai.labels"
+)
+
+// GetAIURL is the Stasharr Tagger's address, for example
+// http://stasharr-tagger:2705. Empty turns AI markers off.
+func (i *Config) GetAIURL() string {
+	return strings.TrimRight(strings.TrimSpace(i.getString(AIURL)), "/")
+}
+
+// GetAIInterval is how many seconds apart frames are looked at.
+func (i *Config) GetAIInterval() float64 {
+	v := i.getFloat64(AIInterval)
+	if v < 1 || v > 30 {
+		return 4
+	}
+	return v
+}
+
+// GetAIMinConfidence is how sure the tagger must be, from 0 to 1.
+func (i *Config) GetAIMinConfidence() float64 {
+	v := i.getFloat64(AIMinConfidence)
+	if v <= 0 || v >= 1 {
+		return 0.35
+	}
+	return v
+}
+
+// GetAIMinSeconds is how long something must go on to get a marker.
+func (i *Config) GetAIMinSeconds() float64 {
+	v := i.getFloat64(AIMinSeconds)
+	if v < 3 || v > 600 {
+		return 16
+	}
+	return v
+}
+
+// GetAIAuto: look at new scenes as they are imported.
+func (i *Config) GetAIAuto() bool { return i.getBoolDefault(AIAuto, true) }
+
+// GetAIReview: suggestions wait for an admin before they become markers.
+func (i *Config) GetAIReview() bool { return i.getBoolDefault(AIReview, true) }
+
+// GetAILabelsJSON is the saved label list, or empty for the defaults.
+func (i *Config) GetAILabelsJSON() string { return i.getString(AILabels) }
