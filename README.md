@@ -9,7 +9,7 @@ things Stash does not do on its own:
 - **Auto-import**: new files are scanned and identified automatically, using
   ThePornDB, StashDB and any other stash-boxes or scrapers you have set up
 - **Reels**: automatic 15 second vertical clips of the best moments of a scene,
-  with a swipe-through Reels page
+  with a swipe-through Reels page, view counts and comments
 - **Trash bin**: deleted files can be restored, and are deleted for good after
   30 days
 - **Duplicate cleanup**: keeps the best copy of each duplicate and moves the
@@ -20,9 +20,17 @@ things Stash does not do on its own:
 - **Recommendations**: "Similar" scenes on every scene page and "Recommended
   for you" on the home page, per user
 - **Phone app**: install Stasharr on your phone's home screen
-- **Android app**: a native app with a Plex-style home screen, full screen
-  player, picture-in-picture and Reels
+- **Android app**: a native app with a Plex-style home screen (or the site's
+  storefront), full screen player, picture-in-picture, Chromecast, downloads
+  and Reels
 - **Audio files**: mp3, m4a, flac and other audio files are added as scenes
+- **Site front end**: viewers get a storefront-style site (featured banner,
+  top pornstars, trending, categories) in five styles and five languages,
+  with likes, favourites, ratings, comments and view counts
+- **AI markers**: the optional Stasharr Tagger container recognises what
+  happens in a scene and suggests markers, on the CPU or an NVIDIA card
+- **Smart playlists, notifications, scheduled backups and metadata refresh**
+- **A new login page** with pictures or previews from the library behind it
 
 Everything else works exactly like Stash, and an existing Stash database is
 upgraded in place the first time Stasharr starts. The web interface runs on
@@ -74,7 +82,12 @@ config folder (and the other volumes at the same folders as before). Back up
 `stash-go.sqlite` first: Stasharr adds new tables to the database, and after
 that the database can no longer be opened by upstream Stash.
 
-An Unraid template is in [`unraid/stasharr.xml`](unraid/stasharr.xml).
+An Unraid template is in [`unraid/stasharr.xml`](unraid/stasharr.xml). For AI
+markers, also run the Stasharr Tagger (see [AI markers](#ai-markers)); the
+`docker-compose.yml` in this repository has it ready as an optional block.
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each version. The same
+list is under **Settings → Changelog** in Stasharr.
 
 ## Users, roles and tiers
 
@@ -161,36 +174,82 @@ tab, for the whole library under Settings → Auto-import (**Make reels**, or
 Watch them on the **Reels** page, which plays one reel per screen as you
 scroll. Reels are stored in your generated folder under `reels/`.
 
+Each reel has its own picture, taken from the reel a third of the way in
+(older reels get one the first time they are shown). The Reels player on the
+site and in the Android app plays reels in a new random order every visit.
+A reel counts as watched after two seconds of play, and the count shows on
+reel cards and in the player. The 💬 button opens the scene's comments
+next to the reel.
+
 ## AI markers
 
 Stasharr can look through your scenes and suggest markers (Kissing,
-Blowjob, Cowgirl, Doggy Style…) with the **Stasharr Tagger**, a small
-add-on container that recognises what is happening in video frames with
-an OpenCLIP model.
+Blowjob, Cowgirl, Doggy Style…) with the **Stasharr Tagger**, a small add-on
+container that recognises what is happening in video frames with an
+OpenCLIP model. Markers show as chapters on scene pages and help reels pick
+their moments.
 
-1. Run the tagger next to Stasharr:
-   - `ghcr.io/bdlnaredi/stasharr-tagger:latest` on the processor, or
-   - `ghcr.io/bdlnaredi/stasharr-tagger:cuda` on an NVIDIA graphics card.
+| Image | Runs on | Model (default) | First download |
+|---|---|---|---|
+| `ghcr.io/bdlnaredi/stasharr-tagger:latest` | processor | ViT-B-32 | about 600 MB |
+| `ghcr.io/bdlnaredi/stasharr-tagger:cuda` | NVIDIA graphics card | ViT-L-14 (more accurate) | about 1.7 GB |
 
-   On Unraid use the `stasharr-tagger` or `stasharr-tagger-nvidia`
-   template in the `unraid` folder (the NVIDIA one needs the Nvidia-Driver
-   plugin and already has `--runtime=nvidia` set). With Docker Compose,
-   uncomment the tagger block in `docker-compose.yml`. The first start
-   downloads the model into `/models`.
-2. In Stasharr open **Settings → AI markers**, enter the tagger's address
-   (for example `http://192.168.0.10:2705`, or
-   `http://stasharr-tagger:2705` with Compose) and check it says Ready.
-3. Press **Look at the rest** to go through the library. New scenes are
-   looked at as they are imported.
-4. Suggestions wait under **Waiting for review**: play the moment, then
-   keep it (it becomes a marker with a tag of the same name) or throw it
-   away. Turn review off to save them straight away.
+### Install on Unraid
 
-You can rename, reword, add or turn off labels. Rough speed for a 30-minute
-scene, looking every 4 seconds: a minute or two on a recent desktop
-processor, 5–15 minutes on a low-power one, well under a minute on an
-NVIDIA card. The model is a general one, not trained for adult content, so
-expect some wrong suggestions; review catches them.
+1. For an NVIDIA card, install the **Nvidia-Driver** plugin from Community
+   Applications first and check that it lists your card.
+2. Open a terminal (the **>_** icon) and download the templates:
+
+   ```
+   wget -O /boot/config/plugins/dockerMan/templates-user/my-stasharr-tagger-nvidia.xml https://raw.githubusercontent.com/bdlnaredi/stasharr/main/unraid/stasharr-tagger-nvidia.xml
+   wget -O /boot/config/plugins/dockerMan/templates-user/my-stasharr-tagger.xml https://raw.githubusercontent.com/bdlnaredi/stasharr/main/unraid/stasharr-tagger.xml
+   ```
+
+   (Saving the file from GitHub's normal page saves a web page, not the
+   template, and gives an empty form.)
+3. **Docker → Add Container**, pick **stasharr-tagger-nvidia** (or
+   **stasharr-tagger** for the processor) under User templates and press
+   **Apply**. The NVIDIA template already has `--runtime=nvidia`; leave
+   `NVIDIA_VISIBLE_DEVICES` on `all` or paste one card's GPU UUID.
+4. Watch the container's log: the first start downloads the model. It is
+   ready when the log shows `Uvicorn running on http://0.0.0.0:2705`.
+
+### Install with Docker Compose
+
+Uncomment the `stasharr-tagger` block in [`docker-compose.yml`](docker-compose.yml).
+For an NVIDIA card use the `:cuda` image and uncomment its `deploy` section
+(needs the NVIDIA Container Toolkit).
+
+### Use it
+
+1. In Stasharr open **Settings → AI markers** and enter the tagger's
+   address, for example `http://192.168.0.10:2705` (or
+   `http://stasharr-tagger:2705` with Compose). The status shows **Ready**
+   and, with a graphics card, its name. If it says CPU when you expected the
+   card, the card is not reaching the container.
+2. Press **Look at the rest** to go through the library. New scenes are
+   looked at automatically after auto-import (switch: **Look at new
+   scenes**). Progress is under Settings → Tasks.
+3. Suggestions wait under **Waiting for review**. Click one to play that
+   moment, then keep it (✓) or throw it away (✕), or do a whole scene at
+   once. Kept suggestions become markers with a tag of the same name. Turn
+   off **Review before saving** to save them straight away.
+
+**Settings:** **Look every** (seconds between frames: fewer is faster, more
+is more exact), **How sure** (higher gives fewer, more reliable markers) and
+**Shortest marker**. Under **What to look for** you can rename, reword, turn
+off or add labels; plain visual descriptions work best. Labels that do not
+make markers (Talking, Title card, Scenery) help it ignore the parts in
+between.
+
+**Speed**, for a 30-minute scene looking every 4 seconds: about a minute or
+two on a recent desktop processor, 5–15 minutes on a low-power one
+(Celeron, N100), and well under a minute on an NVIDIA card. Only key frames
+are decoded and the tagger runs at low priority with 2 threads by default
+(`TAGGER_THREADS`).
+
+The model is a general one, not trained for adult content, so expect some
+wrong suggestions; the review list is there to catch them.
 
 ## Trash bin
 
@@ -287,6 +346,45 @@ and no extra service:
   down. Every user gets their own, and it only shows once you have some
   history.
 
+## Site front end
+
+**Settings → Site look** turns on a storefront-style site for viewers (or
+viewers and editors) instead of the library interface. Admins keep the
+normal interface and open the site from the menu.
+
+- **Home:** a featured banner that plays previews, a just-added ticker, an
+  optional promo banner and rows the admin arranges, renames and hides:
+  Continue watching, Latest, Top pornstars, Trending, Most viewed, Picked
+  for you, New from your favourites, Liked scenes, Reels, Top rated,
+  Categories, Channels, and rows for any tag. The featured scenes are the
+  top rated, most popular, newest, random, or scenes with a chosen tag.
+- **Pages:** scenes with sort tabs and filters (category, length, quality,
+  channel), pornstars A–Z with rich pornstar pages, categories, channels,
+  live search while typing, and My list.
+- **Scene pages:** chapters from markers, Up next, theatre mode, likes,
+  ratings (yours and everyone's average), view counts and comments.
+- **Reels:** a home row and a swipe-through player with views and comments.
+- **Five styles:** Velvet, Neon, Crimson, Blush and Onyx, plus your own logo
+  and accent colour. Admins can preview a style before using it.
+- **Five languages:** English, हिन्दी, Français, Русский and Español,
+  chosen by each visitor from the globe button (the first visit follows the
+  browser's language). Names, titles and your own row headings stay as you
+  typed them.
+- **Age check** before the site opens, asked once per browser.
+- **Comments:** under every scene and on its reels. People can delete their
+  own comments; admins can delete any.
+- **Same look in the Android app** for site users (switch **Same look in
+  the Android app**).
+
+### Login page
+
+The login box sits in the top right corner over drifting pictures or
+moving previews from the library. Under **Settings → Site look → Login
+page** choose **Moving previews**, **Scene pictures** or **Plain**, and
+optionally only scenes with one tag. The login page is visible to anyone
+who can reach your server, so use the tag if only some scenes should be
+shown there.
+
 ## Phone app
 
 Stasharr can be installed on your phone's home screen and opens full screen,
@@ -332,6 +430,18 @@ over the old one.
 (the app adds `http://` and the port for you), and your Stasharr username and
 password. Leave them empty if your server has no login. Away from home, use a
 VPN such as Tailscale, or an https address.
+
+**Storefront:** site users get the site's storefront in the app (admins can
+switch it on under **You → Site layout**): featured banner, ticker, promo,
+the admin's home rows, Scenes with sort tabs and filters, Pornstars A–Z,
+pornstar pages, My list, likes and ratings.
+
+**Previews and reels:** once scrolling stops, the banner or the top scene
+card plays its preview (switch under You). Reels play in random order, count
+views and show views and comments.
+
+**Chromecast:** tap the cast button in the player to move the scene to the
+TV from where you are, and back to the phone when casting ends.
 
 **Downloads:** tap **Download** on a scene to watch it without the server.
 Pick the original file or a smaller 1080p, 720p or 480p copy, which the
