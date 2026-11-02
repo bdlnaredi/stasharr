@@ -92,7 +92,7 @@ extend type Scene {
   reels: [Reel!]!
 }
 
-  "Reels, newest first"
+extend type Query {
   "Newest first, or shuffled with a seed (any number; keep it for the next pages). start_id puts that reel first."
   findReels(page: Int, per_page: Int, seed: Int, start_id: ID): FindReelsResultType!
   libraryWatcherConfig: LibraryWatcherConfig!
