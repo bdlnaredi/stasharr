@@ -104,7 +104,10 @@ type ReelReaderWriter interface {
 	Create(ctx context.Context, r *Reel) error
 	Find(ctx context.Context, id int) (*Reel, error)
 	FindBySceneID(ctx context.Context, sceneID int) ([]*Reel, error)
-	Query(ctx context.Context, page, perPage int) ([]*Reel, int, error)
+	// Query lists reels newest first, or shuffled when seed is not 0 (the same
+	// seed gives the same order, so pages fit together). firstID, when not 0,
+	// puts that reel first.
+	Query(ctx context.Context, page, perPage, seed, firstID int) ([]*Reel, int, error)
 	All(ctx context.Context) ([]*Reel, error)
 	Destroy(ctx context.Context, id int) error
 }

@@ -230,7 +230,7 @@ private fun HomeRowView(row: SiteHomeRow, content: Any) {
                             .background(Brand.SurfaceHigh)
                             .clickable { nav.tab("reels") },
                     ) {
-                        AsyncImage(r.scene.paths.screenshot, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                        AsyncImage(r.picture, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0.5f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.85f))))
                         Text(
                             "▶ REEL",

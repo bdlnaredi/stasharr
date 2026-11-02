@@ -47,6 +47,7 @@ fragment ReelData on Reel {
   height
   source
   stream
+  cover
   created_at
   segments {
     start

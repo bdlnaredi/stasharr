@@ -176,12 +176,17 @@ data class ReelSegment(val start: Double = 0.0, val end: Double = 0.0)
 data class Reel(
     val id: String,
     val stream: String,
+    /** A picture from the reel itself; older servers send none. */
+    val cover: String? = null,
     val duration: Double = 0.0,
     val scene: ReelScene,
     val segments: List<ReelSegment> = emptyList(),
 ) {
     /** Where the reel starts in the full scene, in seconds. */
     val start: Double get() = segments.firstOrNull()?.start ?: 0.0
+
+    /** The reel's own picture, or the scene's screenshot. */
+    val picture: String? get() = cover ?: scene.paths.screenshot
 }
 
 @Serializable

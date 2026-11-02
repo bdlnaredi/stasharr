@@ -89,7 +89,7 @@ func (s *ReelStore) FindBySceneID(ctx context.Context, sceneID int) ([]*models.R
 }
 
 // Query returns reels newest first, filtered by the caller's access policy.
-func (s *ReelStore) Query(ctx context.Context, page, perPage int) ([]*models.Reel, int, error) {
+func (s *ReelStore) Query(ctx context.Context, page, perPage, seed, firstID int) ([]*models.Reel, int, error) {
 	where, args := sceneAccessWhere(ctx, "reels.scene_id")
 	var total int
 	if err := dbWrapper.Get(ctx, &total, "SELECT COUNT(*) FROM reels WHERE 1=1"+where, args...); err != nil {
@@ -102,8 +102,20 @@ func (s *ReelStore) Query(ctx context.Context, page, perPage int) ([]*models.Ree
 		page = 1
 	}
 	var rows []reelRow
-	q := "SELECT " + reelColumns + " FROM reels WHERE 1=1" + where + " ORDER BY reels.created_at DESC, reels.id DESC LIMIT ? OFFSET ?"
-	if err := dbWrapper.Select(ctx, &rows, q, append(args, perPage, (page-1)*perPage)...); err != nil {
+	order := "reels.created_at DESC, reels.id DESC"
+	var orderArgs []interface{}
+	if seed != 0 {
+		// a fixed shuffle for this seed: multiply and wrap by a large prime
+		order = "((reels.id + ?) * 2654435761) % 4294967291, reels.id"
+		orderArgs = append(orderArgs, seed%1000003)
+	}
+	if firstID > 0 {
+		order = "(reels.id = ?) DESC, " + order
+		orderArgs = append([]interface{}{firstID}, orderArgs...)
+	}
+	q := "SELECT " + reelColumns + " FROM reels WHERE 1=1" + where + " ORDER BY " + order + " LIMIT ? OFFSET ?"
+	qArgs := append(append(append([]interface{}{}, args...), orderArgs...), perPage, (page-1)*perPage)
+	if err := dbWrapper.Select(ctx, &rows, q, qArgs...); err != nil {
 		return nil, 0, err
 	}
 	return resolveReels(rows), total, nil

@@ -479,15 +479,16 @@ class Repository(private val api: Api) {
         return data["playlistCreate"].decode<Playlist?>(null)
     }
 
-    suspend fun reels(page: Int, perPage: Int = 15): Page<Reel> {
+    /** Reels newest first, or shuffled with a seed (kept for the next pages). */
+    suspend fun reels(page: Int, perPage: Int = 15, seed: Int = 0): Page<Reel> {
         val data = api.gql(
-            """query(${'$'}page: Int, ${'$'}per: Int) {
-              findReels(page: ${'$'}page, per_page: ${'$'}per) { count reels {
-                id stream duration segments { start end }
+            """query(${'$'}page: Int, ${'$'}per: Int, ${'$'}seed: Int) {
+              findReels(page: ${'$'}page, per_page: ${'$'}per, seed: ${'$'}seed) { count reels {
+                id stream cover duration segments { start end }
                 scene { id title studio { id name } performers { id name } paths { screenshot } }
               } }
             }""",
-            vars { put("page", page); put("per", perPage) }
+            vars { put("page", page); put("per", perPage); put("seed", seed) }
         )
         val res = data.obj("findReels") ?: return Page(0, emptyList())
         return Page(res.int("count"), res["reels"].decode(emptyList()))

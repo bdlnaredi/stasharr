@@ -82,7 +82,7 @@ const ReelItem: React.FC<{
         ref={videoRef}
         className="stasharr-reel-video"
         src={active ? reel.stream : undefined}
-        poster={reel.scene.paths.screenshot ?? undefined}
+        poster={reel.cover}
         loop
         playsInline
         muted={muted}

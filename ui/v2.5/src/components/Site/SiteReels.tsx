@@ -24,7 +24,7 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      {reel.scene.paths.screenshot && <img src={reel.scene.paths.screenshot} alt="" loading="lazy" />}
+      <img src={reel.cover} alt="" loading="lazy" />
       {hover && <video src={reel.stream} autoPlay muted loop playsInline />}
       <span className="site-reel-badge">{t("▶ Reel")}</span>
       <span className="site-reel-card-title">{reelTitle(reel)}</span>
@@ -92,7 +92,7 @@ const ReelSlide: React.FC<{
       <video
         ref={video}
         src={active ? reel.stream : undefined}
-        poster={reel.scene.paths.screenshot ?? undefined}
+        poster={reel.cover}
         loop
         playsInline
         muted={muted}
@@ -150,8 +150,10 @@ export const ReelsPage: React.FC = () => {
   const refs = useRef(new Map<string, HTMLDivElement>());
   const observer = useRef<IntersectionObserver>();
 
+  // a new shuffle every visit; the same one while scrolling through it
+  const [seed] = useState(() => 1 + Math.floor(Math.random() * 1_000_000));
   const { data, loading } = GQL.useFindReelsQuery({
-    variables: { page, per_page: perPage },
+    variables: { page, per_page: perPage, seed, start_id: startID },
     skip: !canViewReels,
   });
   const total = data?.findReels.count ?? 0;

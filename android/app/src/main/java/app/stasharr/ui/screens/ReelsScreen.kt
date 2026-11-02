@@ -73,7 +73,9 @@ import coil.compose.AsyncImage
 fun ReelsScreen() {
     val context = LocalContext.current
     val nav = LocalNav.current
-    val reels = rememberPaged(Unit) { page -> app.repo.reels(page, 15) }
+    // a new shuffle each time the reels open
+    val seed = remember { (1..1_000_000).random() }
+    val reels = rememberPaged(seed) { page -> app.repo.reels(page, 15, seed) }
     val pager = rememberPagerState(pageCount = { reels.items.size })
     var muted by remember { mutableStateOf(false) }
     var paused by remember { mutableStateOf(false) }
@@ -180,7 +182,7 @@ private fun ReelPage(
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onTogglePause)
     ) {
         AsyncImage(
-            model = reel.scene.paths.screenshot,
+            model = reel.picture,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize(),
