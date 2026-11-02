@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
+import { count, locale, t } from "./i18n";
 
 export type SiteScene = GQL.SiteSceneCardFragment;
 export type SiteModel = GQL.SiteModelCardFragment;
@@ -9,7 +10,7 @@ export function sceneTitle(s: Pick<SiteScene, "title" | "files">): string {
   if (s.title) return s.title;
   const path = s.files[0]?.path ?? "";
   const base = path.split(/[\\/]/).pop() ?? "";
-  return tidyFileName(base.replace(/\.[^.]+$/, "")) || "Untitled";
+  return tidyFileName(base.replace(/\.[^.]+$/, "")) || t("Untitled");
 }
 
 // Turns a release file name such as
@@ -43,7 +44,7 @@ export function formatDate(d?: string | null): string {
   if (!d) return "";
   const date = new Date(d.length === 10 ? `${d}T12:00:00` : d);
   if (Number.isNaN(date.getTime())) return d;
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(locale(), {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -66,8 +67,8 @@ export function resolutionBadge(width: number, height: number): string | null {
 }
 
 export function isNew(s: SiteScene): boolean {
-  const t = new Date(s.created_at).getTime();
-  return Date.now() - t < 7 * 24 * 3600 * 1000;
+  const added = new Date(s.created_at).getTime();
+  return Date.now() - added < 7 * 24 * 3600 * 1000;
 }
 
 export function ageFrom(birthdate?: string | null): number | null {
@@ -141,7 +142,7 @@ export const SceneTile: React.FC<{
           />
         )}
         <div className="site-thumb-badges">
-          {isNew(scene) && <span className="site-badge site-badge-new">New</span>}
+          {isNew(scene) && <span className="site-badge site-badge-new">{t("New")}</span>}
           {badge && <span className="site-badge">{badge}</span>}
         </div>
         {scene.files[0]?.duration ? (
@@ -189,7 +190,7 @@ export const ModelTile: React.FC<{ model: SiteModel; rank?: number }> = ({
     </div>
     <div className="site-model-name">{model.name}</div>
     <div className="site-model-meta">
-      {model.scene_count} scene{model.scene_count === 1 ? "" : "s"}
+      {count(model.scene_count, "scene")}
     </div>
   </Link>
 );
@@ -208,7 +209,7 @@ export const StudioTile: React.FC<{
         )}
       </div>
       <div className="site-studio-name">{studio.name}</div>
-      <div className="site-model-meta">{studio.scene_count} scenes</div>
+      <div className="site-model-meta">{count(studio.scene_count, "scene")}</div>
     </Link>
   );
 };
@@ -224,7 +225,7 @@ export const CategoryTile: React.FC<{
       {img && <img src={img} alt="" loading="lazy" />}
       <div className="site-category-label">
         <span>{tag.name}</span>
-        <small>{tag.scene_count} scenes</small>
+        <small>{count(tag.scene_count, "scene")}</small>
       </div>
     </Link>
   );
@@ -236,7 +237,7 @@ export const Section: React.FC<{
   link?: string;
   linkText?: string;
   className?: string;
-}> = ({ title, link, linkText = "View all", className, children }) => (
+}> = ({ title, link, linkText = t("View all"), className, children }) => (
   <section className={`site-section ${className ?? ""}`}>
     <div className="site-section-head">
       <h2>{title}</h2>
@@ -270,13 +271,13 @@ export const Rail: React.FC<{ className?: string }> = ({ className, children }) 
   }
   return (
     <div className={`site-rail ${className ?? ""}`}>
-      <button type="button" className="site-rail-arrow left" onClick={() => scroll(-1)} aria-label="Back">
+      <button type="button" className="site-rail-arrow left" onClick={() => scroll(-1)} aria-label={t("Back")}>
         ‹
       </button>
       <div className="site-rail-track" ref={ref}>
         {children}
       </div>
-      <button type="button" className="site-rail-arrow right" onClick={() => scroll(1)} aria-label="More">
+      <button type="button" className="site-rail-arrow right" onClick={() => scroll(1)} aria-label={t("More")}>
         ›
       </button>
     </div>
@@ -299,7 +300,7 @@ export const Pager: React.FC<{
   return (
     <nav className="site-pager">
       <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)}>
-        ‹ Prev
+        {t("‹ Prev")}
       </button>
       {list.map((p, i) =>
         p === "…" ? (
@@ -318,7 +319,7 @@ export const Pager: React.FC<{
         )
       )}
       <button type="button" disabled={page >= pages} onClick={() => onPage(page + 1)}>
-        Next ›
+        {t("Next ›")}
       </button>
     </nav>
   );

@@ -323,6 +323,44 @@ body.site-mode {
   }
 }
 
+// language picker: a small pill; the real select sits invisibly on top so a
+// tap opens the browser's own list
+
+.site-lang {
+  align-items: center;
+  border: 1px solid var(--site-border);
+  border-radius: 999px;
+  color: var(--site-text);
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 5px;
+  height: 34px;
+  margin: 0;
+  padding: 0 10px;
+  position: relative;
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--site-accent);
+  }
+
+  select {
+    cursor: pointer;
+    inset: 0;
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+  }
+
+  option {
+    background: var(--site-surface);
+    color: var(--site-text);
+  }
+}
+
 .site-account {
   position: relative;
 }
@@ -1954,6 +1992,12 @@ body.site-mode {
     display: block;
   }
 
+  .site-lang {
+    gap: 3px;
+    height: 30px;
+    padding: 0 7px;
+  }
+
   .site-search.phone-open {
     background: var(--site-header-bg);
     border-bottom: 1px solid var(--site-border);
@@ -2549,6 +2593,7 @@ body.site-mode {
   }
 
   .site-model-hero-inner {
+    align-items: flex-start;
     padding-top: 80px;
   }
 
@@ -2559,4 +2604,10 @@ body.site-mode {
   .site-reel-info {
     right: 70px;
   }
+}
+
+// Hindi: spaced-out capitals split Devanagari letters apart, so labels keep
+// normal spacing
+.site-root:lang(hi) * {
+  letter-spacing: normal !important;
 }

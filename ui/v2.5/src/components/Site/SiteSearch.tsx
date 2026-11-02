@@ -3,6 +3,7 @@ import { Link, useHistory, useLocation } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
 import { formatTime, sceneTitle } from "./SiteCards";
 import { useSite } from "./SiteContext";
+import { count, t } from "./i18n";
 
 // waits this long after the last key press before searching
 const DELAY = 250;
@@ -10,8 +11,8 @@ const DELAY = 250;
 function useDebounced(value: string, ms: number): string {
   const [out, setOut] = useState(value);
   useEffect(() => {
-    const t = window.setTimeout(() => setOut(value), ms);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setOut(value), ms);
+    return () => window.clearTimeout(timer);
   }, [value, ms]);
   return out;
 }
@@ -125,7 +126,7 @@ export const SiteSearch: React.FC = () => {
       <button
         type="button"
         className="site-search-toggle"
-        aria-label="Search"
+        aria-label={t("Search")}
         onClick={() => setPhoneOpen(!phoneOpen)}
       >
         ⌕
@@ -139,7 +140,7 @@ export const SiteSearch: React.FC = () => {
         <input
           ref={input}
           type="search"
-          placeholder="Search scenes and stars"
+          placeholder={t("Search scenes and stars")}
           value={q}
           autoComplete="off"
           onChange={(e) => {
@@ -149,18 +150,18 @@ export const SiteSearch: React.FC = () => {
           onFocus={() => setOpen(true)}
           onKeyDown={onKey}
         />
-        <button type="submit" aria-label="Search">
+        <button type="submit" aria-label={t("Search")}>
           ⌕
         </button>
 
         {showDropdown && (
           <div className="site-search-results">
-            {loading && <div className="site-search-note">Searching…</div>}
-            {nothing && <div className="site-search-note">Nothing found for “{q.trim()}”.</div>}
+            {loading && <div className="site-search-note">{t("Searching…")}</div>}
+            {nothing && <div className="site-search-note">{t("Nothing found for “{q}”.", { q: q.trim() })}</div>}
 
             {modelList.length > 0 && (
               <>
-                <div className="site-search-head">{config.models_gender === "FEMALE" ? "Pornstars" : "Models"}</div>
+                <div className="site-search-head">{t(config.models_gender === "FEMALE" ? "Pornstars" : "Models")}</div>
                 <div className="site-search-models">
                   {modelList.map((m, i) => (
                     <Link
@@ -181,7 +182,7 @@ export const SiteSearch: React.FC = () => {
 
             {sceneList.length > 0 && (
               <>
-                <div className="site-search-head">Scenes</div>
+                <div className="site-search-head">{t("Scenes")}</div>
                 {sceneList.map((s, j) => {
                   const i = modelList.length + j;
                   const who = s.performers
@@ -212,7 +213,8 @@ export const SiteSearch: React.FC = () => {
 
             {(sceneList.length > 0 || modelList.length > 0) && (
               <button type="button" className="site-search-all" onClick={showAll}>
-                See all results{sceneCount > sceneList.length ? ` (${sceneCount} scenes)` : ""} ›
+                {t("See all results")}
+                {sceneCount > sceneList.length ? ` (${count(sceneCount, "scene")})` : ""} ›
               </button>
             )}
           </div>

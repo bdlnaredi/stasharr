@@ -23,13 +23,30 @@ import {
   SearchPage,
 } from "./SitePages";
 import { findSiteStyle, siteStyles } from "./siteStyles";
+import { Lang, getLang, languages, setLang, t } from "./i18n";
 import "./site.scss";
 
-const SiteHeader: React.FC<{ name: string; female: boolean; logo?: string | null }> = ({
-  name,
-  female,
-  logo,
-}) => {
+const LangPicker: React.FC<{ lang: Lang; onChange: (l: Lang) => void }> = ({ lang, onChange }) => (
+  <label className="site-lang" title={t("Language")}>
+    <span aria-hidden="true">🌐</span>
+    <select value={lang} aria-label={t("Language")} onChange={(e) => onChange(e.target.value as Lang)}>
+      {languages.map((l) => (
+        <option key={l.id} value={l.id}>
+          {l.label}
+        </option>
+      ))}
+    </select>
+    <span className="site-lang-code">{lang.toUpperCase()}</span>
+  </label>
+);
+
+const SiteHeader: React.FC<{
+  name: string;
+  female: boolean;
+  logo?: string | null;
+  lang: Lang;
+  onLang: (l: Lang) => void;
+}> = ({ name, female, logo, lang, onLang }) => {
   const location = useLocation();
   const { isAdmin, me, canViewReels } = useCurrentUser();
   const [menu, setMenu] = useState(false);
@@ -55,7 +72,7 @@ const SiteHeader: React.FC<{ name: string; female: boolean; logo?: string | null
   return (
     <header className={`site-header ${scrolled ? "scrolled" : ""}`}>
       <div className="site-header-inner">
-        <button type="button" className="site-burger" onClick={() => setMobile(!mobile)} aria-label="Menu">
+        <button type="button" className="site-burger" onClick={() => setMobile(!mobile)} aria-label={t("Menu")}>
           ☰
         </button>
         <Link to="/site" className={`site-logo ${logo ? "site-logo-image" : ""}`}>
@@ -70,16 +87,17 @@ const SiteHeader: React.FC<{ name: string; female: boolean; logo?: string | null
         </Link>
         <nav className={`site-nav ${mobile ? "open" : ""}`}>
           <NavLink exact to="/site">
-            Home
+            {t("Home")}
           </NavLink>
-          <NavLink to="/site/scenes">Scenes</NavLink>
-          <NavLink to="/site/models">{female ? "Pornstars" : "Models"}</NavLink>
-          <NavLink to="/site/categories">Categories</NavLink>
-          <NavLink to="/site/channels">Channels</NavLink>
-          {canViewReels && <NavLink to="/site/reels">Reels</NavLink>}
-          <NavLink to="/site/my-list">My list</NavLink>
+          <NavLink to="/site/scenes">{t("Scenes")}</NavLink>
+          <NavLink to="/site/models">{t(female ? "Pornstars" : "Models")}</NavLink>
+          <NavLink to="/site/categories">{t("Categories")}</NavLink>
+          <NavLink to="/site/channels">{t("Channels")}</NavLink>
+          {canViewReels && <NavLink to="/site/reels">{t("Reels")}</NavLink>}
+          <NavLink to="/site/my-list">{t("My list")}</NavLink>
         </nav>
         <SiteSearch />
+        <LangPicker lang={lang} onChange={onLang} />
         <div className="site-account">
           <button type="button" className="site-avatar" onClick={() => setMenu(!menu)}>
             {(me?.username ?? "Me").slice(0, 1).toUpperCase()}
@@ -87,10 +105,10 @@ const SiteHeader: React.FC<{ name: string; female: boolean; logo?: string | null
           {menu && (
             <div className="site-account-menu">
               <div className="site-account-name">{me?.username ?? "Owner"}</div>
-              <Link to="/site/my-list">My list</Link>
-              <Link to="/site/account">Account</Link>
-              {isAdmin && <Link to="/">Admin interface</Link>}
-              <a href={`${baseURL}logout`}>Log out</a>
+              <Link to="/site/my-list">{t("My list")}</Link>
+              <Link to="/site/account">{t("Account")}</Link>
+              {isAdmin && <Link to="/">{t("Admin interface")}</Link>}
+              <a href={`${baseURL}logout`}>{t("Log out")}</a>
             </div>
           )}
         </div>
@@ -105,19 +123,19 @@ const SiteFooter: React.FC<{ name: string; tagline: string }> = ({ name, tagline
       <div className="site-footer-brand">{name}</div>
       {tagline && <div className="site-footer-tagline">{tagline}</div>}
       <nav>
-        <Link to="/site/scenes">Scenes</Link>
-        <Link to="/site/models">Models</Link>
-        <Link to="/site/categories">Categories</Link>
-        <Link to="/site/channels">Channels</Link>
+        <Link to="/site/scenes">{t("Scenes")}</Link>
+        <Link to="/site/models">{t("Models")}</Link>
+        <Link to="/site/categories">{t("Categories")}</Link>
+        <Link to="/site/channels">{t("Channels")}</Link>
       </nav>
-      <div className="site-footer-small">All models were 18 years of age or older at the time of filming.</div>
+      <div className="site-footer-small">{t("All models were 18 years of age or older at the time of filming.")}</div>
     </div>
   </footer>
 );
 
 const AccountPage: React.FC = () => (
   <div className="site-page site-account-page">
-    <h1 className="site-page-title">Account</h1>
+    <h1 className="site-page-title">{t("Account")}</h1>
     <div className="site-account-panel">
       <AccountPanel />
     </div>
@@ -138,10 +156,11 @@ const AgeGate: React.FC<{ name: string; logo?: string | null; onEnter: () => voi
   <div className="site-age-gate">
     <div className="site-age-card">
       {logo ? <img src={logo} alt={name} className="site-age-logo" /> : <div className="site-logo">{name}</div>}
-      <h2>This is an adult website</h2>
+      <h2>{t("This is an adult website")}</h2>
       <p>
-        It contains sexually explicit material. Only continue if you are at least 18 years old, or the age of
-        majority where you live, and you want to see it.
+        {t(
+          "It contains sexually explicit material. Only continue if you are at least 18 years old, or the age of majority where you live, and you want to see it."
+        )}
       </p>
       <div className="site-age-actions">
         <button
@@ -156,10 +175,10 @@ const AgeGate: React.FC<{ name: string; logo?: string | null; onEnter: () => voi
             onEnter();
           }}
         >
-          I am 18 or older — Enter
+          {t("I am 18 or older — Enter")}
         </button>
         <a className="site-btn site-btn-ghost" href="https://www.google.com" rel="noreferrer">
-          Leave
+          {t("Leave")}
         </a>
       </div>
     </div>
@@ -192,6 +211,11 @@ const Site: React.FC = () => {
 
   const style = findSiteStyle(previewStyle ?? config?.style);
   const [adult, setAdult] = useState(ageConfirmed);
+  const [lang, setLangState] = useState<Lang>(getLang);
+  const changeLang = (l: Lang) => {
+    setLang(l);
+    setLangState(l);
+  };
 
   useEffect(() => {
     document.body.classList.add("site-mode", `site-body-${style.id}`);
@@ -227,18 +251,20 @@ const Site: React.FC = () => {
           <AgeGate name={config.name} logo={config.logo_url} onEnter={() => setAdult(true)} />
         )}
         <Helmet>
+          <html lang={lang} />
           <title>{config.name}</title>
         </Helmet>
         {previewStyle && previewStyle !== config.style && (
           <div className="site-preview-bar">
-            Previewing the {style.name} style.{" "}
+            {t("Previewing the {name} style.", { name: style.name })}{" "}
             <button type="button" onClick={() => setPreviewStyle(null)}>
-              Stop preview
+              {t("Stop preview")}
             </button>
           </div>
         )}
-        <SiteHeader name={config.name} female={female} logo={config.logo_url} />
-        <main className="site-main">
+        <SiteHeader name={config.name} female={female} logo={config.logo_url} lang={lang} onLang={changeLang} />
+        {/* keyed on the language so every page redraws in the new one */}
+        <main className="site-main" key={lang}>
           <Switch>
             <Route exact path="/site" component={SiteHome} />
             <Route path="/site/scenes" component={ScenesPage} />
@@ -256,7 +282,7 @@ const Site: React.FC = () => {
             <Route component={SiteHome} />
           </Switch>
         </main>
-        <SiteFooter name={config.name} tagline={config.tagline} />
+        <SiteFooter key={`f-${lang}`} name={config.name} tagline={config.tagline} />
       </div>
     </SiteContext.Provider>
   );
