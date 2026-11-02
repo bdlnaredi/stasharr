@@ -1,0 +1,99 @@
+# Stasharr: markers found by the Stasharr Tagger
+
+type AIMarkerLabel {
+  "The marker's title and tag"
+  name: String!
+  "What it looks like, in plain English, for the model"
+  prompt: String!
+  enabled: Boolean!
+  "false: only used to recognise frames that should not get a marker"
+  marker: Boolean!
+}
+
+input AIMarkerLabelInput {
+  name: String!
+  prompt: String!
+  enabled: Boolean!
+  marker: Boolean!
+}
+
+type AIMarkerConfig {
+  "The Stasharr Tagger's address, e.g. http://stasharr-tagger:2705. Empty turns AI markers off."
+  url: String!
+  "Seconds between frames that are looked at"
+  interval: Float!
+  "How sure the tagger must be, 0 to 1"
+  min_confidence: Float!
+  "How long something must last to get a marker, in seconds"
+  min_seconds: Float!
+  "Look at new scenes as they are imported"
+  auto: Boolean!
+  "Suggestions wait for approval before they become markers"
+  review: Boolean!
+  labels: [AIMarkerLabel!]!
+  default_labels: [AIMarkerLabel!]!
+}
+
+input AIMarkerConfigInput {
+  url: String
+  interval: Float
+  min_confidence: Float
+  min_seconds: Float
+  auto: Boolean
+  review: Boolean
+  "Empty list restores the default labels"
+  labels: [AIMarkerLabelInput!]
+}
+
+type AITaggerStatus {
+  reachable: Boolean!
+  ok: Boolean!
+  loading: Boolean!
+  error: String
+  "cpu or cuda"
+  device: String
+  "The NVIDIA card's name"
+  gpu: String
+  model: String
+  "Scenes looked at"
+  done: Int!
+  "Scenes in the library"
+  total: Int!
+}
+
+type AIMarkerSuggestion {
+  id: ID!
+  scene: Scene!
+  label: String!
+  seconds: Float!
+  end_seconds: Float!
+  "How sure the tagger was, 0 to 1"
+  score: Float!
+}
+
+type AIMarkerSuggestionResult {
+  count: Int!
+  "How many scenes have suggestions"
+  scenes: Int!
+  suggestions: [AIMarkerSuggestion!]!
+}
+
+extend type Query {
+  "Admin only"
+  aiMarkerConfig: AIMarkerConfig!
+  "Admin only"
+  aiTaggerStatus: AITaggerStatus!
+  "Admin only. Suggestions waiting for review."
+  aiMarkerSuggestions(page: Int, per_page: Int): AIMarkerSuggestionResult!
+}
+
+extend type Mutation {
+  "Admin only"
+  configureAIMarkers(input: AIMarkerConfigInput!): AIMarkerConfig!
+  "Admin only. Looks at these scenes again, or every scene not looked at yet. Returns the job id."
+  runAIMarkers(scene_ids: [ID!]): ID!
+  "Admin only. Turns suggestions into markers. Returns how many were made."
+  aiMarkerApprove(ids: [ID!]!): Int!
+  "Admin only. Throws suggestions away."
+  aiMarkerReject(ids: [ID!]!): Int!
+}

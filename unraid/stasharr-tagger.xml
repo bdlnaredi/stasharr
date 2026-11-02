@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>stasharr-tagger</Name>
+  <Repository>ghcr.io/bdlnaredi/stasharr-tagger:latest</Repository>
+  <Registry>https://github.com/bdlnaredi/stasharr/pkgs/container/stasharr-tagger</Registry>
+  <Network>bridge</Network>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/bdlnaredi/stasharr/issues</Support>
+  <Project>https://github.com/bdlnaredi/stasharr</Project>
+  <Overview>Stasharr Tagger (CPU). Looks at frames from your Stasharr scenes and recognises what is happening, so Stasharr can suggest markers. Runs on the processor. If you have an NVIDIA card, install the stasharr-tagger-nvidia template instead: it is many times faster.[br][br]After it starts, open Stasharr → Settings → AI markers and enter http://[your server IP]:2705 as the tagger address. The first start downloads the model (about 600 MB) into the Models folder.</Overview>
+  <Category>MediaApp:Video Tools:</Category>
+  <WebUI>http://[IP]:[PORT:2705]/health</WebUI>
+  <Icon>https://raw.githubusercontent.com/bdlnaredi/stasharr/main/ui/v2.5/public/favicon.png</Icon>
+  <Config Name="Port" Target="2705" Default="2705" Mode="tcp" Type="Port" Display="always" Required="true" Mask="false" Description="Stasharr connects here.">2705</Config>
+  <Config Name="Models" Target="/models" Default="/mnt/user/appdata/stasharr-tagger/models" Mode="rw" Type="Path" Display="always" Required="true" Mask="false" Description="Where the downloaded model is kept, so it is only downloaded once.">/mnt/user/appdata/stasharr-tagger/models</Config>
+  <Config Name="CPU threads" Target="TAGGER_THREADS" Default="2" Mode="" Type="Variable" Display="always" Required="false" Mask="false" Description="How many processor threads it may use. More is faster but leaves less for everything else.">2</Config>
+  <Config Name="Model" Target="TAGGER_MODEL" Default="ViT-B-32" Mode="" Type="Variable" Display="advanced" Required="false" Mask="false" Description="OpenCLIP model. ViT-B-32 is quick on a CPU; ViT-L-14 is more accurate but about 8 times slower.">ViT-B-32</Config>
+  <Config Name="Model weights" Target="TAGGER_PRETRAINED" Default="laion2b_s34b_b79k" Mode="" Type="Variable" Display="advanced" Required="false" Mask="false" Description="Weights for the model. Use laion2b_s32b_b82k with ViT-L-14.">laion2b_s34b_b79k</Config>
+  <Config Name="Device" Target="TAGGER_DEVICE" Default="cpu" Mode="" Type="Variable" Display="advanced" Required="false" Mask="false" Description="cpu">cpu</Config>
+  <Config Name="TZ" Target="TZ" Default="Asia/Kolkata" Mode="" Type="Variable" Display="advanced" Required="false" Mask="false">Asia/Kolkata</Config>
+</Container>

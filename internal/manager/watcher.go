@@ -536,6 +536,10 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 		mgr.JobManager.Add(ctx, "Auto-import: making reels", &ReelJob{SceneIDs: intIDs})
 	}
 
+	if cfg.GetAIAuto() && cfg.GetAIURL() != "" {
+		mgr.JobManager.Add(ctx, "Auto-import: AI markers", &AIMarkerJob{SceneIDs: intIDs})
+	}
+
 	return nil
 }
 

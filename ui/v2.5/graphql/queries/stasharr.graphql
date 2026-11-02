@@ -174,3 +174,67 @@ query MaintenanceSettings {
     includes_blobs
   }
 }
+
+query AIMarkerConfig {
+  aiMarkerConfig {
+    ...AIMarkerConfigData
+  }
+}
+
+query AITaggerStatus {
+  aiTaggerStatus {
+    reachable
+    ok
+    loading
+    error
+    device
+    gpu
+    model
+    done
+    total
+  }
+}
+
+query AIMarkerSuggestions($page: Int, $per_page: Int) {
+  aiMarkerSuggestions(page: $page, per_page: $per_page) {
+    count
+    scenes
+    suggestions {
+      id
+      label
+      seconds
+      end_seconds
+      score
+      scene {
+        id
+        title
+        files {
+          path
+          duration
+        }
+        paths {
+          screenshot
+          stream
+        }
+      }
+    }
+  }
+}
+
+mutation ConfigureAIMarkers($input: AIMarkerConfigInput!) {
+  configureAIMarkers(input: $input) {
+    ...AIMarkerConfigData
+  }
+}
+
+mutation RunAIMarkers($scene_ids: [ID!]) {
+  runAIMarkers(scene_ids: $scene_ids)
+}
+
+mutation AIMarkerApprove($ids: [ID!]!) {
+  aiMarkerApprove(ids: $ids)
+}
+
+mutation AIMarkerReject($ids: [ID!]!) {
+  aiMarkerReject(ids: $ids)
+}
