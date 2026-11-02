@@ -44,6 +44,10 @@ type SiteConfig {
   logo_url: String
   "Give site users the site's name, colours and rows in the Android app too"
   app_look: Boolean!
+  "What plays behind the login form: previews, pictures or off"
+  login_backdrop: String!
+  "With a tag, the login page only shows scenes with it"
+  login_backdrop_tag: Tag
 }
 
 type SiteHomeRow {
@@ -107,6 +111,9 @@ input SiteConfigInput {
   age_gate: Boolean
   accent: String
   app_look: Boolean
+  login_backdrop: String
+  "Empty for any scene"
+  login_backdrop_tag_id: ID
   enabled: Boolean
   audience: String
   style: String

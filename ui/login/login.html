@@ -4,6 +4,7 @@
     <base href="/%BASE_URL%/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#0b0b10">
     <title>Login</title>
 
     <link rel="shortcut icon" href="data:,">
@@ -28,6 +29,11 @@
         var username = document.getElementById("username").value;
         var password = document.getElementById("password").value;
         var returnURL = document.getElementById("returnURL").value;
+        var button = document.getElementById("login-button");
+        var error = document.getElementsByClassName("login-error")[0];
+
+        button.disabled = true;
+        error.innerHTML = "";
 
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "login", true);
@@ -35,14 +41,21 @@
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
                 if (xhr.status == 200) {
+                    document.body.classList.add("leaving");
                     window.location.replace(returnURL);
                 } else {
-                    document.getElementsByClassName("login-error")[0].innerHTML = localeStrings.invalid_credentials;
+                    button.disabled = false;
+                    error.innerHTML = localeStrings.invalid_credentials;
+                    var card = document.querySelector(".login-card");
+                    card.classList.remove("shake");
+                    void card.offsetWidth;
+                    card.classList.add("shake");
                 }
             }
         };
         xhr.onerror = function() {
-            document.getElementsByClassName("login-error")[0].innerHTML = localeStrings.internal_error;
+            button.disabled = false;
+            error.innerHTML = localeStrings.internal_error;
         };
         var body = "username=" + encodeURIComponent(username) + "&password=" + encodeURIComponent(password) + "&returnURL=" + encodeURIComponent(returnURL);
         xhr.send(body);
@@ -50,16 +63,28 @@
 </script>
 
 <body class="login">
-    <div class="dialog">
-        <div class="card">
+    <!-- pictures and short previews from the library, drifting behind the form -->
+    <div class="backdrop" id="backdrop" aria-hidden="true"></div>
+    <div class="backdrop-shade" aria-hidden="true"></div>
+
+    <div class="brand" id="brand">
+        <div class="brand-name" id="brand-name">Stasharr</div>
+    </div>
+
+    <div class="login-panel">
+        <div class="login-card">
             <form action="login" method="POST" onsubmit="event.preventDefault(); login();">
+                <h1 class="login-title" id="login-title">Login</h1>
                 <div class="form-group">
                     <label for="username"><h6 id="username-heading">Username</h6></label>
-                    <input class="text-input form-control" id="username" name="username" type="text" placeholder="Username" />
+                    <input class="text-input form-control" id="username" name="username" type="text" placeholder="Username" autocomplete="username" autofocus />
                 </div>
                 <div class="form-group">
                     <label for="password"><h6 id="password-heading">Password</h6></label>
-                    <input class="text-input form-control" id="password" name="password" type="password" placeholder="Password" />
+                    <div class="password-wrap">
+                        <input class="text-input form-control" id="password" name="password" type="password" placeholder="Password" autocomplete="current-password" />
+                        <button type="button" class="show-password" id="show-password" aria-label="Show password" tabindex="-1">&#128065;</button>
+                    </div>
                 </div>
                 <div class="login-error">
                     {{.Error}}
@@ -82,5 +107,104 @@
     document.getElementById("username").placeholder = localeStrings.username;
     document.getElementById("password").placeholder = localeStrings.password;
     document.getElementById("login-button").value = localeStrings.login;
+    document.getElementById("login-title").innerText = localeStrings.login;
+
+    document.getElementById("show-password").addEventListener("click", function() {
+        var p = document.getElementById("password");
+        p.type = p.type === "password" ? "text" : "password";
+        p.focus();
+    });
+
+    // The backdrop: columns of scene pictures sliding slowly up and down,
+    // some of them playing their short preview.
+    (function() {
+        var MAX_VIDEOS = 6;
+        var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        var phone = window.innerWidth < 640;
+
+        function tile(item, withVideo) {
+            var t = document.createElement("div");
+            t.className = "tile";
+            var img = document.createElement("img");
+            img.alt = "";
+            img.decoding = "async";
+            img.src = item.image;
+            img.onerror = function() { t.classList.add("empty"); };
+            t.appendChild(img);
+            if (withVideo && item.video) {
+                var v = document.createElement("video");
+                v.muted = true;
+                v.loop = true;
+                v.autoplay = true;
+                v.playsInline = true;
+                v.setAttribute("muted", "");
+                v.setAttribute("playsinline", "");
+                v.preload = "auto";
+                v.src = item.video;
+                v.addEventListener("playing", function() { t.classList.add("playing"); });
+                t.appendChild(v);
+                var p = v.play();
+                if (p && p.catch) p.catch(function() {});
+            }
+            return t;
+        }
+
+        function build(info) {
+            var box = document.getElementById("backdrop");
+            if (info.name) {
+                document.getElementById("brand-name").innerText = info.name;
+                document.title = info.name + " · " + localeStrings.login;
+            }
+            if (info.logo) {
+                var logo = document.createElement("img");
+                logo.className = "brand-logo";
+                logo.alt = info.name || "";
+                logo.src = "login/backdrop/logo";
+                logo.onload = function() { document.getElementById("brand").classList.add("has-logo"); };
+                document.getElementById("brand").insertBefore(logo, document.getElementById("brand-name"));
+            }
+            var items = info.items || [];
+            if (info.mode === "off" || items.length === 0) {
+                document.body.classList.add("plain");
+                return;
+            }
+
+            var cols = phone ? 2 : window.innerWidth < 1100 ? 3 : 4;
+            var videosLeft = phone ? 2 : MAX_VIDEOS;
+            for (var c = 0; c < cols; c++) {
+                var col = document.createElement("div");
+                col.className = "col " + (c % 2 ? "down" : "up");
+                col.style.animationDuration = (70 + c * 13) + "s";
+                var track = document.createElement("div");
+                track.className = "track";
+                // every column gets its own share of the pictures, in its own order
+                var mine = [];
+                for (var i = 0; i < items.length; i++) mine.push(items[(i + c * 3) % items.length]);
+                mine = mine.slice(0, Math.max(4, Math.ceil(items.length / cols) + 2));
+                // the list twice, so the loop has no seam
+                var all = mine.concat(mine);
+                for (var j = 0; j < all.length; j++) {
+                    // previews only on the first copy, one or two per column
+                    var play = !still && j < mine.length && videosLeft > 0 && all[j].video && (j % 2 === c % 2);
+                    if (play) videosLeft--;
+                    track.appendChild(tile(all[j], play));
+                }
+                col.appendChild(track);
+                box.appendChild(col);
+            }
+            requestAnimationFrame(function() { document.body.classList.add("ready"); });
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "login/backdrop", true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+            var info = null;
+            try { info = JSON.parse(xhr.responseText); } catch (e) {}
+            if (xhr.status === 200 && info) build(info);
+            else document.body.classList.add("plain");
+        };
+        xhr.send();
+    })();
 </script>
 </html>

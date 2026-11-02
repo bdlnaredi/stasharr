@@ -42,18 +42,19 @@ func siteAppliesTo(ctx context.Context, cfg *config.Config) bool {
 func (r *Resolver) siteConfig(ctx context.Context) (*SiteConfig, error) {
 	cfg := config.GetInstance()
 	ret := &SiteConfig{
-		Enabled:      cfg.GetSiteEnabled(),
-		Audience:     cfg.GetSiteAudience(),
-		Style:        cfg.GetSiteStyle(),
-		Name:         cfg.GetSiteName(),
-		Tagline:      cfg.GetSiteTagline(),
-		Featured:     cfg.GetSiteFeatured(),
-		ModelsGender: cfg.GetSiteModelsGender(),
-		AppliesToMe:  siteAppliesTo(ctx, cfg),
-		AgeGate:      cfg.GetSiteAgeGate(),
-		Accent:       cfg.GetSiteAccent(),
-		AppLook:      cfg.GetSiteAppLook(),
-		Promo:        sitePromo(cfg),
+		Enabled:       cfg.GetSiteEnabled(),
+		Audience:      cfg.GetSiteAudience(),
+		Style:         cfg.GetSiteStyle(),
+		Name:          cfg.GetSiteName(),
+		Tagline:       cfg.GetSiteTagline(),
+		Featured:      cfg.GetSiteFeatured(),
+		ModelsGender:  cfg.GetSiteModelsGender(),
+		AppliesToMe:   siteAppliesTo(ctx, cfg),
+		AgeGate:       cfg.GetSiteAgeGate(),
+		Accent:        cfg.GetSiteAccent(),
+		AppLook:       cfg.GetSiteAppLook(),
+		Promo:         sitePromo(cfg),
+		LoginBackdrop: cfg.GetLoginBackdrop(),
 	}
 	if p, ok := siteLogoFile(cfg); ok {
 		if info, err := os.Stat(p); err == nil {
@@ -67,6 +68,16 @@ func (r *Resolver) siteConfig(ctx context.Context) (*SiteConfig, error) {
 		return nil, err
 	}
 	ret.HomeRows = rows
+	if id := cfg.GetLoginBackdropTag(); id > 0 {
+		err := r.withReadTxn(ctx, func(ctx context.Context) error {
+			t, err := r.repository.Tag.Find(ctx, id)
+			ret.LoginBackdropTag = t
+			return err
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
 	if id := cfg.GetSiteFeaturedTag(); id > 0 {
 		err := r.withReadTxn(ctx, func(ctx context.Context) error {
 			t, err := r.repository.Tag.Find(ctx, id)
@@ -168,6 +179,23 @@ func (r *mutationResolver) ConfigureSite(ctx context.Context, input SiteConfigIn
 			return nil, err
 		}
 		cfg.SetString(config.SitePromo, string(b))
+	}
+	if input.LoginBackdrop != nil {
+		if !slices.Contains(config.LoginBackdrops, *input.LoginBackdrop) {
+			return nil, errors.New("login backdrop must be previews, pictures or off")
+		}
+		cfg.SetString(config.LoginBackdrop, *input.LoginBackdrop)
+	}
+	if input.LoginBackdropTagID != nil {
+		id := 0
+		if *input.LoginBackdropTagID != "" {
+			n, err := strconv.Atoi(*input.LoginBackdropTagID)
+			if err != nil {
+				return nil, errors.New("invalid tag id")
+			}
+			id = n
+		}
+		cfg.SetInt(config.LoginBackdropTag, id)
 	}
 	if input.AgeGate != nil {
 		cfg.SetBool(config.SiteAgeGate, *input.AgeGate)

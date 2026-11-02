@@ -73,6 +73,11 @@ fragment SiteConfigData on SiteConfig {
   accent
   logo_url
   app_look
+  login_backdrop
+  login_backdrop_tag {
+    id
+    name
+  }
 }
 
 query SiteConfig {

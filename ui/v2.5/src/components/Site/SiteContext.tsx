@@ -24,6 +24,8 @@ const defaultConfig: GQL.SiteConfigDataFragment = {
   accent: "",
   logo_url: null,
   app_look: true,
+  login_backdrop: "previews",
+  login_backdrop_tag: null,
 };
 
 export const SiteContext = React.createContext<ISiteContext>({
