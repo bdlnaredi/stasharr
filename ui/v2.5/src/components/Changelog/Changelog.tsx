@@ -37,6 +37,8 @@ import V0290 from "src/docs/en/Changelog/v0290.md";
 import V0300 from "src/docs/en/Changelog/v0300.md";
 import V0310 from "src/docs/en/Changelog/v0310.md";
 
+import Stasharr from "src/docs/en/Changelog/stasharr.md";
+
 import V0290ReleaseNotes from "src/docs/en/ReleaseNotes/v0290.md";
 
 import { MarkdownPage } from "../Shared/MarkdownPage";
@@ -81,11 +83,16 @@ const Changelog: React.FC = () => {
   const currentPage = V0310;
 
   const releases: IStashRelease[] = [
+    // Stasharr's own changes; the same text as CHANGELOG.md in the repository
     {
-      version: currentVersion,
+      version: `Stasharr ${stashVersion ?? ""}`.trim(),
       date: currentDate,
-      page: currentPage,
+      page: Stasharr,
       defaultOpen: true,
+    },
+    {
+      version: "Stash v0.31.0",
+      page: currentPage,
     },
     {
       version: "v0.30.1",
