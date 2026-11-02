@@ -5,7 +5,7 @@ on:
     branches: [main]
     tags: ["v*"]
     # the Android app does not change the server image
-    paths-ignore: ["android/**", ".github/workflows/android.yml"]
+    paths-ignore: ["android/**", ".github/workflows/android.yml", "tagger/**", ".github/workflows/tagger.yml"]
   workflow_dispatch:
 
 permissions:

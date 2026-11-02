@@ -1,0 +1,93 @@
+name: Tagger image
+
+on:
+  push:
+    branches: [main]
+    paths: ["tagger/**", ".github/workflows/tagger.yml"]
+  pull_request:
+    paths: ["tagger/**", ".github/workflows/tagger.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # builds the CPU image, downloads the model and checks a real answer
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: tagger
+          load: true
+          tags: stasharr-tagger:test
+          build-args: VARIANT=cpu
+          cache-from: type=gha,scope=tagger-cpu
+          cache-to: type=gha,mode=max,scope=tagger-cpu
+      - name: Start it
+        run: docker run -d --name tagger -p 2705:2705 stasharr-tagger:test
+      - name: Wait for the model
+        run: |
+          for i in $(seq 1 120); do
+            out=$(curl -sf http://127.0.0.1:2705/health || true)
+            echo "$out"
+            echo "$out" | grep -q '"ok":true' && exit 0
+            echo "$out" | grep -q '"error":"' && { docker logs tagger; exit 1; }
+            sleep 5
+          done
+          docker logs tagger
+          exit 1
+      - name: Classify a picture
+        run: |
+          python3 - <<'PY'
+          import base64, io, json, struct, urllib.request, zlib
+          # a plain red 64x64 PNG, made without extra packages
+          w = h = 64
+          raw = b"".join(b"\x00" + b"\xff\x00\x00" * w for _ in range(h))
+          def chunk(t, d):
+              c = struct.pack(">I", len(d)) + t + d
+              return c + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+          png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+          body = json.dumps({"labels": ["a plain red square", "a plain blue square", "a photo of a dog"], "images": [base64.b64encode(png).decode()]}).encode()
+          req = urllib.request.Request("http://127.0.0.1:2705/classify", body, {"Content-Type": "application/json"})
+          res = json.load(urllib.request.urlopen(req, timeout=120))
+          print(res)
+          scores = res["scores"][0]
+          assert scores.index(max(scores)) == 0, "expected the red label to win"
+          PY
+      - if: failure()
+        run: docker logs tagger
+
+  publish:
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - variant: cpu
+            tag: latest
+          - variant: cuda
+            tag: cuda
+    steps:
+      - name: Make room for the CUDA libraries
+        if: matrix.variant == 'cuda'
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: tagger
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/stasharr-tagger:${{ matrix.tag }}
+          build-args: VARIANT=${{ matrix.variant }}
+          cache-from: type=gha,scope=tagger-${{ matrix.variant }}
+          cache-to: type=gha,mode=max,scope=tagger-${{ matrix.variant }}
