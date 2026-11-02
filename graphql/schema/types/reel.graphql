@@ -18,6 +18,8 @@ type Reel {
   segments: [ReelSegment!]!
   "URL of the reel video"
   stream: String!
+  "URL of a picture from the reel, made the first time it is asked for"
+  cover: String!
   created_at: Time!
 }
 
@@ -92,7 +94,8 @@ extend type Scene {
 
 extend type Query {
   "Reels, newest first"
-  findReels(page: Int, per_page: Int): FindReelsResultType!
+  "Newest first, or shuffled with a seed (any number; keep it for the next pages). start_id puts that reel first."
+  findReels(page: Int, per_page: Int, seed: Int, start_id: ID): FindReelsResultType!
   libraryWatcherConfig: LibraryWatcherConfig!
 }
 

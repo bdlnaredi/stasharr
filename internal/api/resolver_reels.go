@@ -38,6 +38,11 @@ func loadSceneByID(ctx context.Context, id int) (*models.Scene, error) {
 	return s, nil
 }
 
+func (r *reelResolver) Cover(ctx context.Context, obj *models.Reel) (string, error) {
+	baseURL, _ := ctx.Value(BaseURLCtxKey).(string)
+	return fmt.Sprintf("%s/reel/%d/cover.jpg?t=%d", baseURL, obj.ID, obj.CreatedAt.Unix()), nil
+}
+
 func (r *reelResolver) Stream(ctx context.Context, obj *models.Reel) (string, error) {
 	baseURL, _ := ctx.Value(BaseURLCtxKey).(string)
 	return fmt.Sprintf("%s/reel/%d/stream.mp4?t=%d", baseURL, obj.ID, obj.CreatedAt.Unix()), nil
@@ -57,7 +62,7 @@ func (r *sceneResolver) Reels(ctx context.Context, obj *models.Scene) (ret []*mo
 	return ret, err
 }
 
-func (r *queryResolver) FindReels(ctx context.Context, page *int, perPage *int) (*FindReelsResultType, error) {
+func (r *queryResolver) FindReels(ctx context.Context, page *int, perPage *int, seed *int, startID *string) (*FindReelsResultType, error) {
 	if !access.FromContext(ctx).CanViewReels() {
 		return nil, errReelsNotAllowed
 	}
@@ -73,7 +78,14 @@ func (r *queryResolver) FindReels(ctx context.Context, page *int, perPage *int) 
 	}
 	ret := &FindReelsResultType{}
 	err := r.withReadTxn(ctx, func(ctx context.Context) error {
-		reels, count, err := r.repository.Reel.Query(ctx, p, pp)
+		s, first := 0, 0
+		if seed != nil {
+			s = *seed
+		}
+		if startID != nil && *startID != "" {
+			first, _ = strconv.Atoi(*startID)
+		}
+		reels, count, err := r.repository.Reel.Query(ctx, p, pp, s, first)
 		if err != nil {
 			return err
 		}
@@ -138,6 +150,7 @@ func (r *mutationResolver) ReelDestroy(ctx context.Context, id string) (bool, er
 		return false, err
 	}
 	_ = os.Remove(reel.Path)
+	_ = os.Remove(manager.ReelCoverPath(reel.Path))
 	return true, nil
 }
 

@@ -16,8 +16,8 @@ query UserTiers {
   }
 }
 
-query FindReels($page: Int, $per_page: Int) {
-  findReels(page: $page, per_page: $per_page) {
+query FindReels($page: Int, $per_page: Int, $seed: Int, $start_id: ID) {
+  findReels(page: $page, per_page: $per_page, seed: $seed, start_id: $start_id) {
     count
     reels {
       ...ReelData

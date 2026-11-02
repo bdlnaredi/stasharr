@@ -189,6 +189,7 @@ func GenerateReels(ctx context.Context, sceneID int, duration float64, count int
 	cleanup := func() {
 		for _, m := range made {
 			_ = os.Remove(m.Path)
+			_ = os.Remove(ReelCoverPath(m.Path))
 		}
 	}
 	for i, clip := range plan.clips {
@@ -201,6 +202,9 @@ func GenerateReels(ctx context.Context, sceneID int, duration float64, count int
 			_ = os.Remove(out)
 			cleanup()
 			return nil, err
+		}
+		if err := MakeReelCover(ctx, out, clip.End-clip.Start); err != nil {
+			logger.Warnf("[reels] cover for %s: %v", out, err)
 		}
 		made = append(made, &models.Reel{
 			SceneID:  sceneID,
@@ -233,6 +237,7 @@ func GenerateReels(ctx context.Context, sceneID int, duration float64, count int
 
 	for _, o := range old {
 		_ = os.Remove(o.Path)
+		_ = os.Remove(ReelCoverPath(o.Path))
 	}
 
 	logger.Infof("[reels] made %d reel(s) of %.0fs for %q from %s", len(made), duration, scene.GetTitle(), strings.ToLower(plan.source))
@@ -652,6 +657,31 @@ func renderReel(ctx context.Context, vf *models.VideoFile, clip models.ReelSegme
 		out)
 	if _, err := runFFmpegCapture(ctx, args); err != nil {
 		return fmt.Errorf("rendering reel: %w", err)
+	}
+	return nil
+}
+
+// ReelCoverPath is where a reel's picture is kept: next to the reel, as .jpg.
+func ReelCoverPath(reelPath string) string {
+	return strings.TrimSuffix(reelPath, filepath.Ext(reelPath)) + ".jpg"
+}
+
+// MakeReelCover saves a picture from a third of the way into the reel, so
+// it shows the reel's own vertical frame rather than the scene's screenshot.
+func MakeReelCover(ctx context.Context, reelPath string, length float64) error {
+	at := length / 3
+	if at <= 0 {
+		at = 1
+	}
+	out := ReelCoverPath(reelPath)
+	args := []string{"-hide_banner", "-nostats", "-v", "error", "-y",
+		"-ss", strconv.FormatFloat(at, 'f', 2, 64),
+		"-i", reelPath,
+		"-frames:v", "1", "-q:v", "3",
+		out}
+	if _, err := runFFmpegCapture(ctx, args); err != nil {
+		_ = os.Remove(out)
+		return fmt.Errorf("making reel picture: %w", err)
 	}
 	return nil
 }
