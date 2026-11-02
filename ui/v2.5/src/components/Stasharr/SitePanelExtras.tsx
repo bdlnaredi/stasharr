@@ -278,3 +278,46 @@ export const BrandingEditor: React.FC<{
     </div>
   );
 };
+
+export const LoginPageEditor: React.FC<{
+  cfg: Cfg;
+  tags: { id: string; name: string }[];
+  save: (input: GQL.SiteConfigInput, message?: string) => Promise<void>;
+}> = ({ cfg, tags, save }) => (
+  <div className="setting-section">
+    <h1>Login page</h1>
+    <div className="sub-heading">
+      What plays behind the sign-in box. Anyone who opens the login page sees it before signing in, so limit it
+      to a tag if only some scenes should be shown.
+    </div>
+    <SettingRow heading="Background">
+      <Form.Control
+        as="select"
+        className="input-control"
+        value={cfg.login_backdrop}
+        onChange={(e) => save({ login_backdrop: e.currentTarget.value }, "Login page saved")}
+      >
+        <option value="previews">Moving previews</option>
+        <option value="pictures">Scene pictures</option>
+        <option value="off">Plain</option>
+      </Form.Control>
+    </SettingRow>
+    {cfg.login_backdrop !== "off" && (
+      <SettingRow heading="Only scenes tagged" sub="Leave on Any scene to pick from the whole library.">
+        <Form.Control
+          as="select"
+          className="input-control"
+          value={cfg.login_backdrop_tag?.id ?? ""}
+          onChange={(e) => save({ login_backdrop_tag_id: e.currentTarget.value }, "Login page saved")}
+        >
+          <option value="">Any scene</option>
+          {tags.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </Form.Control>
+      </SettingRow>
+    )}
+  </div>
+);

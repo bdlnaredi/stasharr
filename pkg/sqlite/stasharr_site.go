@@ -197,3 +197,21 @@ GROUP BY b.performer_id ORDER BY c DESC, b.performer_id LIMIT ?`
 	err := dbWrapper.Select(ctx, &rows, q, append(append([]interface{}{performerID}, args...), limit)...)
 	return rows, err
 }
+
+// LoginBackdropSceneIDs picks scenes with a cover picture at random, for the
+// login page. With tagID > 0 only scenes with that tag are picked.
+func LoginBackdropSceneIDs(ctx context.Context, tagID, limit int) ([]int, error) {
+	q := "SELECT scenes.id FROM scenes WHERE scenes.cover_blob IS NOT NULL"
+	var args []interface{}
+	if tagID > 0 {
+		q += " AND EXISTS (SELECT 1 FROM scenes_tags st WHERE st.scene_id = scenes.id AND st.tag_id = ?)"
+		args = append(args, tagID)
+	}
+	q += " ORDER BY RANDOM() LIMIT ?"
+	args = append(args, limit)
+	var ids []int
+	if err := dbWrapper.Select(ctx, &ids, q, args...); err != nil {
+		return nil, fmt.Errorf("picking login scenes: %w", err)
+	}
+	return ids, nil
+}

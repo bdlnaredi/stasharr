@@ -2360,3 +2360,29 @@ func (i *Config) GetSiteModelsGender() string {
 	}
 	return "FEMALE"
 }
+
+// Stasharr: login page
+
+const (
+	LoginBackdrop    = "stasharr.login.backdrop"
+	LoginBackdropTag = "stasharr.login.backdrop_tag"
+)
+
+// LoginBackdrops are the choices for what plays behind the login form.
+var LoginBackdrops = []string{"previews", "pictures", "off"}
+
+// GetLoginBackdrop is what plays behind the login form: previews (short
+// clips), pictures (scene screenshots) or off.
+func (i *Config) GetLoginBackdrop() string {
+	v := i.getString(LoginBackdrop)
+	for _, s := range LoginBackdrops {
+		if s == v {
+			return v
+		}
+	}
+	return "previews"
+}
+
+// GetLoginBackdropTag limits the login backdrop to scenes with this tag; 0
+// for any scene.
+func (i *Config) GetLoginBackdropTag() int { return i.getInt(LoginBackdropTag) }

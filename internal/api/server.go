@@ -235,6 +235,7 @@ func Initialize() (*Server, error) {
 	r.Post(loginEndpoint, handleLoginPost())
 	r.Get(logoutEndpoint, handleLogout())
 	r.Get(loginLocaleEndpoint, handleLoginLocale(cfg))
+	r.Mount(loginEndpoint+"/backdrop", (&loginBackdrop{repository: server.manager.Repository}).Routes())
 	r.HandleFunc(loginEndpoint+"/*", func(w http.ResponseWriter, r *http.Request) {
 		r.URL.Path = strings.TrimPrefix(r.URL.Path, loginEndpoint)
 		w.Header().Set("Cache-Control", "no-cache")

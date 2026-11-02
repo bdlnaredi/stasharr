@@ -6,7 +6,7 @@ import { useToast } from "src/hooks/Toast";
 import { baseURL } from "src/core/createClient";
 import { siteStyles } from "src/components/Site/siteStyles";
 import { SettingRow } from "./util";
-import { BrandingEditor, HomeRowsEditor, PromoEditor } from "./SitePanelExtras";
+import { BrandingEditor, HomeRowsEditor, LoginPageEditor, PromoEditor } from "./SitePanelExtras";
 
 const featuredOptions = [
   { id: "top_rated", label: "Top rated by everyone" },
@@ -193,6 +193,7 @@ export const SitePanel: React.FC = () => {
       <HomeRowsEditor cfg={cfg} tags={tags.data?.findTags.tags ?? []} save={save} />
       <PromoEditor cfg={cfg} save={save} />
       <BrandingEditor cfg={cfg} save={save} />
+      <LoginPageEditor cfg={cfg} tags={tags.data?.findTags.tags ?? []} save={save} />
 
       <div className="setting-section">
         <h1>Style</h1>
