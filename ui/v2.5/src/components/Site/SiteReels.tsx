@@ -4,7 +4,8 @@ import * as GQL from "src/core/generated-graphql";
 import { useCurrentUser } from "src/components/Stasharr/CurrentUser";
 import { Empty, Loading, Rail, Section } from "./SiteCards";
 import { LikeButton } from "./SiteWidgets";
-import { t } from "./i18n";
+import { short, t, views } from "./i18n";
+import { SiteComments } from "./SiteComments";
 
 type Reel = GQL.ReelDataFragment;
 
@@ -27,6 +28,7 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
       <img src={reel.cover} alt="" loading="lazy" />
       {hover && <video src={reel.stream} autoPlay muted loop playsInline />}
       <span className="site-reel-badge">{t("▶ Reel")}</span>
+      {reel.views > 0 && <span className="site-reel-views">👁 {short(reel.views)}</span>}
       <span className="site-reel-card-title">{reelTitle(reel)}</span>
     </Link>
   );
@@ -51,6 +53,32 @@ export const ReelsRow: React.FC<{ title?: string }> = ({ title }) => {
   );
 };
 
+// Reels watched recently in this browser tab, so scrolling back and forth
+// does not count the same reel again and again.
+const counted = new Map<string, number>();
+const RECOUNT_AFTER = 30 * 60 * 1000;
+
+// Counts a watch once the reel has played for two seconds.
+export function useReelView(id: string, active: boolean, playing: boolean): number | null {
+  const [addView] = GQL.useReelAddViewMutation();
+  const [total, setTotal] = useState<number | null>(null);
+  useEffect(() => {
+    if (!active || !playing) return;
+    const last = counted.get(id);
+    if (last && Date.now() - last < RECOUNT_AFTER) return;
+    const timer = window.setTimeout(() => {
+      counted.set(id, Date.now());
+      addView({ variables: { id } })
+        .then((r) => {
+          if (r.data) setTotal(r.data.reelAddView);
+        })
+        .catch(() => counted.delete(id));
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [id, active, playing, addView]);
+  return total;
+}
+
 const ReelSlide: React.FC<{
   reel: Reel;
   active: boolean;
@@ -60,6 +88,13 @@ const ReelSlide: React.FC<{
 }> = ({ reel, active, muted, onMute, setRef }) => {
   const video = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
+  const [talk, setTalk] = useState(false);
+  const seen = useReelView(reel.id, active, !paused);
+  const viewCount = seen ?? reel.views;
+
+  useEffect(() => {
+    if (!active) setTalk(false);
+  }, [active]);
 
   useEffect(() => {
     const v = video.current;
@@ -123,16 +158,37 @@ const ReelSlide: React.FC<{
             ))}
           </div>
         )}
+        <div className="site-reel-views-line">👁 {views(viewCount)}</div>
         <Link to={`/site/scene/${reel.scene.id}?t=${start}`} className="site-btn site-btn-primary site-reel-watch">
           {t("▶ Watch full scene")}
         </Link>
       </div>
       <div className="site-reel-side">
         <LikeButton sceneID={reel.scene.id} label={false} className="site-reel-round" />
+        <button
+          type="button"
+          className={`site-btn site-btn-ghost site-reel-round site-reel-talk ${talk ? "on" : ""}`}
+          onClick={() => setTalk(!talk)}
+          aria-label={t("Comments")}
+        >
+          💬
+          {reel.comment_count > 0 && <small>{short(reel.comment_count)}</small>}
+        </button>
         <button type="button" className="site-btn site-btn-ghost site-reel-round" onClick={onMute} aria-label={muted ? t("Unmute") : t("Mute")}>
           {muted ? "🔇" : "🔊"}
         </button>
       </div>
+      {talk && (
+        <div className="site-reel-comments">
+          <div className="site-reel-comments-head">
+            <b>{t("Comments")}</b>
+            <button type="button" onClick={() => setTalk(false)} aria-label={t("Close")}>
+              ✕
+            </button>
+          </div>
+          <SiteComments sceneID={reel.scene.id} reelID={reel.id} compact />
+        </div>
+      )}
     </div>
   );
 };

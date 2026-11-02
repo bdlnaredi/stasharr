@@ -215,3 +215,84 @@ func LoginBackdropSceneIDs(ctx context.Context, tagID, limit int) ([]int, error)
 	}
 	return ids, nil
 }
+
+// ---------------------------------------------------------------- views and comments
+
+// ReelAddView counts one more watch of a reel and returns the new total.
+func ReelAddView(ctx context.Context, reelID int) (int, error) {
+	if _, err := dbWrapper.Exec(ctx, "UPDATE reels SET views = views + 1 WHERE id = ?", reelID); err != nil {
+		return 0, err
+	}
+	var n int
+	err := dbWrapper.Get(ctx, &n, "SELECT views FROM reels WHERE id = ?", reelID)
+	return n, err
+}
+
+// SceneViewCount is how many times a scene was played, by everyone.
+func SceneViewCount(ctx context.Context, sceneID int) (int, error) {
+	var n int
+	err := dbWrapper.Get(ctx, &n, "SELECT COUNT(*) FROM scenes_view_dates WHERE scene_id = ?", sceneID)
+	return n, err
+}
+
+// SiteComment is one comment on a scene.
+type SiteComment struct {
+	ID        int       `db:"id"`
+	SceneID   int       `db:"scene_id"`
+	ReelID    *int      `db:"reel_id"`
+	UserID    int       `db:"user_id"`
+	Author    string    `db:"author"`
+	Body      string    `db:"body"`
+	CreatedAt Timestamp `db:"created_at"`
+}
+
+const commentColumns = "id, scene_id, reel_id, user_id, author, body, created_at"
+
+// SiteCommentCount is how many comments a scene has.
+func SiteCommentCount(ctx context.Context, sceneID int) (int, error) {
+	var n int
+	err := dbWrapper.Get(ctx, &n, "SELECT COUNT(*) FROM site_comments WHERE scene_id = ?", sceneID)
+	return n, err
+}
+
+// SiteComments lists a scene's comments, newest first.
+func SiteComments(ctx context.Context, sceneID, limit, offset int) ([]*SiteComment, int, error) {
+	total, err := SiteCommentCount(ctx, sceneID)
+	if err != nil {
+		return nil, 0, err
+	}
+	var ret []*SiteComment
+	err = dbWrapper.Select(ctx, &ret, "SELECT "+commentColumns+" FROM site_comments WHERE scene_id = ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?", sceneID, limit, offset)
+	return ret, total, err
+}
+
+// SiteAddComment saves a comment.
+func SiteAddComment(ctx context.Context, c *SiteComment) error {
+	c.CreatedAt = Timestamp{time.Now()}
+	res, err := dbWrapper.Exec(ctx, "INSERT INTO site_comments (scene_id, reel_id, user_id, author, body, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+		c.SceneID, c.ReelID, c.UserID, c.Author, c.Body, c.CreatedAt)
+	if err != nil {
+		return err
+	}
+	id, err := res.LastInsertId()
+	c.ID = int(id)
+	return err
+}
+
+// SiteFindComment returns a comment, or nil.
+func SiteFindComment(ctx context.Context, id int) (*SiteComment, error) {
+	var ret []*SiteComment
+	if err := dbWrapper.Select(ctx, &ret, "SELECT "+commentColumns+" FROM site_comments WHERE id = ?", id); err != nil {
+		return nil, err
+	}
+	if len(ret) == 0 {
+		return nil, nil
+	}
+	return ret[0], nil
+}
+
+// SiteDeleteComment removes a comment.
+func SiteDeleteComment(ctx context.Context, id int) error {
+	_, err := dbWrapper.Exec(ctx, "DELETE FROM site_comments WHERE id = ?", id)
+	return err
+}

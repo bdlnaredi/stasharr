@@ -261,6 +261,21 @@ const dict: Record<string, Tr> = {
     ru: "По запросу «{q}» ничего не найдено.",
     es: "No hay resultados para «{q}».",
   },
+  // comments
+  Comments: { hi: "टिप्पणियाँ", fr: "Commentaires", ru: "Комментарии", es: "Comentarios" },
+  "Add a comment…": { hi: "टिप्पणी लिखें…", fr: "Ajouter un commentaire…", ru: "Написать комментарий…", es: "Añade un comentario…" },
+  Post: { hi: "भेजें", fr: "Publier", ru: "Отправить", es: "Publicar" },
+  Delete: { hi: "हटाएँ", fr: "Supprimer", ru: "Удалить", es: "Eliminar" },
+  "on a reel": { hi: "रील पर", fr: "sur un reel", ru: "к рилсу", es: "en un reel" },
+  "Be the first to comment.": {
+    hi: "सबसे पहले टिप्पणी करें।",
+    fr: "Soyez le premier à commenter.",
+    ru: "Оставьте первый комментарий.",
+    es: "Sé el primero en comentar.",
+  },
+  "Show more comments": { hi: "और टिप्पणियाँ", fr: "Plus de commentaires", ru: "Ещё комментарии", es: "Más comentarios" },
+  Close: { hi: "बंद करें", fr: "Fermer", ru: "Закрыть", es: "Cerrar" },
+  "just now": { hi: "अभी", fr: "à l'instant", ru: "только что", es: "ahora mismo" },
   "See all results": { hi: "सभी परिणाम देखें", fr: "Voir tous les résultats", ru: "Все результаты", es: "Ver todos los resultados" },
 };
 
@@ -295,6 +310,20 @@ const plurals: Record<string, Record<Lang, Forms>> = {
     ru: { one: "{n} оценка", few: "{n} оценки", many: "{n} оценок", other: "{n} оценки" },
     es: { one: "{n} valoración", other: "{n} valoraciones" },
   },
+  view: {
+    en: { one: "{n} view", other: "{n} views" },
+    hi: { one: "{n} बार देखा गया", other: "{n} बार देखा गया" },
+    fr: { one: "{n} vue", other: "{n} vues" },
+    ru: { one: "{n} просмотр", few: "{n} просмотра", many: "{n} просмотров", other: "{n} просмотра" },
+    es: { one: "{n} visualización", other: "{n} visualizaciones" },
+  },
+  comment: {
+    en: { one: "{n} comment", other: "{n} comments" },
+    hi: { one: "{n} टिप्पणी", other: "{n} टिप्पणियाँ" },
+    fr: { one: "{n} commentaire", other: "{n} commentaires" },
+    ru: { one: "{n} комментарий", few: "{n} комментария", many: "{n} комментариев", other: "{n} комментария" },
+    es: { one: "{n} comentario", other: "{n} comentarios" },
+  },
   together: {
     en: { one: "{n} scene together", other: "{n} scenes together" },
     hi: { one: "{n} दृश्य साथ में", other: "{n} दृश्य साथ में" },
@@ -305,9 +334,48 @@ const plurals: Record<string, Record<Lang, Forms>> = {
 };
 
 /** "3 scenes", "3 сцены", "5 сцен"… with the right form for the number. */
-export function count(n: number, what: "scene" | "model" | "rating" | "together"): string {
+export function count(n: number, what: "scene" | "model" | "rating" | "together" | "view" | "comment"): string {
   const forms = plurals[what][current];
   const rule = new Intl.PluralRules(locale()).select(n) as keyof Forms;
   const form = forms[rule] ?? forms.other;
   return form.replace("{n}", n.toLocaleString(locale()));
+}
+
+/** A short number: 950, 1.2K, 3.4M (in the chosen language's style). */
+export function short(n: number): string {
+  try {
+    return new Intl.NumberFormat(locale(), { notation: "compact", maximumFractionDigits: 1 }).format(n);
+  } catch {
+    return String(n);
+  }
+}
+
+/** "1.2K views", with the plural form chosen by the full number. */
+export function views(n: number): string {
+  return count(n, "view").replace(n.toLocaleString(locale()), short(n));
+}
+
+/** "5 minutes ago", "yesterday"… in the chosen language. */
+export function ago(date: string | Date): string {
+  const then = new Date(date).getTime();
+  const secs = Math.round((then - Date.now()) / 1000);
+  if (Math.abs(secs) < 45) return t("just now");
+  const rtf = new Intl.RelativeTimeFormat(locale(), { numeric: "auto" });
+  const steps: [Intl.RelativeTimeFormatUnit, number][] = [
+    ["minute", 60],
+    ["hour", 3600],
+    ["day", 86400],
+    ["week", 604800],
+    ["month", 2629800],
+    ["year", 31557600],
+  ];
+  let unit: Intl.RelativeTimeFormatUnit = "minute";
+  let size = 60;
+  for (const [u, s] of steps) {
+    if (Math.abs(secs) >= s) {
+      unit = u;
+      size = s;
+    }
+  }
+  return rtf.format(Math.round(secs / size), unit);
 }

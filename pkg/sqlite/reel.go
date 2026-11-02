@@ -25,6 +25,7 @@ type reelRow struct {
 	Height    int       `db:"height"`
 	Source    string    `db:"source"`
 	Segments  string    `db:"segments"`
+	Views     int       `db:"views"`
 	CreatedAt Timestamp `db:"created_at"`
 }
 
@@ -37,13 +38,14 @@ func (r reelRow) resolve() *models.Reel {
 		Width:     r.Width,
 		Height:    r.Height,
 		Source:    r.Source,
+		Views:     r.Views,
 		CreatedAt: r.CreatedAt.Timestamp,
 	}
 	_ = json.Unmarshal([]byte(r.Segments), &ret.Segments)
 	return ret
 }
 
-const reelColumns = "reels.id, reels.scene_id, reels.path, reels.duration, reels.width, reels.height, reels.source, reels.segments, reels.created_at"
+const reelColumns = "reels.id, reels.scene_id, reels.path, reels.duration, reels.width, reels.height, reels.source, reels.segments, reels.views, reels.created_at"
 
 func (s *ReelStore) Create(ctx context.Context, r *models.Reel) error {
 	r.CreatedAt = time.Now()

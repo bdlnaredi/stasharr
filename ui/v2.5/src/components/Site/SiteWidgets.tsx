@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import * as GQL from "src/core/generated-graphql";
-import { count, t } from "./i18n";
+import { count, t, views } from "./i18n";
 
 // A heart that likes or unlikes a scene for the current user.
 export const LikeButton: React.FC<{ sceneID: string; className?: string; label?: boolean }> = ({
@@ -67,6 +67,14 @@ export const FollowButton: React.FC<{ performerID: string; following: boolean }>
       <span className="site-heart">{on ? "♥" : "♡"}</span> {on ? t("Favourite") : t("Add to favourites")}
     </button>
   );
+};
+
+// "1.2K views" for a scene, counted across everyone.
+export const SceneViews: React.FC<{ sceneID: string }> = ({ sceneID }) => {
+  const { data } = GQL.useSiteSceneExtrasQuery({ variables: { id: sceneID }, fetchPolicy: "cache-and-network" });
+  const n = data?.findScene?.site_views;
+  if (n === undefined) return null;
+  return <span className="site-views">👁 {views(n)}</span>;
 };
 
 // Five stars: the average of everyone's ratings, and the current user's own
