@@ -484,7 +484,7 @@ class Repository(private val api: Api) {
         val data = api.gql(
             """query(${'$'}page: Int, ${'$'}per: Int, ${'$'}seed: Int) {
               findReels(page: ${'$'}page, per_page: ${'$'}per, seed: ${'$'}seed) { count reels {
-                id stream cover duration segments { start end }
+                id stream cover views comment_count duration segments { start end }
                 scene { id title studio { id name } performers { id name } paths { screenshot } }
               } }
             }""",
@@ -492,6 +492,12 @@ class Repository(private val api: Api) {
         )
         val res = data.obj("findReels") ?: return Page(0, emptyList())
         return Page(res.int("count"), res["reels"].decode(emptyList()))
+    }
+
+    /** Counts one watch of a reel; returns the new total. */
+    suspend fun reelAddView(id: String): Int? {
+        val data = api.gql("mutation(\$id: ID!) { reelAddView(id: \$id) }", vars { put("id", id) })
+        return data.int("reelAddView")
     }
 
     suspend fun saveActivity(sceneId: String, resumeTime: Double, playDuration: Double) {

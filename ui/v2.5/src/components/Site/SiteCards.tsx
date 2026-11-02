@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
-import { count, locale, t } from "./i18n";
+import { count, locale, t, views } from "./i18n";
 
 export type SiteScene = GQL.SiteSceneCardFragment;
 export type SiteModel = GQL.SiteModelCardFragment;
@@ -173,6 +173,7 @@ export const SceneTile: React.FC<{
             <Link to={`/site/studio/${scene.studio.id}`}>{scene.studio.name}</Link>
           )}
           {scene.date && <span>{formatDate(scene.date)}</span>}
+          {scene.site_views > 0 && <span>{views(scene.site_views)}</span>}
         </div>
       </div>
     </div>

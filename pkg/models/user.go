@@ -75,6 +75,7 @@ type Reel struct {
 	Height    int           `json:"height"`
 	Source    string        `json:"source"`
 	Segments  []ReelSegment `json:"segments"`
+	Views     int           `json:"views"`
 	CreatedAt time.Time     `json:"created_at"`
 }
 

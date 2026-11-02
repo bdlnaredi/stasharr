@@ -20,6 +20,10 @@ type Reel {
   stream: String!
   "URL of a picture from the reel, made the first time it is asked for"
   cover: String!
+  "How many times the reel was watched"
+  views: Int!
+  "Comments on the reel's scene"
+  comment_count: Int!
   created_at: Time!
 }
 

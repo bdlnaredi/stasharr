@@ -178,6 +178,9 @@ data class Reel(
     val stream: String,
     /** A picture from the reel itself; older servers send none. */
     val cover: String? = null,
+    /** How many times the reel was watched. */
+    val views: Int = 0,
+    @SerialName("comment_count") val commentCount: Int = 0,
     val duration: Double = 0.0,
     val scene: ReelScene,
     val segments: List<ReelSegment> = emptyList(),

@@ -21,7 +21,8 @@ import {
   titleSize,
 } from "./SiteCards";
 import { useSite } from "./SiteContext";
-import { FollowButton, LikeButton, SceneRating } from "./SiteWidgets";
+import { FollowButton, LikeButton, SceneRating, SceneViews } from "./SiteWidgets";
+import { SiteComments } from "./SiteComments";
 import { count, t } from "./i18n";
 
 function useQueryParams(): [URLSearchParams, (changes: Record<string, string | null>) => void] {
@@ -429,6 +430,7 @@ export const ScenePage: React.FC = () => {
               {scene.date && <span>{formatDate(scene.date)}</span>}
               {f?.duration ? <span>{formatTime(f.duration)}</span> : null}
               {badge && <span className="site-badge">{badge}</span>}
+              <SceneViews sceneID={scene.id} />
             </div>
             <SceneRating sceneID={scene.id} />
           </div>
@@ -485,6 +487,8 @@ export const ScenePage: React.FC = () => {
             ))}
           </div>
         )}
+
+        <SiteComments key={scene.id} sceneID={scene.id} />
 
         {moreScenes.length > 0 && mainModel && (
           <Section title={t("More of {name}", { name: mainModel.name })} link={`/site/model/${mainModel.id}`}>

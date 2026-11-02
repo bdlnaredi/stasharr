@@ -14,6 +14,7 @@ import { Icon } from "src/components/Shared/Icon";
 import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 import { useToast } from "src/hooks/Toast";
 import { useCurrentUser } from "./CurrentUser";
+import { useReelView } from "src/components/Site/SiteReels";
 
 type Reel = GQL.ReelDataFragment;
 
@@ -50,6 +51,8 @@ const ReelItem: React.FC<{
   setRef: (el: HTMLDivElement | null) => void;
 }> = ({ reel, active, muted, canEdit, onToggleMute, onDelete, onRemake, setRef }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const seen = useReelView(reel.id, active, true);
+  const viewCount = seen ?? reel.views;
 
   useEffect(() => {
     const v = videoRef.current;
@@ -98,7 +101,14 @@ const ReelItem: React.FC<{
         )}
         {performers && <div className="stasharr-reel-performers">{performers}</div>}
         <div className="stasharr-reel-meta">
-          {Math.round(reel.duration)}s · {sourceLabel(reel.source)}
+          {Math.round(reel.duration)}s · {sourceLabel(reel.source)} · {viewCount.toLocaleString()} view
+          {viewCount === 1 ? "" : "s"}
+          {reel.comment_count > 0 && (
+            <>
+              {" "}
+              · {reel.comment_count} comment{reel.comment_count === 1 ? "" : "s"}
+            </>
+          )}
         </div>
       </div>
       <div className="stasharr-reel-actions">

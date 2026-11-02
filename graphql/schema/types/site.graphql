@@ -98,6 +98,28 @@ extend type Scene {
   "Whether the current user liked the scene on the site"
   site_liked: Boolean!
   site_rating: SiteRating!
+  "How many times the scene was played, by everyone"
+  site_views: Int!
+  "How many comments the scene has"
+  site_comment_count: Int!
+}
+
+type SiteComment {
+  id: ID!
+  author: String!
+  body: String!
+  created_at: Time!
+  "Written while watching one of the scene's reels"
+  from_reel: Boolean!
+  "Written by the current user"
+  mine: Boolean!
+  "The current user may delete it: their own, or any for admins"
+  can_delete: Boolean!
+}
+
+type SiteCommentResult {
+  count: Int!
+  comments: [SiteComment!]!
 }
 
 extend type Performer {
@@ -135,6 +157,8 @@ extend type Query {
   siteFromFavorites(page: Int, per_page: Int): SiteSceneResult!
   "Models who most often appear with the given one"
   siteCoStars(performer_id: ID!, limit: Int): [SiteCoStar!]!
+  "A scene's comments, newest first"
+  siteComments(scene_id: ID!, page: Int, per_page: Int): SiteCommentResult!
 }
 
 extend type Mutation {
@@ -146,4 +170,10 @@ extend type Mutation {
   siteToggleLike(scene_id: ID!): Boolean!
   "Follows or unfollows a model. Returns whether they are now a favourite."
   siteToggleFavoriteModel(performer_id: ID!): Boolean!
+  "Adds a comment to a scene. reel_id when written on a reel."
+  siteAddComment(scene_id: ID!, body: String!, reel_id: ID): SiteComment!
+  "Deletes a comment: your own, or any for admins"
+  siteDeleteComment(id: ID!): Boolean!
+  "Counts one watch of a reel. Returns the new total."
+  reelAddView(id: ID!): Int!
 }

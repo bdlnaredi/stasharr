@@ -6,6 +6,7 @@ fragment SiteSceneCard on Scene {
   details
   resume_time
   in_watch_later
+  site_views
   files {
     path
     duration
@@ -215,7 +216,42 @@ query SiteSceneExtras($id: ID!) {
       average
       count
     }
+    site_views
+    site_comment_count
   }
+}
+
+fragment SiteCommentData on SiteComment {
+  id
+  author
+  body
+  created_at
+  from_reel
+  mine
+  can_delete
+}
+
+query SiteComments($scene_id: ID!, $page: Int, $per_page: Int) {
+  siteComments(scene_id: $scene_id, page: $page, per_page: $per_page) {
+    count
+    comments {
+      ...SiteCommentData
+    }
+  }
+}
+
+mutation SiteAddComment($scene_id: ID!, $body: String!, $reel_id: ID) {
+  siteAddComment(scene_id: $scene_id, body: $body, reel_id: $reel_id) {
+    ...SiteCommentData
+  }
+}
+
+mutation SiteDeleteComment($id: ID!) {
+  siteDeleteComment(id: $id)
+}
+
+mutation ReelAddView($id: ID!) {
+  reelAddView(id: $id)
 }
 
 query SiteLiked($page: Int, $per_page: Int) {

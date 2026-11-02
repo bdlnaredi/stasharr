@@ -48,6 +48,8 @@ fragment ReelData on Reel {
   source
   stream
   cover
+  views
+  comment_count
   created_at
   segments {
     start

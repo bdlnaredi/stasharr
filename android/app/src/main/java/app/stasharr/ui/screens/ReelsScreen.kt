@@ -32,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,6 +68,7 @@ import app.stasharr.ui.components.LoadingBox
 import app.stasharr.ui.components.rememberPaged
 import app.stasharr.ui.theme.Brand
 import coil.compose.AsyncImage
+import kotlinx.coroutines.delay
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -79,6 +81,8 @@ fun ReelsScreen() {
     val pager = rememberPagerState(pageCount = { reels.items.size })
     var muted by remember { mutableStateOf(false) }
     var paused by remember { mutableStateOf(false) }
+    // view totals updated after this phone counted a watch
+    val viewCounts = remember { mutableStateMapOf<String, Int>() }
 
     val player = remember {
         newPlayer(context).apply {
@@ -109,6 +113,9 @@ fun ReelsScreen() {
         paused = false
         player.playWhenReady = true
         player.play()
+        // a watch counts after two seconds on screen
+        delay(2000)
+        runCatching { app.repo.reelAddView(reel.id) }.getOrNull()?.let { viewCounts[reel.id] = it }
     }
     // load more near the end, without restarting the reel on screen
     LaunchedEffect(pager.settledPage, reels.items.size) {
@@ -123,6 +130,7 @@ fun ReelsScreen() {
                 val reel = reels.items[page]
                 ReelPage(
                     reel = reel,
+                    views = viewCounts[reel.id] ?: reel.views,
                     active = page == pager.settledPage,
                     player = player,
                     muted = muted,
@@ -167,6 +175,7 @@ private fun EmptyReels(error: String?) {
 @Composable
 private fun ReelPage(
     reel: Reel,
+    views: Int,
     active: Boolean,
     player: ExoPlayer,
     muted: Boolean,
@@ -244,6 +253,15 @@ private fun ReelPage(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                buildString {
+                    append(if (views == 1) "1 view" else "%,d views".format(views))
+                    if (reel.commentCount > 0) append(" · ").append(if (reel.commentCount == 1) "1 comment" else "${reel.commentCount} comments")
+                },
+                color = Color.White.copy(alpha = 0.65f),
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
 
         // actions, bottom right
