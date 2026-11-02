@@ -21,6 +21,7 @@ import { ISiteStyle } from "./siteStyles";
 import { useSite } from "./SiteContext";
 import { ReelsRow } from "./SiteReels";
 import { LikeButton } from "./SiteWidgets";
+import { t } from "./i18n";
 
 // ---------------------------------------------------------------- hero
 
@@ -54,7 +55,7 @@ const HeroText: React.FC<{ scene: SiteScene }> = ({ scene }) => {
   return (
     <div className="site-hero-text" key={scene.id}>
       <div className="site-hero-kicker">
-        <span>Featured</span>
+        <span>{t("Featured")}</span>
         {scene.studio && <Link to={`/site/studio/${scene.studio.id}`}>{scene.studio.name}</Link>}
       </div>
       <h1 className={titleSize(sceneTitle(scene))} title={sceneTitle(scene)}>
@@ -62,7 +63,7 @@ const HeroText: React.FC<{ scene: SiteScene }> = ({ scene }) => {
       </h1>
       {(models.length > 0 || scene.performers.length > 0) && (
         <div className="site-hero-models">
-          Starring{" "}
+          {t("Starring")}{" "}
           {(models.length ? models : scene.performers).slice(0, 4).map((p, i) => (
             <React.Fragment key={p.id}>
               {i > 0 && " & "}
@@ -79,7 +80,7 @@ const HeroText: React.FC<{ scene: SiteScene }> = ({ scene }) => {
       {scene.details && <p className="site-hero-details">{scene.details}</p>}
       <div className="site-hero-actions">
         <button type="button" className="site-btn site-btn-primary" onClick={() => history.push(`/site/scene/${scene.id}`)}>
-          ▶ Watch now
+          {t("▶ Watch now")}
         </button>
         <button
           type="button"
@@ -93,7 +94,7 @@ const HeroText: React.FC<{ scene: SiteScene }> = ({ scene }) => {
             }
           }}
         >
-          {inList ? "✓ In my list" : "+ My list"}
+          {inList ? t("✓ In my list") : t("+ My list")}
         </button>
         <LikeButton sceneID={scene.id} label={false} />
       </div>
@@ -108,8 +109,8 @@ const Hero: React.FC<{ scenes: SiteScene[]; style: ISiteStyle }> = ({ scenes, st
 
   useEffect(() => {
     if (count < 2 || paused) return;
-    const t = window.setTimeout(() => setIndex((i) => (i + 1) % count), 8000);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setIndex((i) => (i + 1) % count), 8000);
+    return () => window.clearTimeout(timer);
   }, [index, count, paused]);
 
   if (count === 0) return null;
@@ -136,7 +137,7 @@ const Hero: React.FC<{ scenes: SiteScene[]; style: ISiteStyle }> = ({ scenes, st
                 key={s.id}
                 className={i === index ? "active" : ""}
                 onClick={() => setIndex(i)}
-                aria-label={`Show ${sceneTitle(s)}`}
+                aria-label={t("Show {title}", { title: sceneTitle(s) })}
               />
             ))}
           </div>
@@ -144,7 +145,7 @@ const Hero: React.FC<{ scenes: SiteScene[]; style: ISiteStyle }> = ({ scenes, st
       </div>
       {style.hero === "split" && next.length > 0 && (
         <div className="site-hero-side">
-          <div className="site-hero-side-title">Up next</div>
+          <div className="site-hero-side-title">{t("Up next")}</div>
           {next.map((s) => (
             <button
               type="button"
@@ -179,7 +180,7 @@ export const Ticker: React.FC = () => {
   const loop = [...items, ...items];
   return (
     <div className="site-ticker">
-      <span className="site-ticker-label">Just added</span>
+      <span className="site-ticker-label">{t("Just added")}</span>
       <div className="site-ticker-window">
         <div className="site-ticker-track" style={{ animationDuration: `${items.length * 6}s` }}>
           {loop.map((it, i) => (
@@ -313,8 +314,8 @@ const CategoriesRow: React.FC<{ title: string }> = ({ title }) => {
   return (
     <Section title={title} link="/site/categories">
       <div className="site-category-grid">
-        {tags.map((t) => (
-          <CategoryTile key={t.id} tag={t} />
+        {tags.map((tag) => (
+          <CategoryTile key={tag.id} tag={tag} />
         ))}
       </div>
     </Section>
@@ -372,7 +373,7 @@ export function defaultRowTitle(type: string, femaleOnly: boolean): string {
 
 const HomeRow: React.FC<{ row: GQL.SiteConfigDataFragment["home_rows"][number] }> = ({ row }) => {
   const { config } = useSite();
-  const title = row.title || defaultRowTitle(row.type, female(config));
+  const title = row.title || t(defaultRowTitle(row.type, female(config)));
   switch (row.type) {
     case "continue":
       return <ExtrasRow which="continue" title={title} />;
@@ -411,7 +412,7 @@ const Promo: React.FC<{ promo: GQL.SiteConfigDataFragment["promo"] }> = ({ promo
     <>
       {promo.image && <img src={promo.image} alt="" />}
       <span className="site-promo-text">{promo.text}</span>
-      {promo.link && <span className="site-promo-go">Explore ›</span>}
+      {promo.link && <span className="site-promo-go">{t("Explore ›")}</span>}
     </>
   );
   const external = /^https?:\/\//.test(promo.link);

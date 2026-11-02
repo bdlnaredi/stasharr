@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import * as GQL from "src/core/generated-graphql";
+import { count, t } from "./i18n";
 
 // A heart that likes or unlikes a scene for the current user.
 export const LikeButton: React.FC<{ sceneID: string; className?: string; label?: boolean }> = ({
@@ -20,7 +21,7 @@ export const LikeButton: React.FC<{ sceneID: string; className?: string; label?:
       className={`site-btn site-btn-ghost site-like ${liked ? "on" : ""} ${className ?? ""}`}
       disabled={loading}
       aria-pressed={liked}
-      title={liked ? "Unlike" : "Like"}
+      title={liked ? t("Unlike") : t("Like")}
       onClick={async () => {
         setLiked(!liked);
         try {
@@ -32,7 +33,7 @@ export const LikeButton: React.FC<{ sceneID: string; className?: string; label?:
       }}
     >
       <span className="site-heart">{liked ? "♥" : "♡"}</span>
-      {label && (liked ? " Liked" : " Like")}
+      {label && ` ${liked ? t("Liked") : t("Like")}`}
     </button>
   );
 };
@@ -63,7 +64,7 @@ export const FollowButton: React.FC<{ performerID: string; following: boolean }>
         }
       }}
     >
-      <span className="site-heart">{on ? "♥" : "♡"}</span> {on ? "Favourite" : "Add to favourites"}
+      <span className="site-heart">{on ? "♥" : "♡"}</span> {on ? t("Favourite") : t("Add to favourites")}
     </button>
   );
 };
@@ -98,18 +99,18 @@ export const SceneRating: React.FC<{ sceneID: string }> = ({ sceneID }) => {
   return (
     <div className="site-rating">
       {avg !== null && summary && (
-        <div className="site-rating-avg" title={`${summary.count} rating${summary.count === 1 ? "" : "s"}`}>
+        <div className="site-rating-avg" title={count(summary.count, "rating")}>
           <span className="site-stars" style={{ ["--fill" as string]: `${avg}%` }}>
             ★★★★★
           </span>
           <b>{(avg / 20).toFixed(1)}</b>
           <small>
-            {summary.count} rating{summary.count === 1 ? "" : "s"}
+            {count(summary.count, "rating")}
           </small>
         </div>
       )}
       <div className="site-rating-own" onMouseLeave={() => setHover(0)}>
-        <small>{ownStars ? "Your rating" : "Rate it"}</small>
+        <small>{ownStars ? t("Your rating") : t("Rate it")}</small>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
             type="button"
@@ -117,7 +118,7 @@ export const SceneRating: React.FC<{ sceneID: string }> = ({ sceneID }) => {
             className={(hover || ownStars) >= n ? "on" : ""}
             onMouseEnter={() => setHover(n)}
             onClick={() => set(n)}
-            aria-label={`${n} star${n === 1 ? "" : "s"}`}
+            aria-label={`${n} ★`}
           >
             ★
           </button>

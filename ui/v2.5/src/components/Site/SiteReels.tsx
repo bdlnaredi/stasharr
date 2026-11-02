@@ -4,6 +4,7 @@ import * as GQL from "src/core/generated-graphql";
 import { useCurrentUser } from "src/components/Stasharr/CurrentUser";
 import { Empty, Loading, Rail, Section } from "./SiteCards";
 import { LikeButton } from "./SiteWidgets";
+import { t } from "./i18n";
 
 type Reel = GQL.ReelDataFragment;
 
@@ -25,7 +26,7 @@ const ReelCard: React.FC<{ reel: Reel }> = ({ reel }) => {
     >
       {reel.scene.paths.screenshot && <img src={reel.scene.paths.screenshot} alt="" loading="lazy" />}
       {hover && <video src={reel.stream} autoPlay muted loop playsInline />}
-      <span className="site-reel-badge">▶ Reel</span>
+      <span className="site-reel-badge">{t("▶ Reel")}</span>
       <span className="site-reel-card-title">{reelTitle(reel)}</span>
     </Link>
   );
@@ -40,7 +41,7 @@ export const ReelsRow: React.FC<{ title?: string }> = ({ title }) => {
   const reels = data?.findReels.reels ?? [];
   if (!canViewReels || reels.length === 0) return null;
   return (
-    <Section title={title || "Reels"} link="/site/reels" linkText="Watch reels">
+    <Section title={title || t("Reels")} link="/site/reels" linkText={t("Watch reels")}>
       <Rail className="site-rail-reels">
         {reels.map((r) => (
           <ReelCard key={r.id} reel={r} />
@@ -99,7 +100,7 @@ const ReelSlide: React.FC<{
         onClick={toggle}
       />
       {paused && active && (
-        <button type="button" className="site-reel-play" onClick={toggle} aria-label="Play">
+        <button type="button" className="site-reel-play" onClick={toggle} aria-label={t("Play")}>
           ▶
         </button>
       )}
@@ -123,12 +124,12 @@ const ReelSlide: React.FC<{
           </div>
         )}
         <Link to={`/site/scene/${reel.scene.id}?t=${start}`} className="site-btn site-btn-primary site-reel-watch">
-          ▶ Watch full scene
+          {t("▶ Watch full scene")}
         </Link>
       </div>
       <div className="site-reel-side">
         <LikeButton sceneID={reel.scene.id} label={false} className="site-reel-round" />
-        <button type="button" className="site-btn site-btn-ghost site-reel-round" onClick={onMute} aria-label={muted ? "Unmute" : "Mute"}>
+        <button type="button" className="site-btn site-btn-ghost site-reel-round" onClick={onMute} aria-label={muted ? t("Unmute") : t("Mute")}>
           {muted ? "🔇" : "🔊"}
         </button>
       </div>
@@ -215,7 +216,7 @@ export const ReelsPage: React.FC = () => {
   if (!canViewReels) {
     return (
       <div className="site-page">
-        <Empty text="Reels are not available for your account." />
+        <Empty text={t("Reels are not available for your account.")} />
       </div>
     );
   }
@@ -223,7 +224,7 @@ export const ReelsPage: React.FC = () => {
   if (reels.length === 0) {
     return (
       <div className="site-page">
-        <Empty text="No reels yet." />
+        <Empty text={t("No reels yet.")} />
       </div>
     );
   }

@@ -22,6 +22,7 @@ import {
 } from "./SiteCards";
 import { useSite } from "./SiteContext";
 import { FollowButton, LikeButton, SceneRating } from "./SiteWidgets";
+import { count, t } from "./i18n";
 
 function useQueryParams(): [URLSearchParams, (changes: Record<string, string | null>) => void] {
   const location = useLocation();
@@ -96,12 +97,12 @@ const SceneFilters: React.FC<{ hideCategory?: boolean; hideChannel?: boolean }> 
   function select(key: string, label: string, options: { id: string; label: string }[]) {
     return (
       <label className="site-filter">
-        <span>{label}</span>
+        <span>{t(label)}</span>
         <select value={params.get(key) ?? ""} onChange={(e) => set({ [key]: e.currentTarget.value || null, page: null })}>
-          <option value="">Any</option>
+          <option value="">{t("Any")}</option>
           {options.map((o) => (
             <option key={o.id} value={o.id}>
-              {o.label}
+              {t(o.label)}
             </option>
           ))}
         </select>
@@ -111,13 +112,13 @@ const SceneFilters: React.FC<{ hideCategory?: boolean; hideChannel?: boolean }> 
 
   return (
     <div className="site-filters">
-      {!hideCategory && select("cat", "Category", tags.map((t) => ({ id: t.id, label: t.name })))}
+      {!hideCategory && select("cat", "Category", tags.map((tag) => ({ id: tag.id, label: tag.name })))}
       {select("len", "Length", lengths)}
       {select("res", "Quality", qualities)}
-      {!hideChannel && select("ch", "Channel", studios.map((t) => ({ id: t.id, label: t.name })))}
+      {!hideChannel && select("ch", "Channel", studios.map((st) => ({ id: st.id, label: st.name })))}
       {active && (
         <button type="button" className="site-filter-clear" onClick={() => set({ cat: null, len: null, res: null, ch: null, page: null })}>
-          Clear filters
+          {t("Clear filters")}
         </button>
       )}
     </div>
@@ -198,17 +199,17 @@ const SceneBrowser: React.FC<{
               className={s.id === current.id ? "active" : ""}
               onClick={() => set({ sort: s.id === sorts[0].id ? null : s.id, page: null })}
             >
-              {s.label}
+              {t(s.label)}
             </button>
           ))}
         </div>
-        <span className="site-count">{total.toLocaleString()} scenes</span>
+        <span className="site-count">{count(total, "scene")}</span>
       </div>
       <SceneFilters hideCategory={hideCategory} hideChannel={hideChannel} />
       {loading && scenes.length === 0 ? (
         <Loading />
       ) : scenes.length === 0 ? (
-        <Empty text="No scenes match." />
+        <Empty text={t("No scenes match.")} />
       ) : (
         <SceneGrid scenes={scenes} />
       )}
@@ -219,7 +220,7 @@ const SceneBrowser: React.FC<{
 
 export const ScenesPage: React.FC = () => (
   <div className="site-page">
-    <h1 className="site-page-title">All scenes</h1>
+    <h1 className="site-page-title">{t("All scenes")}</h1>
     <SceneBrowser />
   </div>
 );
@@ -242,10 +243,10 @@ export const SearchPage: React.FC = () => {
   return (
     <div className="site-page">
       <h1 className="site-page-title">
-        Results for <em>“{q}”</em>
+        {t("Results for")} <em>“{q}”</em>
       </h1>
       {found.length > 0 && (
-        <Section title="Models">
+        <Section title={t(config.models_gender === "FEMALE" ? "Pornstars" : "Models")}>
           <Rail>
             {found.map((m) => (
               <ModelTile key={m.id} model={m} />
@@ -269,21 +270,21 @@ const UpNext: React.FC<{ next: GQL.SiteSceneCardFragment; onCancel: () => void }
       history.push(`/site/scene/${next.id}`);
       return;
     }
-    const t = window.setTimeout(() => setLeft(left - 1), 1000);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setLeft(left - 1), 1000);
+    return () => window.clearTimeout(timer);
   }, [left, next.id, history]);
   return (
     <div className="site-upnext">
       {next.paths.screenshot && <img src={next.paths.screenshot} alt="" />}
       <div className="site-upnext-text">
-        <span className="site-kicker">Up next in {left}s</span>
+        <span className="site-kicker">{t("Up next in {n}s", { n: left })}</span>
         <b>{sceneTitle(next)}</b>
         <div>
           <button type="button" className="site-btn site-btn-primary" onClick={() => history.push(`/site/scene/${next.id}`)}>
-            ▶ Play now
+            {t("▶ Play now")}
           </button>{" "}
           <button type="button" className="site-btn site-btn-ghost" onClick={onCancel}>
-            Cancel
+            {t("Cancel")}
           </button>
         </div>
       </div>
@@ -337,8 +338,8 @@ export const ScenePage: React.FC = () => {
 
   // ?t= starts at a time, for example from a reel
   const startAt = useMemo(() => {
-    const t = Number(new URLSearchParams(location.search).get("t"));
-    return Number.isFinite(t) && t > 0 ? t : null;
+    const at = Number(new URLSearchParams(location.search).get("t"));
+    return Number.isFinite(at) && at > 0 ? at : null;
   }, [location.search]);
 
   const initial = useMemo(() => {
@@ -352,7 +353,7 @@ export const ScenePage: React.FC = () => {
   if (!scene) {
     return (
       <div className="site-page">
-        <Empty text="This scene is not available." />
+        <Empty text={t("This scene is not available.")} />
       </div>
     );
   }
@@ -445,7 +446,7 @@ export const ScenePage: React.FC = () => {
                 }
               }}
             >
-              {inList ? "✓ In my list" : "+ My list"}
+              {inList ? t("✓ In my list") : t("+ My list")}
             </button>
             <button
               type="button"
@@ -455,7 +456,7 @@ export const ScenePage: React.FC = () => {
                 setTheatre(!theatre);
               }}
             >
-              {theatre ? "▣ Normal view" : "▭ Theatre mode"}
+              {theatre ? t("▣ Normal view") : t("▭ Theatre mode")}
             </button>
           </div>
         </div>
@@ -477,22 +478,22 @@ export const ScenePage: React.FC = () => {
 
         {scene.tags.length > 0 && (
           <div className="site-tag-list">
-            {scene.tags.map((t) => (
-              <Link key={t.id} to={`/site/category/${t.id}`} className="site-chip">
-                {t.name}
+            {scene.tags.map((tag) => (
+              <Link key={tag.id} to={`/site/category/${tag.id}`} className="site-chip">
+                {tag.name}
               </Link>
             ))}
           </div>
         )}
 
         {moreScenes.length > 0 && mainModel && (
-          <Section title={`More of ${mainModel.name}`} link={`/site/model/${mainModel.id}`}>
+          <Section title={t("More of {name}", { name: mainModel.name })} link={`/site/model/${mainModel.id}`}>
             <SceneGrid scenes={moreScenes} />
           </Section>
         )}
 
         {similarScenes.length > 0 && (
-          <Section title="You may also like">
+          <Section title={t("You may also like")}>
             <Rail>
               {similarScenes.map((s) => (
                 <SceneTile key={s.id} scene={s} />
@@ -543,7 +544,7 @@ export const ModelsPage: React.FC = () => {
 
   return (
     <div className="site-page">
-      <h1 className="site-page-title">{config.models_gender === "FEMALE" ? "Pornstars" : "Models"}</h1>
+      <h1 className="site-page-title">{t(config.models_gender === "FEMALE" ? "Pornstars" : "Models")}</h1>
       <div className="site-toolbar">
         <div className="site-tabs">
           {modelSorts.map((s) => (
@@ -553,15 +554,15 @@ export const ModelsPage: React.FC = () => {
               className={s.id === current.id ? "active" : ""}
               onClick={() => set({ sort: s.id === "popular" ? null : s.id, page: null })}
             >
-              {s.label}
+              {t(s.label)}
             </button>
           ))}
         </div>
-        <span className="site-count">{total.toLocaleString()} models</span>
+        <span className="site-count">{count(total, "model")}</span>
       </div>
       <div className="site-letters">
         <button type="button" className={!letter ? "active" : ""} onClick={() => set({ letter: null, page: null })}>
-          All
+          {t("All")}
         </button>
         {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((l) => (
           <button
@@ -577,7 +578,7 @@ export const ModelsPage: React.FC = () => {
       {loading && models.length === 0 ? (
         <Loading />
       ) : models.length === 0 ? (
-        <Empty text="No models found." />
+        <Empty text={t("No models found.")} />
       ) : (
         <div className="site-model-grid">
           {models.map((m) => (
@@ -613,7 +614,7 @@ export const ModelPage: React.FC = () => {
   if (!m) {
     return (
       <div className="site-page">
-        <Empty text="This model is not available." />
+        <Empty text={t("This model is not available.")} />
       </div>
     );
   }
@@ -627,7 +628,7 @@ export const ModelPage: React.FC = () => {
     ["Eyes", m.eye_color],
     ["Height", heightText(m.height_cm)],
     ["Measurements", m.measurements],
-    ["Career", m.career_start ? `${m.career_start}${m.career_end ? ` – ${m.career_end}` : " – now"}` : null],
+    ["Career", m.career_start ? `${m.career_start}${m.career_end ? ` – ${m.career_end}` : ` – ${t("now")}`}` : null],
     ["Tattoos", m.tattoos],
     ["Piercings", m.piercings],
   ];
@@ -644,11 +645,11 @@ export const ModelPage: React.FC = () => {
         <div className="site-page site-model-hero-inner">
           <div className="site-model-hero-photo">{m.image_path && <img src={m.image_path} alt={m.name} />}</div>
           <div className="site-model-hero-text">
-            <span className="site-kicker">{m.gender === GQL.GenderEnum.Female ? "Pornstar" : "Model"}</span>
+            <span className="site-kicker">{t(m.gender === GQL.GenderEnum.Female ? "Pornstar" : "Model")}</span>
             <h1>{m.name}</h1>
-            {m.alias_list.length > 0 && <div className="site-model-aliases">Also known as {m.alias_list.slice(0, 5).join(", ")}</div>}
+            {m.alias_list.length > 0 && <div className="site-model-aliases">{t("Also known as {names}", { names: m.alias_list.slice(0, 5).join(", ") })}</div>}
             <div className="site-model-stat">
-              <strong>{m.scene_count}</strong> scene{m.scene_count === 1 ? "" : "s"}
+              <strong>{count(m.scene_count, "scene")}</strong>
             </div>
             <FollowButton performerID={m.id} following={!!m.site_favorite} />
             <dl className="site-facts">
@@ -656,7 +657,7 @@ export const ModelPage: React.FC = () => {
                 .filter(([, v]) => !!v)
                 .map(([k, v]) => (
                   <React.Fragment key={k}>
-                    <dt>{k}</dt>
+                    <dt>{t(k)}</dt>
                     <dd>{v}</dd>
                   </React.Fragment>
                 ))}
@@ -667,7 +668,7 @@ export const ModelPage: React.FC = () => {
       </div>
       <div className="site-page">
         {popularScenes.length > 1 && (
-          <Section title="Most popular scenes">
+          <Section title={t("Most popular scenes")}>
             <Rail>
               {popularScenes.map((s) => (
                 <SceneTile key={s.id} scene={s} />
@@ -676,7 +677,7 @@ export const ModelPage: React.FC = () => {
           </Section>
         )}
         {costarList.length > 0 && (
-          <Section title="Frequently seen with" className="site-section-models">
+          <Section title={t("Frequently seen with")} className="site-section-models">
             <Rail>
               {costarList.map((c) => (
                 <Link key={c.performer.id} to={`/site/model/${c.performer.id}`} className="site-model-tile">
@@ -685,14 +686,14 @@ export const ModelPage: React.FC = () => {
                   </div>
                   <div className="site-model-name">{c.performer.name}</div>
                   <div className="site-model-meta">
-                    {c.scenes} scene{c.scenes === 1 ? "" : "s"} together
+                    {count(c.scenes, "together")}
                   </div>
                 </Link>
               ))}
             </Rail>
           </Section>
         )}
-        <h2 className="site-page-subtitle">All scenes with {m.name}</h2>
+        <h2 className="site-page-subtitle">{t("All scenes with {name}", { name: m.name })}</h2>
         <SceneBrowser sceneFilter={filter} />
       </div>
     </div>
@@ -714,7 +715,7 @@ export const ChannelsPage: React.FC = () => {
   const studios = data?.findStudios.studios ?? [];
   return (
     <div className="site-page">
-      <h1 className="site-page-title">Channels</h1>
+      <h1 className="site-page-title">{t("Channels")}</h1>
       {loading && studios.length === 0 ? (
         <Loading />
       ) : (
@@ -743,7 +744,7 @@ export const ChannelPage: React.FC = () => {
       <div className="site-channel-head">
         {hasLogo && <img src={s!.image_path!} alt="" />}
         <div>
-          <span className="site-kicker">Channel</span>
+          <span className="site-kicker">{t("Channel")}</span>
           <h1>{s?.name ?? ""}</h1>
           {s?.details && <p>{s.details}</p>}
         </div>
@@ -768,13 +769,13 @@ export const CategoriesPage: React.FC = () => {
   const tags = data?.findTags.tags ?? [];
   return (
     <div className="site-page">
-      <h1 className="site-page-title">Categories</h1>
+      <h1 className="site-page-title">{t("Categories")}</h1>
       {loading && tags.length === 0 ? (
         <Loading />
       ) : (
         <div className="site-category-grid site-category-grid-all">
-          {tags.map((t) => (
-            <CategoryTile key={t.id} tag={t} />
+          {tags.map((tag) => (
+            <CategoryTile key={tag.id} tag={tag} />
           ))}
         </div>
       )}
@@ -786,16 +787,16 @@ export const CategoriesPage: React.FC = () => {
 export const CategoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { data } = GQL.useSiteTagQuery({ variables: { id } });
-  const t = data?.findTag;
+  const tag = data?.findTag;
   const filter = useMemo<GQL.SceneFilterType>(
     () => ({ tags: { value: [id], modifier: GQL.CriterionModifier.Includes, depth: 0 } }),
     [id]
   );
   return (
     <div className="site-page">
-      <span className="site-kicker">Category</span>
-      <h1 className="site-page-title">{t?.name ?? ""}</h1>
-      {t?.description && <p className="site-lead">{t.description}</p>}
+      <span className="site-kicker">{t("Category")}</span>
+      <h1 className="site-page-title">{tag?.name ?? ""}</h1>
+      {tag?.description && <p className="site-lead">{tag.description}</p>}
       <SceneBrowser sceneFilter={filter} hideCategory />
     </div>
   );
@@ -819,9 +820,9 @@ export const MyListPage: React.FC = () => {
 
   return (
     <div className="site-page">
-      <h1 className="site-page-title">My list</h1>
+      <h1 className="site-page-title">{t("My list")}</h1>
       {cont.length > 0 && (
-        <Section title="Continue watching">
+        <Section title={t("Continue watching")}>
           <Rail>
             {cont.map((s) => (
               <SceneTile key={s.id} scene={s} />
@@ -829,9 +830,9 @@ export const MyListPage: React.FC = () => {
           </Rail>
         </Section>
       )}
-      <Section title="Favourite pornstars" className="site-section-models">
+      <Section title={t("Favourite pornstars")} className="site-section-models">
         {favModels.length === 0 ? (
-          <Empty text="Tap “Add to favourites” on a model's page to follow her." />
+          <Empty text={t("Tap “Add to favourites” on a model's page to follow her.")} />
         ) : (
           <Rail>
             {favModels.map((m) => (
@@ -841,7 +842,7 @@ export const MyListPage: React.FC = () => {
         )}
       </Section>
       {newFromFavs.length > 0 && (
-        <Section title="New from your favourites">
+        <Section title={t("New from your favourites")}>
           <Rail>
             {newFromFavs.map((s) => (
               <SceneTile key={s.id} scene={s} />
@@ -849,11 +850,11 @@ export const MyListPage: React.FC = () => {
           </Rail>
         </Section>
       )}
-      <Section title="Saved for later">
-        {later.length === 0 ? <Empty text="Nothing saved yet. Tap “+ My list” on any scene." /> : <SceneGrid scenes={later} />}
+      <Section title={t("Saved for later")}>
+        {later.length === 0 ? <Empty text={t("Nothing saved yet. Tap “+ My list” on any scene.")} /> : <SceneGrid scenes={later} />}
       </Section>
-      <Section title="Liked scenes">
-        {likedScenes.length === 0 ? <Empty text="Tap the heart on a scene to like it." /> : <SceneGrid scenes={likedScenes} />}
+      <Section title={t("Liked scenes")}>
+        {likedScenes.length === 0 ? <Empty text={t("Tap the heart on a scene to like it.")} /> : <SceneGrid scenes={likedScenes} />}
       </Section>
     </div>
   );
