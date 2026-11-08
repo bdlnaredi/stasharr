@@ -72,9 +72,7 @@ func (j *TagClipJob) Execute(ctx context.Context, progress *job.Progress) error 
 		if j.Redo {
 			// start afresh, so the old choices do not steer the new ones;
 			// the old files stay until each tag's new clip replaces them
-			if err := r.WithTxn(ctx, func(ctx context.Context) error {
-				return sqlite.DeleteAllTagClips(ctx)
-			}); err != nil {
+			if err := r.WithTxn(ctx, sqlite.DeleteAllTagClips); err != nil {
 				return err
 			}
 		}
