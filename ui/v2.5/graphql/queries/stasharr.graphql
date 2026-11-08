@@ -249,3 +249,94 @@ query TagClipProgress {
 mutation MakeTagClips($tag_ids: [ID!], $redo: Boolean) {
   makeTagClips(tag_ids: $tag_ids, redo: $redo)
 }
+
+query StasharrStats($days: Int) {
+  stasharrStats(days: $days) {
+    days
+    totals {
+      scenes
+      duration
+      size
+      performers
+      tags
+      studios
+      reels
+      reel_views
+      comments
+      users
+      plays
+    }
+    added_by_month {
+      month
+      scenes
+      size
+    }
+    resolutions {
+      id
+      name
+      count
+    }
+    plays_by_day {
+      day
+      plays
+    }
+    top_scenes {
+      plays
+      scene {
+        id
+        title
+        files {
+          path
+        }
+        paths {
+          screenshot
+        }
+      }
+    }
+    top_performers {
+      id
+      name
+      count
+    }
+    top_tags {
+      id
+      name
+      count
+    }
+    top_reels {
+      reel_id
+      views
+      scene {
+        id
+        title
+        files {
+          path
+        }
+      }
+    }
+    users {
+      id
+      name
+      role
+      plays
+      last_play
+      last_login
+    }
+    recent_plays {
+      user
+      at
+      scene {
+        id
+        title
+        files {
+          path
+        }
+      }
+    }
+    generated {
+      name
+      bytes
+    }
+    generated_total
+  }
+}
