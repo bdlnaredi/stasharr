@@ -12,6 +12,10 @@ fragment TagData on Tag {
     updated_at
   }
   image_path
+  clip {
+    video
+    still
+  }
   scene_count
   scene_count_all: scene_count(depth: -1)
   scene_marker_count
@@ -75,6 +79,10 @@ fragment TagListData on Tag {
     updated_at
   }
   image_path
+  clip {
+    video
+    still
+  }
   # Direct counts only - no recursive depth queries
   scene_count
   scene_marker_count

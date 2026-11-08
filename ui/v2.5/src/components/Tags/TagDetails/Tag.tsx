@@ -46,6 +46,8 @@ import { AliasList } from "src/components/Shared/DetailsPage/AliasList";
 import { HeaderImage } from "src/components/Shared/DetailsPage/HeaderImage";
 import { goBackOrReplace } from "src/utils/history";
 import { PatchComponent } from "src/patch";
+import { useCurrentUser } from "src/components/Stasharr/CurrentUser";
+import { TagClipButton } from "src/components/Stasharr/TagClipsSection";
 
 interface IProps {
   tag: GQL.TagDataFragment;
@@ -305,6 +307,7 @@ const TagPage: React.FC<IProps> = PatchComponent(
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState<boolean>(false);
     const [isMerging, setIsMerging] = useState<boolean>(false);
+    const { isAdmin } = useCurrentUser();
 
     // Editing tag state
     const [image, setImage] = useState<string | null>();
@@ -459,10 +462,13 @@ const TagPage: React.FC<IProps> = PatchComponent(
 
     function renderMergeButton() {
       return (
-        <Button variant="secondary" onClick={() => setIsMerging(true)}>
-          <FormattedMessage id="actions.merge" />
-          ...
-        </Button>
+        <>
+          <Button variant="secondary" onClick={() => setIsMerging(true)}>
+            <FormattedMessage id="actions.merge" />
+            ...
+          </Button>
+          {isAdmin && <TagClipButton tagID={tag.id} />}
+        </>
       );
     }
 

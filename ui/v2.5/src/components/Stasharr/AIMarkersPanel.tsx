@@ -5,6 +5,7 @@ import * as GQL from "src/core/generated-graphql";
 import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 import { useToast } from "src/hooks/Toast";
 import { SettingRow, baseName } from "./util";
+import { TagClipsSection } from "./TagClipsSection";
 
 type Cfg = GQL.AiMarkerConfigDataFragment;
 type Label = Cfg["labels"][number];
@@ -366,6 +367,7 @@ export const AIMarkersPanel: React.FC = () => {
       <TaggerStatus key={cfg.url} hasURL={!!cfg.url} onRun={runRest} />
       <ReviewList />
       <LabelsEditor cfg={cfg} save={save} />
+      <TagClipsSection />
     </div>
   );
 };

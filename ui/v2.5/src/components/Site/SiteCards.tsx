@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
 import { count, locale, t, views } from "./i18n";
+import { LoopClip } from "src/components/Shared/LoopClip";
 
 export type SiteScene = GQL.SiteSceneCardFragment;
 export type SiteModel = GQL.SiteModelCardFragment;
@@ -216,14 +217,25 @@ export const StudioTile: React.FC<{
 };
 
 export const CategoryTile: React.FC<{
-  tag: { id: string; name: string; image_path?: string | null; scene_count: number };
+  tag: {
+    id: string;
+    name: string;
+    image_path?: string | null;
+    scene_count: number;
+    clip?: { video: string; still: string } | null;
+  };
   cover?: string | null;
 }> = ({ tag, cover }) => {
-  const img =
-    tag.image_path && !tag.image_path.includes("default=true") ? tag.image_path : cover;
+  // a picture set by hand wins; then the tag's clip; then a scene picture
+  const own = tag.image_path && !tag.image_path.includes("default=true") ? tag.image_path : null;
+  const img = own ?? cover;
   return (
-    <Link to={`/site/category/${tag.id}`} className="site-category-tile">
-      {img && <img src={img} alt="" loading="lazy" />}
+    <Link to={`/site/category/${tag.id}`} className={`site-category-tile ${!own && tag.clip ? "has-clip" : ""}`}>
+      {!own && tag.clip ? (
+        <LoopClip video={tag.clip.video} still={tag.clip.still} />
+      ) : (
+        img && <img src={img} alt="" loading="lazy" />
+      )}
       <div className="site-category-label">
         <span>{tag.name}</span>
         <small>{count(tag.scene_count, "scene")}</small>

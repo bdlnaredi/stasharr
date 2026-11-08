@@ -7,6 +7,23 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Tag clips
+- **Every tag gets its own moving picture:** a 4-second silent loop cut from
+  the tag's best scene (highest rated, most played), starting at a marker
+  for the tag when there is one, so "Cowgirl" shows that moment. Without a
+  marker it uses the scene's reel moment or its busiest part.
+- Clips play on the site's category tiles and at the top of each category
+  page, on tag cards in the admin interface, and in the Android app. They
+  only load while on screen. A still picture from the clip shows for people
+  who prefer less motion.
+- Viewers only see a clip when their tier lets them see the scene it came
+  from. Tags with a picture you set keep it.
+- **Settings → AI markers → Tag clips:** progress, Make clips and Remake
+  all. Each tag's page has **Make new clip**. New tags get clips after
+  auto-import.
+
+## v2.8 (2026-11-02)
+
 ### AI markers and the Stasharr Tagger
 - **AI markers.** Stasharr can look through scenes and suggest markers
   (Kissing, Blowjob, Cowgirl, Doggy Style…). It takes a small key frame

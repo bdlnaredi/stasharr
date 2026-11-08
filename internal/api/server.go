@@ -410,8 +410,9 @@ func (s *Server) getGroupRoutes() chi.Router {
 func (s *Server) getTagRoutes() chi.Router {
 	repo := s.manager.Repository
 	return tagRoutes{
-		routes:    routes{txnManager: repo.TxnManager},
-		tagFinder: repo.Tag,
+		routes:      routes{txnManager: repo.TxnManager},
+		tagFinder:   repo.Tag,
+		sceneFinder: repo.Scene,
 	}.Routes()
 }
 

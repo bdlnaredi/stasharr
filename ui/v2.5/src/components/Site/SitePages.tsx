@@ -24,6 +24,7 @@ import { useSite } from "./SiteContext";
 import { FollowButton, LikeButton, SceneRating, SceneViews } from "./SiteWidgets";
 import { SiteComments } from "./SiteComments";
 import { count, t } from "./i18n";
+import { LoopClip } from "src/components/Shared/LoopClip";
 
 function useQueryParams(): [URLSearchParams, (changes: Record<string, string | null>) => void] {
   const location = useLocation();
@@ -796,8 +797,14 @@ export const CategoryPage: React.FC = () => {
     () => ({ tags: { value: [id], modifier: GQL.CriterionModifier.Includes, depth: 0 } }),
     [id]
   );
+  const ownImage = tag?.image_path && !tag.image_path.includes("default=true");
   return (
     <div className="site-page">
+      {tag?.clip && !ownImage && (
+        <div className="site-category-banner">
+          <LoopClip video={tag.clip.video} still={tag.clip.still} />
+        </div>
+      )}
       <span className="site-kicker">{t("Category")}</span>
       <h1 className="site-page-title">{tag?.name ?? ""}</h1>
       {tag?.description && <p className="site-lead">{tag.description}</p>}

@@ -205,7 +205,7 @@ private fun HomeRowView(row: SiteHomeRow, content: Any) {
             if (tags.isEmpty()) return
             StoreHeader(title)
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                items(tags, key = { it.id }) { t -> CategoryTile(t.name, t.sceneCount, Modifier.width(170.dp)) { nav.tag(t.id, t.name) } }
+                items(tags, key = { it.id }) { t -> CategoryTile(t.name, t.sceneCount, Modifier.width(170.dp), clip = t.clip) { nav.tag(t.id, t.name) } }
             }
         }
         "channels" -> {

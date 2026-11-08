@@ -144,7 +144,12 @@ data class Tag(
     val id: String,
     val name: String,
     @SerialName("scene_count") val sceneCount: Int = 0,
+    /** A short silent loop for tags without their own picture. */
+    val clip: TagClip? = null,
 )
+
+@Serializable
+data class TagClip(val video: String, val still: String)
 
 @Serializable
 data class PlaylistCover(val paths: Paths = Paths())

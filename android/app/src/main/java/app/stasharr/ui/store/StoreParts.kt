@@ -65,6 +65,7 @@ import app.stasharr.app
 import app.stasharr.data.Performer
 import app.stasharr.data.Scene
 import app.stasharr.data.SitePromo
+import app.stasharr.data.TagClip
 import app.stasharr.player.AutoPreview
 import app.stasharr.player.PreviewPlayer
 import app.stasharr.player.previewSpot
@@ -255,25 +256,36 @@ fun ModelCard(p: Performer, modifier: Modifier = Modifier, width: Dp? = 140.dp, 
     }
 }
 
-/** A coloured category tile. */
+/** A category tile: the tag's clip when it has one, otherwise a colour. */
 @Composable
-fun CategoryTile(name: String, count: Int, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun CategoryTile(name: String, count: Int, modifier: Modifier = Modifier, clip: TagClip? = null, onClick: () -> Unit) {
     val hue = (name.hashCode() and 0xffff) % 360
     val tint = Color.hsv(hue.toFloat(), 0.5f, 0.45f)
+    val key = rememberPreviewKey("tag")
     Box(
         modifier
             .aspectRatio(3f / 2f)
             .clip(RoundedCornerShape(12.dp))
             .background(Brush.linearGradient(listOf(tint, Brand.SurfaceHigh)))
             .border(1.dp, Brand.Outline, RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(12.dp),
+            .previewSpot(key, AutoPreview.enabled && clip != null)
+            .clickable(onClick = onClick),
     ) {
-        Column(Modifier.align(Alignment.BottomStart)) {
+        TagClipBackdrop(clip, key)
+        Column(Modifier.align(Alignment.BottomStart).padding(12.dp)) {
             Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("$count scenes", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
         }
     }
+}
+
+/** A tag's clip behind its tile: the still picture, and the loop when it is its turn. */
+@Composable
+private fun TagClipBackdrop(clip: TagClip?, key: String) {
+    if (clip == null) return
+    AsyncImage(clip.still, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+    ScenePreview(clip.video, active = PreviewPlayer.activeCardId == key, modifier = Modifier.fillMaxSize())
+    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)))))
 }
 
 /** A sideways row of scenes. */
