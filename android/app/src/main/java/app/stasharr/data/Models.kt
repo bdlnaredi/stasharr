@@ -310,7 +310,18 @@ enum class SceneSort(val label: String, val sort: String, val desc: Boolean = tr
     Title("A–Z", "title", desc = false),
 }
 
-<<<<<<< HEAD
+/** A comment on a scene (also shown on its reels). */
+@Serializable
+data class Comment(
+    val id: String,
+    val author: String,
+    val body: String,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("from_reel") val fromReel: Boolean = false,
+    val mine: Boolean = false,
+    @SerialName("can_delete") val canDelete: Boolean = false,
+)
+
 /** A new scene with one of your favourite pornstars. */
 @Serializable
 data class FavoriteAlert(
@@ -325,16 +336,4 @@ data class FavoriteAlerts(
     val count: Int = 0,
     @SerialName("seen_at") val seenAt: String? = null,
     val alerts: List<FavoriteAlert> = emptyList(),
-=======
-/** A comment on a scene (also shown on its reels). */
-@Serializable
-data class Comment(
-    val id: String,
-    val author: String,
-    val body: String,
-    @SerialName("created_at") val createdAt: String,
-    @SerialName("from_reel") val fromReel: Boolean = false,
-    val mine: Boolean = false,
-    @SerialName("can_delete") val canDelete: Boolean = false,
->>>>>>> origin/main
 )

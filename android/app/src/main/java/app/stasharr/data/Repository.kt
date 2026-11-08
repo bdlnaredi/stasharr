@@ -494,24 +494,6 @@ class Repository(private val api: Api) {
         return Page(res.int("count"), res["reels"].decode(emptyList()))
     }
 
-<<<<<<< HEAD
-    /** New scenes with your favourite pornstars; since: only those added after it. */
-    suspend fun favoriteAlerts(limit: Int = 20, since: String? = null): FavoriteAlerts {
-        val data = api.gql(
-            """query(${'$'}limit: Int, ${'$'}since: Time) {
-              favoriteAlerts(limit: ${'$'}limit, since: ${'$'}since) {
-                count seen_at
-                alerts { performer_id performer added_at scene { ...SceneCard } }
-              }
-            }""" + SCENE_CARD,
-            vars { put("limit", limit); if (since != null) put("since", since) }
-        )
-        return data["favoriteAlerts"].decode(FavoriteAlerts())
-    }
-
-    suspend fun markAlertsSeen() {
-        api.gql("mutation { markFavoriteAlertsSeen }", vars { })
-=======
     /** A scene's comments, newest first, and how many there are. */
     suspend fun comments(sceneId: String, page: Int = 1, perPage: Int = 20): Page<Comment> {
         val data = api.gql(
@@ -539,7 +521,24 @@ class Repository(private val api: Api) {
 
     suspend fun deleteComment(id: String) {
         api.gql("mutation(\$id: ID!) { siteDeleteComment(id: \$id) }", vars { put("id", id) })
->>>>>>> origin/main
+    }
+
+    /** New scenes with your favourite pornstars; since: only those added after it. */
+    suspend fun favoriteAlerts(limit: Int = 20, since: String? = null): FavoriteAlerts {
+        val data = api.gql(
+            """query(${'$'}limit: Int, ${'$'}since: Time) {
+              favoriteAlerts(limit: ${'$'}limit, since: ${'$'}since) {
+                count seen_at
+                alerts { performer_id performer added_at scene { ...SceneCard } }
+              }
+            }""" + SCENE_CARD,
+            vars { put("limit", limit); if (since != null) put("since", since) }
+        )
+        return data["favoriteAlerts"].decode(FavoriteAlerts())
+    }
+
+    suspend fun markAlertsSeen() {
+        api.gql("mutation { markFavoriteAlertsSeen }", vars { })
     }
 
     /** Counts one watch of a reel; returns the new total. */
