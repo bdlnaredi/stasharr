@@ -7,7 +7,7 @@ import { LoopClip } from "src/components/Shared/LoopClip";
 export type SiteScene = GQL.SiteSceneCardFragment;
 export type SiteModel = GQL.SiteModelCardFragment;
 
-export function sceneTitle(s: Pick<SiteScene, "title" | "files">): string {
+export function sceneTitle(s: { title?: string | null; files: readonly { path: string }[] }): string {
   if (s.title) return s.title;
   const path = s.files[0]?.path ?? "";
   const base = path.split(/[\\/]/).pop() ?? "";

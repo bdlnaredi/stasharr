@@ -2882,3 +2882,131 @@ body.site-mode {
     width: 30px;
   }
 }
+
+// ---------------------------------------------------------------- alerts bell
+
+.site-alerts {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.site-alerts-bell {
+  align-items: center;
+  background: none;
+  border: 1px solid var(--site-border);
+  border-radius: 999px;
+  color: var(--site-text);
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  position: relative;
+  width: 34px;
+
+  &:hover {
+    border-color: var(--site-accent);
+  }
+}
+
+.site-alerts-badge {
+  background: var(--site-accent);
+  border-radius: 999px;
+  color: var(--site-on-accent, #fff);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  min-width: 16px;
+  padding: 0 4px;
+  position: absolute;
+  right: -4px;
+  text-align: center;
+  top: -4px;
+}
+
+.site-alerts-menu {
+  background: var(--site-surface);
+  border: 1px solid var(--site-border);
+  border-radius: var(--site-radius);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  max-height: 70vh;
+  overflow-y: auto;
+  position: absolute;
+  right: -50px;
+  top: 46px;
+  width: 340px;
+  z-index: 70;
+}
+
+.site-alerts-head {
+  border-bottom: 1px solid var(--site-border);
+  font-weight: 700;
+  padding: 12px 16px;
+}
+
+.site-alerts-empty {
+  color: var(--site-muted);
+  font-size: 14px;
+  padding: 16px;
+}
+
+.site-alerts-item {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px;
+
+  &:hover {
+    background: var(--site-surface-2);
+  }
+
+  img,
+  .ph {
+    aspect-ratio: 16 / 9;
+    background: var(--site-surface-2);
+    border-radius: 4px;
+    flex-shrink: 0;
+    object-fit: cover;
+    width: 88px;
+  }
+
+  .txt {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  b {
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    color: var(--site-muted);
+    font-size: 12px;
+  }
+}
+
+.site-alerts-all {
+  border-top: 1px solid var(--site-border);
+  color: var(--site-accent);
+  display: block;
+  font-weight: 600;
+  padding: 10px 16px;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .site-alerts-bell {
+    height: 30px;
+    width: 30px;
+  }
+
+  .site-alerts-menu {
+    position: fixed;
+    right: 8px;
+    left: 8px;
+    top: 60px;
+    width: auto;
+  }
+}

@@ -1,0 +1,28 @@
+# Stasharr: new scenes with your favourite pornstars
+
+type FavoriteAlert {
+  scene: Scene!
+  performer_id: ID!
+  "The favourite in the scene"
+  performer: String!
+  added_at: Time!
+}
+
+type FavoriteAlerts {
+  "New scenes since you last looked (up to 99)"
+  count: Int!
+  "When you last looked"
+  seen_at: Time!
+  "Newest first"
+  alerts: [FavoriteAlert!]!
+}
+
+extend type Query {
+  "New scenes with your favourite pornstars. since: only scenes added after this (default: when you last looked)."
+  favoriteAlerts(limit: Int, since: Time): FavoriteAlerts!
+}
+
+extend type Mutation {
+  "Marks your alerts as seen"
+  markFavoriteAlertsSeen: Boolean!
+}

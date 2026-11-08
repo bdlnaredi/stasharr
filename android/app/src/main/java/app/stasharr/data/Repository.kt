@@ -494,6 +494,24 @@ class Repository(private val api: Api) {
         return Page(res.int("count"), res["reels"].decode(emptyList()))
     }
 
+    /** New scenes with your favourite pornstars; since: only those added after it. */
+    suspend fun favoriteAlerts(limit: Int = 20, since: String? = null): FavoriteAlerts {
+        val data = api.gql(
+            """query(${'$'}limit: Int, ${'$'}since: Time) {
+              favoriteAlerts(limit: ${'$'}limit, since: ${'$'}since) {
+                count seen_at
+                alerts { performer_id performer added_at scene { ...SceneCard } }
+              }
+            }""" + SCENE_CARD,
+            vars { put("limit", limit); if (since != null) put("since", since) }
+        )
+        return data["favoriteAlerts"].decode(FavoriteAlerts())
+    }
+
+    suspend fun markAlertsSeen() {
+        api.gql("mutation { markFavoriteAlertsSeen }", vars { })
+    }
+
     /** Counts one watch of a reel; returns the new total. */
     suspend fun reelAddView(id: String): Int? {
         val data = api.gql("mutation(\$id: ID!) { reelAddView(id: \$id) }", vars { put("id", id) })

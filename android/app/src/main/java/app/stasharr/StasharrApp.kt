@@ -1,6 +1,7 @@
 package app.stasharr
 
 import android.app.Application
+import app.stasharr.alerts.FavoriteAlertsState
 import app.stasharr.data.Api
 import app.stasharr.data.Downloads
 import app.stasharr.data.Repository
@@ -37,6 +38,7 @@ class StasharrApp : Application(), ImageLoaderFactory {
         downloads = Downloads(this, repo, api.client, appScope)
         SiteMode.restore(this)
         AutoPreview.restore(this)
+        FavoriteAlertsState.restore(this)
     }
 
     // images use the same connection and login as everything else

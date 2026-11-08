@@ -59,6 +59,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.BuildConfig
 import app.stasharr.app
+import app.stasharr.alerts.FavoriteAlertsState
+import app.stasharr.ui.store.AlertsRow
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import app.stasharr.data.Me
@@ -347,6 +349,28 @@ fun ProfileScreen(me: Me?) {
                 androidx.compose.material3.Switch(
                     checked = AutoPreview.enabled,
                     onCheckedChange = { AutoPreview.setEnabled(ctx, it) },
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        AlertsRow()
+        run {
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("New scene alerts", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "A phone notification when a pornstar you follow has a new scene",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Brand.TextMuted,
+                    )
+                }
+                androidx.compose.material3.Switch(
+                    checked = FavoriteAlertsState.notify,
+                    onCheckedChange = { FavoriteAlertsState.setNotify(ctx, it) },
                 )
             }
         }
