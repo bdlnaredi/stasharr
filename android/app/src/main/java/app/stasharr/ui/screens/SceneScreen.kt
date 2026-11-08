@@ -87,6 +87,7 @@ import app.stasharr.ui.components.PerformerBubble
 import app.stasharr.ui.components.ProgressLine
 import app.stasharr.ui.components.RatingStars
 import app.stasharr.ui.components.SceneCard
+import app.stasharr.ui.components.CommentsSection
 import app.stasharr.ui.components.SectionHeader
 import app.stasharr.ui.components.formatDuration
 import app.stasharr.ui.components.metaLine
@@ -351,6 +352,9 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
                     scene.tags.forEach { t -> Chip(t.name) { nav.tag(t.id, t.name) } }
                 }
             }
+
+            Spacer(Modifier.height(20.dp))
+            CommentsSection(scene.id, Modifier.padding(horizontal = 20.dp))
 
             val more = similar.value.orEmpty()
             if (more.isNotEmpty()) {

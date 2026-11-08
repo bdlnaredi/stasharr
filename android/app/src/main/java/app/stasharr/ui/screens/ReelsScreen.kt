@@ -3,6 +3,16 @@ package app.stasharr.ui.screens
 import android.view.ViewGroup
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material.icons.rounded.ChatBubble
+import app.stasharr.ui.components.CommentsSection
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -83,6 +93,9 @@ fun ReelsScreen() {
     var paused by remember { mutableStateOf(false) }
     // view totals updated after this phone counted a watch
     val viewCounts = remember { mutableStateMapOf<String, Int>() }
+    // comment totals changed while watching, and the reel whose comments are open
+    val commentCounts = remember { mutableStateMapOf<String, Int>() }
+    var talkReel by remember { mutableStateOf<Reel?>(null) }
 
     val player = remember {
         newPlayer(context).apply {
@@ -142,6 +155,8 @@ fun ReelsScreen() {
                     },
                     onOpen = { player.pause(); nav.scene(reel.scene.id) },
                     onPlayScene = { player.pause(); nav.play(reel.scene.id, reel.start) },
+                    comments = commentCounts[reel.id] ?: reel.commentCount,
+                    onComments = { talkReel = reel },
                 )
             }
         }
@@ -150,6 +165,33 @@ fun ReelsScreen() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             GradientText("Reels")
+        }
+    }
+
+    // the reel's comments, over the bottom of the reel; it keeps playing
+    talkReel?.let { r ->
+        ReelCommentsSheet(r, onDismiss = { talkReel = null }, onCount = { commentCounts[r.id] = it })
+    }
+}
+
+@kotlin.OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReelCommentsSheet(r: Reel, onDismiss: () -> Unit, onCount: (Int) -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = Brand.Surface,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.7f)
+                .verticalScroll(rememberScrollState())
+                .imePadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 18.dp, vertical = 4.dp)
+        ) {
+            CommentsSection(r.scene.id, reelId = r.id, onCountChange = onCount)
         }
     }
 }
@@ -184,6 +226,8 @@ private fun ReelPage(
     onTogglePause: () -> Unit,
     onOpen: () -> Unit,
     onPlayScene: () -> Unit,
+    comments: Int,
+    onComments: () -> Unit,
 ) {
     Box(
         Modifier
@@ -257,7 +301,7 @@ private fun ReelPage(
             Text(
                 buildString {
                     append(if (views == 1) "1 view" else "%,d views".format(views))
-                    if (reel.commentCount > 0) append(" · ").append(if (reel.commentCount == 1) "1 comment" else "${reel.commentCount} comments")
+                    if (comments > 0) append(" · ").append(if (comments == 1) "1 comment" else "$comments comments")
                 },
                 color = Color.White.copy(alpha = 0.65f),
                 style = MaterialTheme.typography.bodySmall,
@@ -271,6 +315,7 @@ private fun ReelPage(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             ReelAction(if (muted) Icons.AutoMirrored.Rounded.VolumeOff else Icons.AutoMirrored.Rounded.VolumeUp, if (muted) "Muted" else "Sound", onToggleMute)
+            ReelAction(Icons.Rounded.ChatBubble, if (comments > 0) "$comments" else "Comment", onComments)
             ReelAction(Icons.Rounded.PlayArrow, "Full scene", onPlayScene)
             ReelAction(Icons.Rounded.Info, "Details", onOpen)
         }
