@@ -1705,17 +1705,28 @@ body.site-mode {
 
 // ---------------------------------------------------------------- phones and tablets
 
-@media (max-width: 1200px) {
-  .site-search input {
-    width: 180px;
+// laptops: a tighter menu so it stays on one line, also in longer languages
+@media (max-width: 1600px) {
+  .site-header-inner {
+    gap: 18px;
   }
 
   .site-nav {
     gap: 14px;
+
+    a {
+      font-size: 13px;
+      letter-spacing: 0.03em;
+    }
+  }
+
+  .site-search input {
+    width: 190px;
   }
 }
 
-@media (max-width: 1000px) {
+// below this the menu moves into the ☰ button
+@media (max-width: 1340px) {
   .site-burger {
     display: block;
   }

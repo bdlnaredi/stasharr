@@ -11,7 +11,7 @@ import {
   MessageDescriptor,
   useIntl,
 } from "react-intl";
-import { Nav, Navbar, Button } from "react-bootstrap";
+import { Nav, Navbar, Button, Dropdown } from "react-bootstrap";
 import { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { LinkContainer } from "react-router-bootstrap";
 import { Link, NavLink, useLocation, useHistory } from "react-router-dom";
@@ -24,6 +24,7 @@ import { ManualStateContext } from "./Help/context";
 import { SettingsButton } from "./SettingsButton";
 import {
   faBars,
+  faEllipsisH,
   faChartColumn,
   faFilm,
   faHeart,
@@ -255,15 +256,21 @@ export const MainNavbar: React.FC = () => {
   const [expanded, setExpanded] = useState(false);
 
   // Show all menu items by default, unless config says otherwise
-  const menuItems = useMemo(() => {
-    let cfgMenuItems = configuration?.interface.menuItems;
-    const withReels = (items: IMenuItem[]) => [
-      ...items,
+  // Stasharr's own pages; on wide screens they sit under "More" so the
+  // menu bar fits on one line
+  const extraItems = useMemo(
+    () => [
       getAudioMenuItem(),
       playlistsMenuItem,
       ...(canViewReels ? [reelsMenuItem] : []),
       describeMenuItem,
-    ];
+    ],
+    [canViewReels]
+  );
+
+  const menuItems = useMemo(() => {
+    let cfgMenuItems = configuration?.interface.menuItems;
+    const withReels = (items: IMenuItem[]) => items;
     if (!cfgMenuItems) {
       return withReels(allMenuItems);
     }
@@ -279,7 +286,7 @@ export const MainNavbar: React.FC = () => {
     return withReels(
       allMenuItems.filter((menuItem) => cfgMenuItems!.includes(menuItem.name))
     );
-  }, [configuration, canViewReels]);
+  }, [configuration]);
 
   // react-bootstrap typing bug
   const navbarRef = useRef<HTMLElement | null>(null);
@@ -465,24 +472,51 @@ export const MainNavbar: React.FC = () => {
     >
       <Navbar.Collapse className="bg-dark order-sm-1">
         <MainNavbarMenuItems>
-          {menuItems.map(({ href, icon, message }) => (
-            <Nav.Link
-              eventKey={href}
-              as="div"
-              key={href}
-              className="col-4 col-sm-3 col-md-2 col-lg-auto"
+          {[...menuItems, ...extraItems].map(({ href, icon, message }) => {
+            const extra = extraItems.some((x) => x.href === href);
+            return (
+              <Nav.Link
+                eventKey={href}
+                as="div"
+                key={href}
+                className={`col-4 col-sm-3 col-md-2 col-lg-auto ${extra ? "d-xl-none" : ""}`}
+              >
+                <LinkContainer activeClassName="active" exact to={href}>
+                  <Button
+                    className="minimal p-4 p-xl-2 d-flex d-xl-inline-block flex-column justify-content-between align-items-center"
+                    title={intl.formatMessage(message)}
+                  >
+                    <Icon
+                      {...{ icon }}
+                      className="nav-menu-icon d-block d-xl-inline mb-2 mb-xl-0"
+                    />
+                    <span className="nav-menu-label">{intl.formatMessage(message)}</span>
+                  </Button>
+                </LinkContainer>
+              </Nav.Link>
+            );
+          })}
+          {/* wide screens: Stasharr's pages under one menu */}
+          <Dropdown className="d-none d-xl-inline-block stasharr-more-menu">
+            <Dropdown.Toggle
+              variant="secondary"
+              className={`minimal p-xl-2 ${extraItems.some((x) => location.pathname.startsWith(x.href)) ? "active" : ""}`}
+              title="More"
             >
-              <LinkContainer activeClassName="active" exact to={href}>
-                <Button className="minimal p-4 p-xl-2 d-flex d-xl-inline-block flex-column justify-content-between align-items-center">
-                  <Icon
-                    {...{ icon }}
-                    className="nav-menu-icon d-block d-xl-inline mb-2 mb-xl-0"
-                  />
-                  <span>{intl.formatMessage(message)}</span>
-                </Button>
-              </LinkContainer>
-            </Nav.Link>
-          ))}
+              <Icon icon={faEllipsisH} className="nav-menu-icon d-xl-inline" />
+              <span className="nav-menu-label">More</span>
+            </Dropdown.Toggle>
+            <Dropdown.Menu className="bg-secondary">
+              {extraItems.map(({ href, icon, message }) => (
+                <LinkContainer key={href} to={href} activeClassName="active">
+                  <Dropdown.Item onClick={handleDismiss}>
+                    <Icon icon={icon} className="mr-2" />
+                    {intl.formatMessage(message)}
+                  </Dropdown.Item>
+                </LinkContainer>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
         </MainNavbarMenuItems>
         <Nav>
           <MainNavbarUtilityItems>

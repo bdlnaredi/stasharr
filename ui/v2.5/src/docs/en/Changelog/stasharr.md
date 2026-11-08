@@ -5,6 +5,14 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Menus fit on one line
+- Admin menu bar: Audio, Playlists, Reels and Describe are under **More**
+  on wide screens (phones and tablets still list them all), and on screens
+  up to 1600 pixels wide the menu shows icons only, with the name when
+  pointing at one.
+- Site header: a tighter menu on laptops, and the ☰ menu below 1340 pixels,
+  so it stays on one line in every language.
+
 ### Android app
 - **Comments in the app:** under every scene, and on reels through a new
   comment button that opens them over the reel while it keeps playing.
