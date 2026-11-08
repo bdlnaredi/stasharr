@@ -147,3 +147,67 @@ def classify(req: ClassifyRequest):
         img_feats = img_feats / img_feats.norm(dim=-1, keepdim=True)
         probs = (100.0 * img_feats @ text.T).float().softmax(dim=-1)
     return ClassifyResponse(scores=[[round(float(x), 5) for x in row] for row in probs.cpu()], seconds=round(time.time() - started, 3))
+
+
+# ---------------------------------------------------------------- embeddings
+# Stasharr keeps one vector per sampled frame so people can search scenes by
+# describing them. Vectors are normalised, so a dot product is the match.
+
+
+class EmbedImagesRequest(BaseModel):
+    images: List[str]
+
+
+class EmbedTextRequest(BaseModel):
+    texts: List[str]
+
+
+class EmbedResponse(BaseModel):
+    vectors: List[List[float]]
+    dim: int
+    model: str
+
+
+def _decode(images: List[str]):
+    batch = []
+    for b in images:
+        try:
+            img = Image.open(io.BytesIO(base64.b64decode(b))).convert("RGB")
+        except Exception as e:  # noqa: BLE001
+            raise HTTPException(400, f"unreadable image: {e}")
+        batch.append(_state["preprocess"](img))
+    return batch
+
+
+@app.post("/embed_images", response_model=EmbedResponse)
+def embed_images(req: EmbedImagesRequest):
+    if len(req.images) > MAX_IMAGES:
+        raise HTTPException(400, f"send at most {MAX_IMAGES} images at a time")
+    _ready()
+    if not req.images:
+        return EmbedResponse(vectors=[], dim=0, model=f"{MODEL} ({PRETRAINED})")
+    pixels = torch.stack(_decode(req.images)).to(DEVICE)
+    if DEVICE == "cuda":
+        pixels = pixels.half()
+    with _lock, torch.no_grad():
+        feats = _state["model"].encode_image(pixels)
+        feats = feats / feats.norm(dim=-1, keepdim=True)
+    rows = feats.float().cpu().tolist()
+    return EmbedResponse(
+        vectors=[[round(x, 5) for x in r] for r in rows], dim=len(rows[0]), model=f"{MODEL} ({PRETRAINED})"
+    )
+
+
+@app.post("/embed_text", response_model=EmbedResponse)
+def embed_text(req: EmbedTextRequest):
+    if not req.texts or len(req.texts) > 64:
+        raise HTTPException(400, "send 1 to 64 texts")
+    _ready()
+    with _lock, torch.no_grad():
+        tokens = _state["tokenizer"](req.texts).to(DEVICE)
+        feats = _state["model"].encode_text(tokens)
+        feats = feats / feats.norm(dim=-1, keepdim=True)
+    rows = feats.float().cpu().tolist()
+    return EmbedResponse(
+        vectors=[[round(x, 5) for x in r] for r in rows], dim=len(rows[0]), model=f"{MODEL} ({PRETRAINED})"
+    )

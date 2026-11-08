@@ -793,6 +793,75 @@ video.tag-card-image {
   object-fit: cover;
 }
 
+// Search by description
+.stasharr-describe {
+  margin: 1.5rem auto;
+  max-width: 1300px;
+  padding: 0 1rem;
+
+  h2 {
+    font-size: 1.5rem;
+  }
+}
+
+.stasharr-describe-form {
+  display: flex;
+  gap: 10px;
+  margin: 1rem 0;
+  max-width: 720px;
+}
+
+.stasharr-describe-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.stasharr-describe-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.stasharr-describe-item {
+  color: inherit;
+  display: block;
+
+  .pic {
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  span {
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 3px;
+    bottom: 6px;
+    color: #fff;
+    font-size: 12px;
+    left: 6px;
+    padding: 1px 6px;
+    position: absolute;
+  }
+
+  .title {
+    font-size: 0.9rem;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 // Statistics page
 .stasharr-stats {
   margin: 2.5rem auto 3rem;

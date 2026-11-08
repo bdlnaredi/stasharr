@@ -261,6 +261,9 @@ const dict: Record<string, Tr> = {
     ru: "По запросу «{q}» ничего не найдено.",
     es: "No hay resultados para «{q}».",
   },
+  // search by description
+  "Matching moments": { hi: "मिलते-जुलते पल", fr: "Moments correspondants", ru: "Подходящие моменты", es: "Momentos que coinciden" },
+
   // alerts
   Alerts: { hi: "सूचनाएँ", fr: "Alertes", ru: "Уведомления", es: "Avisos" },
   "with {name}": { hi: "{name} के साथ", fr: "avec {name}", ru: "с {name}", es: "con {name}" },

@@ -250,6 +250,35 @@ mutation MakeTagClips($tag_ids: [ID!], $redo: Boolean) {
   makeTagClips(tag_ids: $tag_ids, redo: $redo)
 }
 
+query SearchMoments($query: String!, $limit: Int) {
+  searchMoments(query: $query, limit: $limit) {
+    seconds
+    score
+    frame
+    scene {
+      id
+      title
+      files {
+        path
+      }
+    }
+  }
+}
+
+query SearchIndexStatus {
+  searchIndexStatus {
+    ready
+    done
+    total
+    frames
+    model
+  }
+}
+
+mutation RunSearchIndex($scene_ids: [ID!]) {
+  runSearchIndex(scene_ids: $scene_ids)
+}
+
 query StasharrStats($days: Int) {
   stasharrStats(days: $days) {
     days

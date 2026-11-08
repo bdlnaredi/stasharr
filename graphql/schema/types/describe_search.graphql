@@ -1,0 +1,33 @@
+# Stasharr: search scenes by describing what you want to see
+
+type SearchMoment {
+  scene: Scene!
+  "Where in the scene it best matches"
+  seconds: Float!
+  "How well it matches; higher is better"
+  score: Float!
+  "A picture of that moment"
+  frame: String!
+}
+
+type SearchIndexStatus {
+  "Whether search by description can be used: the tagger is ready"
+  ready: Boolean!
+  "Scenes indexed with the tagger's current model"
+  done: Int!
+  total: Int!
+  frames: Int!
+  model: String
+}
+
+extend type Query {
+  "Scenes with a moment that looks like the description, best first"
+  searchMoments(query: String!, limit: Int): [SearchMoment!]!
+  "Admin only"
+  searchIndexStatus: SearchIndexStatus!
+}
+
+extend type Mutation {
+  "Admin only. Indexes these scenes, or every scene not indexed yet. Returns the job id."
+  runSearchIndex(scene_ids: [ID!]): ID!
+}

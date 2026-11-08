@@ -252,6 +252,22 @@ are decoded and the tagger runs at low priority with 2 threads by default
 The model is a general one, not trained for adult content, so expect some
 wrong suggestions; the review list is there to catch them.
 
+## Search by description
+
+With the Stasharr Tagger running (see [AI markers](#ai-markers)), people can
+search by describing what they want to see, for example "blonde in red
+lingerie on a couch" or "outdoors by a pool". Every scene gets one small
+vector per 10 seconds of video, once; a description is turned into a vector
+the same way and the closest moments win. Results show the scene, a picture
+of the moment and its time, and play from there.
+
+- On the site: **Matching moments** on the search results page.
+- In the admin interface: **Describe** in the menu.
+- Build the index under **Settings → AI markers → Search by description**
+  (**Index the rest**); new scenes are added after auto-import. It takes
+  about 1 MB per 100 scenes, and the whole index is kept in memory while
+  searching (about 60–100 MB for 1,000 scenes).
+
 ## Trash bin
 
 Files you delete from the library (scenes, images, galleries, or duplicates

@@ -538,6 +538,7 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 
 	if cfg.GetAIAuto() && cfg.GetAIURL() != "" {
 		mgr.JobManager.Add(ctx, "Auto-import: AI markers", &AIMarkerJob{SceneIDs: intIDs})
+		mgr.JobManager.Add(ctx, "Auto-import: search index", &SearchIndexJob{SceneIDs: intIDs})
 	}
 
 	// new scenes can bring new tags; give them clips

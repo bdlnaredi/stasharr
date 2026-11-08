@@ -74,6 +74,7 @@ func (rs sceneRoutes) Routes() chi.Router {
 		r.Get("/offline.mp4", rs.Offline)
 
 		r.Get("/screenshot", rs.Screenshot)
+		r.Get("/frame/{sec}", rs.Frame)
 		r.Get("/preview", rs.Preview)
 		r.Get("/webp", rs.Webp)
 		r.Get("/vtt/chapter", rs.VttChapter)

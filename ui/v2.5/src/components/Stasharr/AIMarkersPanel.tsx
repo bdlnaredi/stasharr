@@ -6,6 +6,7 @@ import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 import { useToast } from "src/hooks/Toast";
 import { SettingRow, baseName } from "./util";
 import { TagClipsSection } from "./TagClipsSection";
+import { SearchIndexSection } from "./Describe";
 
 type Cfg = GQL.AiMarkerConfigDataFragment;
 type Label = Cfg["labels"][number];
@@ -368,6 +369,7 @@ export const AIMarkersPanel: React.FC = () => {
       <ReviewList />
       <LabelsEditor cfg={cfg} save={save} />
       <TagClipsSection />
+      <SearchIndexSection onToast={(m) => Toast.success(m)} onError={(e) => Toast.error(e)} />
     </div>
   );
 };

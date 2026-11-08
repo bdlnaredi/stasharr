@@ -57,6 +57,17 @@ jobs:
           print(res)
           scores = res["scores"][0]
           assert scores.index(max(scores)) == 0, "expected the red label to win"
+          # search vectors: a red picture should be closer to "red" than "blue"
+          def post(path, payload):
+              r = urllib.request.Request("http://127.0.0.1:2705" + path, json.dumps(payload).encode(), {"Content-Type": "application/json"})
+              return json.load(urllib.request.urlopen(r, timeout=120))
+          img = post("/embed_images", {"images": [base64.b64encode(png).decode()]})
+          txt = post("/embed_text", {"texts": ["a plain red square", "a plain blue square"]})
+          v = img["vectors"][0]
+          red = sum(a * b for a, b in zip(v, txt["vectors"][0]))
+          blue = sum(a * b for a, b in zip(v, txt["vectors"][1]))
+          print("dim", img["dim"], "red", red, "blue", blue)
+          assert img["dim"] == len(v) > 100 and red > blue
           PY
       - if: failure()
         run: docker logs tagger
