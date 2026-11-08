@@ -7,6 +7,10 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Android app
+- **Comments in the app:** under every scene, and on reels through a new
+  comment button that opens them over the reel while it keeps playing.
+  Write, read and delete your own (admins can delete any).
 ### Statistics
 - The **Statistics** page (chart icon) has a new part for admins: plays per
   day, most watched scenes, performers, tags and reels, who is watching
