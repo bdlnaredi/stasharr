@@ -494,6 +494,35 @@ class Repository(private val api: Api) {
         return Page(res.int("count"), res["reels"].decode(emptyList()))
     }
 
+    /** A scene's comments, newest first, and how many there are. */
+    suspend fun comments(sceneId: String, page: Int = 1, perPage: Int = 20): Page<Comment> {
+        val data = api.gql(
+            """query(${'$'}id: ID!, ${'$'}page: Int, ${'$'}per: Int) {
+              siteComments(scene_id: ${'$'}id, page: ${'$'}page, per_page: ${'$'}per) {
+                count comments { id author body created_at from_reel mine can_delete }
+              }
+            }""",
+            vars { put("id", sceneId); put("page", page); put("per", perPage) }
+        )
+        val res = data.obj("siteComments") ?: return Page(0, emptyList())
+        return Page(res.int("count"), res["comments"].decode(emptyList()))
+    }
+
+    /** Adds a comment; reelId when it is written on a reel. */
+    suspend fun addComment(sceneId: String, body: String, reelId: String? = null): Comment? {
+        val data = api.gql(
+            """mutation(${'$'}id: ID!, ${'$'}body: String!, ${'$'}reel: ID) {
+              siteAddComment(scene_id: ${'$'}id, body: ${'$'}body, reel_id: ${'$'}reel) { id author body created_at from_reel mine can_delete }
+            }""",
+            vars { put("id", sceneId); put("body", body); if (reelId != null) put("reel", reelId) }
+        )
+        return data["siteAddComment"].decode<Comment?>(null)
+    }
+
+    suspend fun deleteComment(id: String) {
+        api.gql("mutation(\$id: ID!) { siteDeleteComment(id: \$id) }", vars { put("id", id) })
+    }
+
     /** Counts one watch of a reel; returns the new total. */
     suspend fun reelAddView(id: String): Int? {
         val data = api.gql("mutation(\$id: ID!) { reelAddView(id: \$id) }", vars { put("id", id) })

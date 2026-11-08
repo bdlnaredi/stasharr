@@ -7,6 +7,11 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Android app
+- **Comments in the app:** under every scene, and on reels through a new
+  comment button that opens them over the reel while it keeps playing.
+  Write, read and delete your own (admins can delete any).
+
 ### Tag clips
 - **Every tag gets its own moving picture:** a 4-second silent loop cut from
   the tag's best scene (highest rated, most played), starting at a marker

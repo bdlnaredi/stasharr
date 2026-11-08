@@ -309,3 +309,15 @@ enum class SceneSort(val label: String, val sort: String, val desc: Boolean = tr
     Random("Random", "random"),
     Title("A–Z", "title", desc = false),
 }
+
+/** A comment on a scene (also shown on its reels). */
+@Serializable
+data class Comment(
+    val id: String,
+    val author: String,
+    val body: String,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("from_reel") val fromReel: Boolean = false,
+    val mine: Boolean = false,
+    @SerialName("can_delete") val canDelete: Boolean = false,
+)
