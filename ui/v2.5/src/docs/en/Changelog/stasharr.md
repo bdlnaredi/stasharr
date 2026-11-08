@@ -12,6 +12,9 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   pointing at one.
 - Site header: a tighter menu on laptops, and the ☰ menu below 1340 pixels,
   so it stays on one line in every language.
+- Settings: the list of sections on the left scrolls on its own when it is
+  taller than the window, so everything down to Troubleshooting mode can
+  be reached.
 
 ### Android app
 - **Comments in the app:** under every scene, and on reels through a new

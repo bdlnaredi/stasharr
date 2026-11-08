@@ -1082,3 +1082,31 @@ video.tag-card-image {
     }
   }
 }
+
+// Settings: the list of sections on the left stays put while the page
+// scrolls, so with Stasharr's extra sections it can be taller than the
+// window. It scrolls on its own now, and its links are a little tighter.
+@include media-breakpoint-up(sm) {
+  #settings-menu-container {
+    max-height: calc(100vh - #{$navbar-height} - 1.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 1.5rem;
+    scrollbar-color: rgba(138, 155, 168, 0.4) transparent;
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(138, 155, 168, 0.4);
+      border-radius: 3px;
+    }
+
+    .nav-pills .nav-link {
+      padding-bottom: 0.4rem;
+      padding-top: 0.4rem;
+    }
+  }
+}
