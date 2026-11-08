@@ -404,6 +404,15 @@ optionally only scenes with one tag. The login page is visible to anyone
 who can reach your server, so use the tag if only some scenes should be
 shown there.
 
+## Statistics
+
+The **Statistics** page (the chart icon in the menu bar) has a Stasharr part
+for admins: plays per day, the most watched scenes, performers, tags and
+reels, a table of who is watching (plays, last played and last signed in for
+each account), what was played recently, scenes added per month, picture
+quality, and how much space video files and each generated folder (reels,
+previews, tag clips…) take. Choose 7 days, 30 days, 90 days or a year.
+
 ## Phone app
 
 Stasharr can be installed on your phone's home screen and opens full screen,

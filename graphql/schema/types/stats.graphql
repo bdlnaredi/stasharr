@@ -1,17 +1,91 @@
-type StatsResultType {
-  scene_count: Int!
-  scenes_size: Float!
-  scenes_duration: Float!
-  image_count: Int!
-  images_size: Float!
-  gallery_count: Int!
-  performer_count: Int!
-  studio_count: Int!
-  group_count: Int!
-  movie_count: Int! @deprecated(reason: "use group_count instead")
-  tag_count: Int!
-  total_o_count: Int!
-  total_play_duration: Float!
-  total_play_count: Int!
-  scenes_played: Int!
+# Stasharr: the admin stats page
+
+type StatsTotals {
+  scenes: Int!
+  "Seconds of video"
+  duration: Float!
+  "Bytes of video files"
+  size: Float!
+  performers: Int!
+  tags: Int!
+  studios: Int!
+  reels: Int!
+  reel_views: Int!
+  comments: Int!
+  users: Int!
+  plays: Int!
+}
+
+type StatsMonth {
+  "YYYY-MM"
+  month: String!
+  scenes: Int!
+  size: Float!
+}
+
+type StatsCount {
+  id: ID!
+  name: String!
+  count: Int!
+}
+
+type StatsScene {
+  scene: Scene!
+  plays: Int!
+}
+
+type StatsReel {
+  reel_id: ID!
+  scene: Scene!
+  views: Int!
+}
+
+type StatsDay {
+  "YYYY-MM-DD"
+  day: String!
+  plays: Int!
+}
+
+type StatsUser {
+  "0 for the owner account"
+  id: ID!
+  name: String!
+  role: String!
+  plays: Int!
+  last_play: Time
+  last_login: Time
+}
+
+type StatsPlay {
+  user: String!
+  scene: Scene!
+  at: Time!
+}
+
+type StatsFolder {
+  name: String!
+  bytes: Float!
+}
+
+type StasharrStats {
+  "The period the play numbers cover, in days"
+  days: Int!
+  totals: StatsTotals!
+  added_by_month: [StatsMonth!]!
+  resolutions: [StatsCount!]!
+  plays_by_day: [StatsDay!]!
+  top_scenes: [StatsScene!]!
+  top_performers: [StatsCount!]!
+  top_tags: [StatsCount!]!
+  top_reels: [StatsReel!]!
+  users: [StatsUser!]!
+  recent_plays: [StatsPlay!]!
+  "Sizes of the folders in the generated folder (reels, previews…)"
+  generated: [StatsFolder!]!
+  generated_total: Float!
+}
+
+extend type Query {
+  "Admin only. days: the period for play numbers (default 30)."
+  stasharrStats(days: Int): StasharrStats!
 }
