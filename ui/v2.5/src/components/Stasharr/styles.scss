@@ -1031,3 +1031,54 @@ video.tag-card-image {
     padding: 6px 0;
   }
 }
+
+// Menu bar: Stasharr's pages sit under "More" on wide screens, and on
+// screens that are wide but not very wide the menu shows icons only (the
+// name appears when pointing at one), so everything fits on one line.
+.top-nav {
+  .stasharr-more-menu {
+    .dropdown-toggle {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      color: inherit;
+
+      &.active,
+      &:hover {
+        background-color: rgba(138, 155, 168, 0.15);
+      }
+    }
+
+    .nav-menu-icon {
+      margin-right: 0.35rem;
+    }
+
+    .dropdown-menu {
+      min-width: 12rem;
+    }
+
+    .dropdown-item.active {
+      background-color: #137cbd;
+    }
+  }
+
+  @media (min-width: 1200px) and (max-width: 1599.98px) {
+    .navbar-nav .nav-menu-label {
+      display: none;
+    }
+
+    .navbar-nav .nav-menu-icon {
+      margin-right: 0 !important;
+    }
+
+    .navbar-nav .btn {
+      padding-left: 0.6rem !important;
+      padding-right: 0.6rem !important;
+    }
+
+    // the user name and "Site" next to their icons
+    .nav-utility .btn span {
+      display: none !important;
+    }
+  }
+}
