@@ -16,6 +16,12 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   page, on tag cards in the admin interface, and in the Android app. They
   only load while on screen. A still picture from the clip shows for people
   who prefer less motion.
+- **Each tag gets a different clip.** Tags without a marker no longer share
+  the same scene and moment: scenes another tag already uses come last,
+  and clips from the same scene start at least 20 seconds apart. With the
+  Stasharr Tagger running, the clip starts at the frame that looks most
+  like the tag (for example a close-up for a body tag, or the hair colour
+  for Blonde).
 - Viewers only see a clip when their tier lets them see the scene it came
   from. Tags with a picture you set keep it.
 - **Settings → AI markers → Tag clips:** progress, Make clips and Remake
