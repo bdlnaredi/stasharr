@@ -11,6 +11,12 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 - **Comments in the app:** under every scene, and on reels through a new
   comment button that opens them over the reel while it keeps playing.
   Write, read and delete your own (admins can delete any).
+### Statistics
+- The **Statistics** page (chart icon) has a new part for admins: plays per
+  day, most watched scenes, performers, tags and reels, who is watching
+  (plays, last played, last signed in per account), recently played, scenes
+  added per month, picture quality, and storage used by video files and by
+  each generated folder. Pick 7 days, 30 days, 90 days or a year.
 
 ### Tag clips
 - **Every tag gets its own moving picture:** a 4-second silent loop cut from
