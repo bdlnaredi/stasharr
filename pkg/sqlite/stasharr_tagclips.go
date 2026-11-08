@@ -72,8 +72,8 @@ func TagClipProgress(ctx context.Context) (done, total int, err error) {
 }
 
 // TagClipCandidates lists the best scenes for a tag's clip: scenes with a
-// marker for the tag first (with the marker's time), then by rating, then
-// by how often they were played.
+// marker for the tag first (with the marker's time), then scenes no other
+// tag's clip uses yet, then by rating and by how often they were played.
 func TagClipCandidates(ctx context.Context, tagID, limit int) ([]TagClipCandidate, error) {
 	const q = `
 SELECT s.id AS scene_id,
@@ -85,11 +85,26 @@ FROM scenes s
 WHERE EXISTS (SELECT 1 FROM scenes_tags st WHERE st.scene_id = s.id AND st.tag_id = ?1)
    OR EXISTS (SELECT 1 FROM scene_markers m2 WHERE m2.scene_id = s.id AND m2.primary_tag_id = ?1)
 ORDER BY (marker IS NOT NULL) DESC,
+  -- scenes other tags' clips already use come last, so tags differ
+  (SELECT COUNT(*) FROM tag_clips c WHERE c.scene_id = s.id AND c.tag_id != ?1) ASC,
   COALESCE(s.rating, 0) DESC,
   (SELECT COUNT(*) FROM scenes_view_dates v WHERE v.scene_id = s.id) DESC,
   s.id DESC
 LIMIT ?2`
 	var ret []TagClipCandidate
 	err := dbWrapper.Select(ctx, &ret, q, tagID, limit)
+	return ret, err
+}
+
+// DeleteAllTagClips forgets every tag clip (the files stay).
+func DeleteAllTagClips(ctx context.Context) error {
+	_, err := dbWrapper.Exec(ctx, "DELETE FROM tag_clips")
+	return err
+}
+
+// TagClipTimesInScene lists where other tags' clips from a scene start.
+func TagClipTimesInScene(ctx context.Context, sceneID, exceptTagID int) ([]float64, error) {
+	var ret []float64
+	err := dbWrapper.Select(ctx, &ret, "SELECT seconds FROM tag_clips WHERE scene_id = ? AND tag_id != ?", sceneID, exceptTagID)
 	return ret, err
 }

@@ -381,8 +381,11 @@ normal interface and open the site from the menu.
 
 Every tag without its own picture gets a 4-second silent loop from its best
 scene (highest rated, then most played), starting just after a marker for
-the tag when there is one (yours or an AI marker). Without a marker it uses
-the scene's reel moment or its busiest part. The clips play on category
+the tag when there is one (yours or an AI marker). Scenes another tag's clip
+already uses come last, so tags do not repeat the same scene. Without a
+marker, and with the Stasharr Tagger running, the clip starts at the frame
+that looks most like the tag; otherwise at a reel moment or busy part that
+no other tag's clip from that scene uses. The clips play on category
 tiles, at the top of category pages, on tag cards in the admin interface
 and in the Android app, and only load while they are on screen. Viewers see
 a clip only when their tier lets them see the scene it came from.
