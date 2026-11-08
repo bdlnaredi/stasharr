@@ -1,5 +1,9 @@
 package app.stasharr.ui
 
+import app.stasharr.alerts.FavoriteAlertsState
+import app.stasharr.ui.screens.AlertsScreen
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import android.content.Context
 import android.net.Uri
 import androidx.compose.animation.fadeIn
@@ -79,6 +83,7 @@ class Navigator(private val nav: NavHostController, private val context: Context
     fun playlist(id: String) = nav.navigate("playlist/$id")
     fun list(kind: SceneListKind) = nav.navigate("list/${kind.name}")
     fun downloads() = nav.navigate("downloads")
+    fun alerts() = nav.navigate("alerts")
     fun back() = nav.popBackStack()
 
     /** Opens a website address such as /site/model/12 in the app. */
@@ -182,6 +187,33 @@ private fun MainScaffold() {
     val backStack by nav.currentBackStackEntryAsState()
     val current = backStack?.destination?.route
 
+    // alerts for new scenes from favourites: the badge count, a scene a
+    // notification asked to open, and asking once to allow notifications
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        while (true) {
+            FavoriteAlertsState.refresh(app)
+            kotlinx.coroutines.delay(10 * 60 * 1000L)
+        }
+    }
+    val opening = FavoriteAlertsState.openScene
+    androidx.compose.runtime.LaunchedEffect(opening) {
+        if (opening != null) {
+            navigator.scene(opening)
+            FavoriteAlertsState.openScene = null
+        }
+    }
+    val askNotify = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        val prefs = context.getSharedPreferences("alerts", Context.MODE_PRIVATE)
+        if (android.os.Build.VERSION.SDK_INT >= 33 && !FavoriteAlertsState.canPost(context) && !prefs.getBoolean("asked", false)) {
+            prefs.edit().putBoolean("asked", true).apply()
+            askNotify.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+    val alertsTab = if (store) "mylist" else "profile"
+
     AutoPreview.Controller()
     CompositionLocalProvider(LocalNav provides navigator, LocalOpenDownloads provides { navigator.downloads() }) {
         Scaffold(
@@ -194,7 +226,16 @@ private fun MainScaffold() {
                         NavigationBarItem(
                             selected = selected,
                             onClick = { navigator.tab(t.route) },
-                            icon = { Icon(t.icon, contentDescription = t.label) },
+                            icon = {
+                                val n = FavoriteAlertsState.count
+                                if (t.route == alertsTab && n > 0) {
+                                    BadgedBox(badge = { Badge(containerColor = Brand.Pink) { Text(if (n > 9) "9+" else "$n") } }) {
+                                        Icon(t.icon, contentDescription = t.label)
+                                    }
+                                } else {
+                                    Icon(t.icon, contentDescription = t.label)
+                                }
+                            },
                             label = { Text(t.label) },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color.White,
@@ -231,6 +272,7 @@ private fun MainScaffold() {
                         TagScreen(it.arguments?.getString("id").orEmpty(), it.arguments?.getString("name").orEmpty())
                     }
                     composable("downloads") { DownloadsScreen() }
+                    composable("alerts") { AlertsScreen() }
                     composable("playlist/{id}") { PlaylistScreen(it.arguments?.getString("id").orEmpty()) }
                     composable("list/{kind}") {
                         val kind = runCatching { SceneListKind.valueOf(it.arguments?.getString("kind").orEmpty()) }

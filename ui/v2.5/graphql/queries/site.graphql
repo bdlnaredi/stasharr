@@ -315,3 +315,29 @@ query SiteFilterOptions {
     }
   }
 }
+
+query FavoriteAlerts($limit: Int, $since: Time) {
+  favoriteAlerts(limit: $limit, since: $since) {
+    count
+    seen_at
+    alerts {
+      performer_id
+      performer
+      added_at
+      scene {
+        id
+        title
+        files {
+          path
+        }
+        paths {
+          screenshot
+        }
+      }
+    }
+  }
+}
+
+mutation MarkFavoriteAlertsSeen {
+  markFavoriteAlertsSeen
+}

@@ -411,6 +411,16 @@ tags without one, **Remake all** after adding markers) or with **Make new
 clip** on a tag's page. New tags get one after auto-import. They are kept in
 the generated folder under `tagclips/`, about 0.5 MB each.
 
+### Alerts for favourite pornstars
+
+When a pornstar you follow (**Add to favourites** on her page) gets a new
+scene, the bell in the site's header shows how many are new and lists them;
+opening it marks them seen. The owner account also gets alerts for
+performers marked favourite in the library. The Android app shows the same
+list (My list, or You), a badge on that tab, and a phone notification about
+every 30 minutes when there is something new; tap it to open the scene.
+Notifications can be turned off in the app.
+
 ### Login page
 
 The login box sits in the top right corner over drifting pictures or
@@ -419,6 +429,15 @@ page** choose **Moving previews**, **Scene pictures** or **Plain**, and
 optionally only scenes with one tag. The login page is visible to anyone
 who can reach your server, so use the tag if only some scenes should be
 shown there.
+
+## Statistics
+
+The **Statistics** page (the chart icon in the menu bar) has a Stasharr part
+for admins: plays per day, the most watched scenes, performers, tags and
+reels, a table of who is watching (plays, last played and last signed in for
+each account), what was played recently, scenes added per month, picture
+quality, and how much space video files and each generated folder (reels,
+previews, tag clips…) take. Choose 7 days, 30 days, 90 days or a year.
 
 ## Phone app
 

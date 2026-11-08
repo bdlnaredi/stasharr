@@ -24,6 +24,7 @@ import {
 } from "./SitePages";
 import { findSiteStyle, siteStyles } from "./siteStyles";
 import { Lang, getLang, languages, setLang, t } from "./i18n";
+import { SiteAlerts } from "./SiteAlerts";
 import "./site.scss";
 
 const LangPicker: React.FC<{ lang: Lang; onChange: (l: Lang) => void }> = ({ lang, onChange }) => (
@@ -98,6 +99,7 @@ const SiteHeader: React.FC<{
         </nav>
         <SiteSearch />
         <LangPicker lang={lang} onChange={onLang} />
+        <SiteAlerts />
         <div className="site-account">
           <button type="button" className="site-avatar" onClick={() => setMenu(!menu)}>
             {(me?.username ?? "Me").slice(0, 1).toUpperCase()}

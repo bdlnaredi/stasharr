@@ -7,6 +7,25 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Android app
+- **Comments in the app:** under every scene, and on reels through a new
+  comment button that opens them over the reel while it keeps playing.
+  Write, read and delete your own (admins can delete any).
+### Statistics
+- The **Statistics** page (chart icon) has a new part for admins: plays per
+  day, most watched scenes, performers, tags and reels, who is watching
+  (plays, last played, last signed in per account), recently played, scenes
+  added per month, picture quality, and storage used by video files and by
+  each generated folder. Pick 7 days, 30 days, 90 days or a year.
+### New from your favourite pornstars
+- **Alerts** when a pornstar you follow has a new scene: a bell with the
+  number of new scenes in the site's header, and a list of them; opening it
+  marks them seen. For the owner account, performers marked favourite in the
+  library count too.
+- **Android:** a phone notification for new scenes (tap to open the scene),
+  checked about every 30 minutes; a badge on My list (site look) or You, and
+  a "New from your favourites" list. Turn notifications off under You or on
+  the alerts list.
 ### Search by description
 - Type what you want to see, such as "blonde in red lingerie on a couch",
   and get the scenes and the moment in each that looks most like it, with

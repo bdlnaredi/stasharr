@@ -5,6 +5,7 @@ import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 import TextUtils from "src/utils/text";
 import { FileSize } from "./Shared/FileSize";
 import { useConfigurationContext } from "src/hooks/Config";
+import { StasharrStats } from "./Stasharr/StasharrStats";
 
 export const Stats: React.FC = () => {
   const { configuration } = useConfigurationContext();
@@ -145,6 +146,7 @@ export const Stats: React.FC = () => {
           </p>
         </div>
       </div>
+      <StasharrStats />
     </div>
   );
 };

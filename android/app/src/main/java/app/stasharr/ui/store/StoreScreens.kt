@@ -1,5 +1,8 @@
 package app.stasharr.ui.store
 
+import app.stasharr.alerts.FavoriteAlertsState
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -658,6 +661,7 @@ fun StoreMyList() {
     Loaded(loader) { d ->
         LazyColumn(Modifier.fillMaxSize()) {
             item { StorePageTitle("My list") }
+            item { AlertsRow() }
             item { SceneRow("Continue watching", d.cont) }
             item {
                 if (d.favModels.isEmpty()) {
@@ -722,5 +726,34 @@ fun AgeGate(onEnter: () -> Unit) {
                 }.padding(10.dp),
             )
         }
+    }
+}
+
+/** "New from your favourites", with how many are new; opens the alerts. */
+@Composable
+internal fun AlertsRow() {
+    val nav = LocalNav.current
+    val n = FavoriteAlertsState.count
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (n > 0) Brand.Pink.copy(alpha = 0.18f) else Brand.SurfaceHigh)
+            .clickable { nav.alerts() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Rounded.NotificationsActive, null, tint = if (n > 0) Brand.Pink else Brand.TextMuted)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text("New from your favourites", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(
+                if (n == 0) "Nothing new since you last looked" else if (n == 1) "1 new scene" else "$n new scenes",
+                style = MaterialTheme.typography.bodySmall,
+                color = Brand.TextMuted,
+            )
+        }
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = Brand.TextMuted)
     }
 }
