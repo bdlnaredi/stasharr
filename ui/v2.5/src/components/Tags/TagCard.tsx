@@ -11,6 +11,7 @@ import { PopoverCountButton } from "../Shared/PopoverCountButton";
 import { Icon } from "../Shared/Icon";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import cx from "classnames";
+import { LoopClip } from "../Shared/LoopClip";
 import { useTagUpdate } from "src/core/StashService";
 
 interface IProps {
@@ -212,6 +213,17 @@ const TagCardDetails: React.FC<IProps> = PatchComponent(
 const TagCardImage: React.FC<IProps> = PatchComponent(
   "TagCard.Image",
   ({ tag }) => {
+    // Stasharr: tags without their own picture play their clip
+    if (tag.clip && (!tag.image_path || tag.image_path.includes("default=true"))) {
+      return (
+        <LoopClip
+          className="tag-card-image"
+          video={tag.clip.video}
+          still={tag.clip.still}
+          alt={tag.name}
+        />
+      );
+    }
     return (
       <img
         loading="lazy"

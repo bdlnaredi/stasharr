@@ -785,3 +785,10 @@ body.stasharr-no-download {
     }
   }
 }
+
+// tag clips on tag cards fill the picture area
+video.tag-card-image {
+  background: #000;
+  display: block;
+  object-fit: cover;
+}

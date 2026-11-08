@@ -169,7 +169,7 @@ class Repository(private val api: Api) {
         }
         val data = api.gql(
             """query(${'$'}filter: FindFilterType, ${'$'}tf: TagFilterType) {
-              findTags(filter: ${'$'}filter, tag_filter: ${'$'}tf) { count tags { id name scene_count } }
+              findTags(filter: ${'$'}filter, tag_filter: ${'$'}tf) { count tags { id name scene_count clip { video still } } }
             }""", v
         )
         val res = data.obj("findTags") ?: return Page(0, emptyList())
@@ -243,7 +243,7 @@ class Repository(private val api: Api) {
     suspend fun tags(page: Int = 1, perPage: Int = 60, q: String? = null): Page<Tag> {
         val data = api.gql(
             """query(${'$'}filter: FindFilterType) {
-              findTags(filter: ${'$'}filter) { count tags { id name scene_count } }
+              findTags(filter: ${'$'}filter) { count tags { id name scene_count clip { video still } } }
             }""",
             vars { put("filter", findFilter(page, perPage, "scenes_count", true, q)) }
         )
@@ -423,7 +423,7 @@ class Repository(private val api: Api) {
     /** The most used tags, for a categories row. */
     suspend fun topTags(perPage: Int = 16): List<Tag> {
         val data = api.gql(
-            "query(\$f: FindFilterType) { findTags(filter: \$f) { tags { id name scene_count } } }",
+            "query(\$f: FindFilterType) { findTags(filter: \$f) { tags { id name scene_count clip { video still } } } }",
             vars { put("f", buildJsonObject { put("per_page", perPage); put("sort", "scenes_count"); put("direction", "DESC") }) }
         )
         return data.obj("findTags")?.get("tags").decode<List<Tag>>(emptyList()).filter { it.sceneCount > 0 }

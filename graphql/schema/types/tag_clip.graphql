@@ -1,0 +1,33 @@
+# Stasharr: short looping clips for tags
+
+type TagClip {
+  "4 second silent MP4 loop, 640x360"
+  video: String!
+  "A still picture from the clip"
+  still: String!
+  "The scene it was cut from"
+  scene_id: ID!
+  seconds: Float!
+}
+
+extend type Tag {
+  "The tag's clip, when it has one and you may see the scene it comes from. Tags with their own picture keep showing it."
+  clip: TagClip
+}
+
+type TagClipProgress {
+  "Tags with a clip"
+  done: Int!
+  "Tags without their own picture that have scenes"
+  total: Int!
+}
+
+extend type Query {
+  "Admin only"
+  tagClipProgress: TagClipProgress!
+}
+
+extend type Mutation {
+  "Admin only. Makes clips for these tags (again), or for every tag without one; redo remakes all. Returns the job id."
+  makeTagClips(tag_ids: [ID!], redo: Boolean): ID!
+}

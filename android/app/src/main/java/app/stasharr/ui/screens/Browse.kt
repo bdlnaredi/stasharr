@@ -69,6 +69,14 @@ import app.stasharr.data.SortOption
 import app.stasharr.data.SortState
 import app.stasharr.data.Sorts
 import app.stasharr.data.StudioFilters
+import app.stasharr.data.TagClip
+import app.stasharr.player.AutoPreview
+import app.stasharr.player.PreviewPlayer
+import app.stasharr.player.ScenePreview
+import app.stasharr.player.previewSpot
+import app.stasharr.player.rememberPreviewKey
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import app.stasharr.data.TagFilters
 import app.stasharr.data.TagRef
 import app.stasharr.data.WatchFilter
@@ -353,7 +361,7 @@ fun BrowseScreen() {
                 val f = m.tagFilters
                 val state = rememberPaged(q, sort, f) { page -> app.repo.findTags(sort, page, 80, q, f.toJson()) }
                 PagedGrid(state, key = { it.id }, minCell = 150.dp, empty = "No tags match") { t ->
-                    TagTile(t.name, t.sceneCount) { nav.tag(t.id, t.name) }
+                    TagTile(t.name, t.sceneCount, t.clip) { nav.tag(t.id, t.name) }
                 }
             }
         }
@@ -373,19 +381,25 @@ fun BrowseScreen() {
 }
 
 @Composable
-private fun TagTile(name: String, count: Int, onClick: () -> Unit) {
+private fun TagTile(name: String, count: Int, clip: TagClip?, onClick: () -> Unit) {
     val hue = (name.hashCode() and 0xffff) % 360
     val tint = Color.hsv(hue.toFloat(), 0.55f, 0.55f)
+    val key = rememberPreviewKey("tag")
     Box(
         Modifier
             .fillMaxWidth()
-            .height(72.dp)
+            .height(if (clip != null) 110.dp else 72.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(Brush.linearGradient(listOf(tint, Brand.SurfaceHigh)))
-            .clickable(onClick = onClick)
-            .padding(12.dp),
+            .previewSpot(key, AutoPreview.enabled && clip != null)
+            .clickable(onClick = onClick),
     ) {
-        Column(Modifier.align(Alignment.BottomStart)) {
+        if (clip != null) {
+            AsyncImage(clip.still, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+            ScenePreview(clip.video, active = PreviewPlayer.activeCardId == key, modifier = Modifier.fillMaxSize())
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)))))
+        }
+        Column(Modifier.align(Alignment.BottomStart).padding(12.dp)) {
             Text(name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis, color = Color.White)
             Text("$count scenes", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.7f))
         }

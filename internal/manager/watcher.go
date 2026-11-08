@@ -540,6 +540,9 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 		mgr.JobManager.Add(ctx, "Auto-import: AI markers", &AIMarkerJob{SceneIDs: intIDs})
 	}
 
+	// new scenes can bring new tags; give them clips
+	mgr.JobManager.Add(ctx, "Auto-import: tag clips", &TagClipJob{})
+
 	return nil
 }
 

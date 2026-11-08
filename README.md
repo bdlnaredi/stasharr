@@ -31,6 +31,7 @@ things Stash does not do on its own:
   happens in a scene and suggests markers, on the CPU or an NVIDIA card
 - **Smart playlists, notifications, scheduled backups and metadata refresh**
 - **A new login page** with pictures or previews from the library behind it
+- **Tag clips**: every tag gets a short looping clip of its moment
 
 Everything else works exactly like Stash, and an existing Stash database is
 upgraded in place the first time Stasharr starts. The web interface runs on
@@ -375,6 +376,21 @@ normal interface and open the site from the menu.
   own comments; admins can delete any.
 - **Same look in the Android app** for site users (switch **Same look in
   the Android app**).
+
+### Tag clips
+
+Every tag without its own picture gets a 4-second silent loop from its best
+scene (highest rated, then most played), starting just after a marker for
+the tag when there is one (yours or an AI marker). Without a marker it uses
+the scene's reel moment or its busiest part. The clips play on category
+tiles, at the top of category pages, on tag cards in the admin interface
+and in the Android app, and only load while they are on screen. Viewers see
+a clip only when their tier lets them see the scene it came from.
+
+Make them under **Settings → AI markers → Tag clips** (**Make clips** for
+tags without one, **Remake all** after adding markers) or with **Make new
+clip** on a tag's page. New tags get one after auto-import. They are kept in
+the generated folder under `tagclips/`, about 0.5 MB each.
 
 ### Login page
 

@@ -1337,7 +1337,8 @@ body.site-mode {
   overflow: hidden;
   position: relative;
 
-  img {
+  img,
+  video {
     height: 100%;
     left: 0;
     object-fit: cover;
@@ -1348,9 +1349,55 @@ body.site-mode {
     width: 100%;
   }
 
-  &:hover img {
-    opacity: 0.9;
+  // clips are brighter than pictures need to be dimmed
+  &.has-clip video {
+    opacity: 0.88;
+  }
+
+  &:hover img,
+  &:hover video {
+    opacity: 1;
     transform: scale(1.06);
+  }
+
+  &::after {
+    background: var(--site-accent);
+    content: "";
+    height: 3px;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s;
+  }
+
+  &:hover::after {
+    transform: scaleX(1);
+  }
+}
+
+// the category page opens with its clip, faded into the page
+.site-category-banner {
+  aspect-ratio: 16 / 5;
+  border-radius: var(--site-card-radius);
+  margin-bottom: 18px;
+  overflow: hidden;
+  position: relative;
+
+  video,
+  img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  &::after {
+    background: linear-gradient(0deg, var(--site-bg), transparent 70%);
+    content: "";
+    inset: 0;
+    position: absolute;
   }
 }
 

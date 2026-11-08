@@ -22,6 +22,7 @@ type generatedPaths struct {
 	Tmp                string
 	InteractiveHeatmap string
 	Reels              string
+	TagClips           string
 }
 
 func newGeneratedPaths(path string) *generatedPaths {
@@ -35,6 +36,7 @@ func newGeneratedPaths(path string) *generatedPaths {
 	gp.Tmp = filepath.Join(path, "tmp")
 	gp.InteractiveHeatmap = filepath.Join(path, "interactive_heatmaps")
 	gp.Reels = filepath.Join(path, "reels")
+	gp.TagClips = filepath.Join(path, "tagclips")
 	return &gp
 }
 

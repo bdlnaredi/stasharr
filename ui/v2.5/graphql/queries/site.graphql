@@ -166,6 +166,10 @@ query SiteTags($filter: FindFilterType, $tag_filter: TagFilterType) {
       id
       name
       image_path
+      clip {
+        video
+        still
+      }
       scene_count
     }
   }
@@ -176,6 +180,10 @@ query SiteTag($id: ID!) {
     id
     name
     image_path
+    clip {
+      video
+      still
+    }
     scene_count
     description
   }

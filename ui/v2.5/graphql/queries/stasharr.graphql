@@ -238,3 +238,14 @@ mutation AIMarkerApprove($ids: [ID!]!) {
 mutation AIMarkerReject($ids: [ID!]!) {
   aiMarkerReject(ids: $ids)
 }
+
+query TagClipProgress {
+  tagClipProgress {
+    done
+    total
+  }
+}
+
+mutation MakeTagClips($tag_ids: [ID!], $redo: Boolean) {
+  makeTagClips(tag_ids: $tag_ids, redo: $redo)
+}
