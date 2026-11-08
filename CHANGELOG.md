@@ -17,6 +17,15 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   (plays, last played, last signed in per account), recently played, scenes
   added per month, picture quality, and storage used by video files and by
   each generated folder. Pick 7 days, 30 days, 90 days or a year.
+### New from your favourite pornstars
+- **Alerts** when a pornstar you follow has a new scene: a bell with the
+  number of new scenes in the site's header, and a list of them; opening it
+  marks them seen. For the owner account, performers marked favourite in the
+  library count too.
+- **Android:** a phone notification for new scenes (tap to open the scene),
+  checked about every 30 minutes; a badge on My list (site look) or You, and
+  a "New from your favourites" list. Turn notifications off under You or on
+  the alerts list.
 
 ### Tag clips
 - **Every tag gets its own moving picture:** a 4-second silent loop cut from

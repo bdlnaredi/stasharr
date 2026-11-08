@@ -261,6 +261,16 @@ const dict: Record<string, Tr> = {
     ru: "По запросу «{q}» ничего не найдено.",
     es: "No hay resultados para «{q}».",
   },
+  // alerts
+  Alerts: { hi: "सूचनाएँ", fr: "Alertes", ru: "Уведомления", es: "Avisos" },
+  "with {name}": { hi: "{name} के साथ", fr: "avec {name}", ru: "с {name}", es: "con {name}" },
+  "Nothing new yet. Tap “Add to favourites” on a pornstar's page to hear about her new scenes.": {
+    hi: "अभी कुछ नया नहीं। किसी पोर्नस्टार के पेज पर “पसंदीदा में जोड़ें” दबाएँ ताकि उसके नए दृश्यों की सूचना मिले।",
+    fr: "Rien de nouveau. Appuyez sur « Ajouter aux favoris » sur la page d'une pornstar pour être averti de ses nouvelles scènes.",
+    ru: "Пока ничего нового. Нажмите «В избранное» на странице порнозвезды, чтобы узнавать о её новых сценах.",
+    es: "Nada nuevo todavía. Pulsa «Añadir a favoritas» en la página de una pornstar para enterarte de sus nuevas escenas.",
+  },
+
   // comments
   Comments: { hi: "टिप्पणियाँ", fr: "Commentaires", ru: "Комментарии", es: "Comentarios" },
   "Add a comment…": { hi: "टिप्पणी लिखें…", fr: "Ajouter un commentaire…", ru: "Написать комментарий…", es: "Añade un comentario…" },
