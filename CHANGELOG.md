@@ -7,6 +7,17 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Search by description
+- Type what you want to see, such as "blonde in red lingerie on a couch",
+  and get the scenes and the moment in each that looks most like it, with
+  a picture of that moment. On the site it appears as **Matching moments**
+  on the search results page; in the admin interface under **Describe** in
+  the menu. Clicking a result plays from that moment.
+- Needs the Stasharr Tagger (update its image: it has two new functions).
+  Settings → AI markers → Search by description shows progress and indexes
+  the rest; new scenes are added after auto-import. The tagger looks at one
+  frame every 10 seconds of each scene once.
+
 ### Tag clips
 - **Every tag gets its own moving picture:** a 4-second silent loop cut from
   the tag's best scene (highest rated, most played), starting at a marker

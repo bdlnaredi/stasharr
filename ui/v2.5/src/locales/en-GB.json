@@ -1759,6 +1759,7 @@
   "years_old": "years old",
   "zip_file_count": "Zip File Count",
   "stasharr": {
+    "describe": "Describe",
     "reels": "Reels"
   }
 }

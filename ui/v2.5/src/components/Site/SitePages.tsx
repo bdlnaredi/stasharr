@@ -25,6 +25,7 @@ import { FollowButton, LikeButton, SceneRating, SceneViews } from "./SiteWidgets
 import { SiteComments } from "./SiteComments";
 import { count, t } from "./i18n";
 import { LoopClip } from "src/components/Shared/LoopClip";
+import { MomentsSection } from "./SiteMoments";
 
 function useQueryParams(): [URLSearchParams, (changes: Record<string, string | null>) => void] {
   const location = useLocation();
@@ -256,6 +257,7 @@ export const SearchPage: React.FC = () => {
           </Rail>
         </Section>
       )}
+      <MomentsSection q={q} />
       <SceneBrowser q={q} />
     </div>
   );

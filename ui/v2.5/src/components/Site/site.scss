@@ -2882,3 +2882,55 @@ body.site-mode {
     width: 30px;
   }
 }
+
+// ---------------------------------------------------------------- search by description
+
+.site-moment-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.site-moment {
+  display: block;
+
+  &:hover .site-moment-pic img {
+    transform: scale(1.05);
+  }
+}
+
+.site-moment-pic {
+  aspect-ratio: 16 / 9;
+  background: var(--site-surface-2);
+  border-radius: var(--site-card-radius);
+  overflow: hidden;
+  position: relative;
+
+  img {
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s;
+    width: 100%;
+  }
+}
+
+.site-moment-time {
+  background: rgba(0, 0, 0, 0.75);
+  border-radius: 4px;
+  bottom: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  left: 8px;
+  padding: 2px 7px;
+  position: absolute;
+}
+
+.site-moment-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

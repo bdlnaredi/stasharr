@@ -31,6 +31,7 @@ import {
   faImages,
   faMapMarkerAlt,
   faMobileAlt,
+  faWandMagicSparkles,
   faPlayCircle,
   faQuestionCircle,
   faSignOutAlt,
@@ -114,6 +115,10 @@ const messages = defineMessages({
     id: "stasharr.audio",
     defaultMessage: "Audio",
   },
+  describe: {
+    id: "stasharr.describe",
+    defaultMessage: "Describe",
+  },
 });
 
 const reelsMenuItem: IMenuItem = {
@@ -122,6 +127,14 @@ const reelsMenuItem: IMenuItem = {
   href: "/reels",
   icon: faMobileAlt,
   hotkey: "g r",
+};
+
+const describeMenuItem: IMenuItem = {
+  name: "describe",
+  message: messages.describe,
+  href: "/describe",
+  icon: faWandMagicSparkles,
+  hotkey: "g d",
 };
 
 const playlistsMenuItem: IMenuItem = {
@@ -249,6 +262,7 @@ export const MainNavbar: React.FC = () => {
       getAudioMenuItem(),
       playlistsMenuItem,
       ...(canViewReels ? [reelsMenuItem] : []),
+      describeMenuItem,
     ];
     if (!cfgMenuItems) {
       return withReels(allMenuItems);
