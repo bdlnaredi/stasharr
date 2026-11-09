@@ -4,6 +4,7 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import app.stasharr.alerts.AutoDownloads
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -31,6 +32,8 @@ data class OfflineItem(
     val size: Long = 0,
     val error: String? = null,
     val thumb: String? = null,
+    /** Started by auto-download; the oldest of these are deleted. */
+    val auto: Boolean = false,
 ) {
     val key: String get() = "${sceneId}_$quality"
     val done: Boolean get() = state == DONE
@@ -116,8 +119,8 @@ class Downloads(
     }.getOrDefault(0L)
 
     /** Starts downloading a scene in a quality. */
-    fun start(scene: Scene, quality: OfflineQuality) {
-        val item = OfflineItem(sceneId = scene.id, quality = quality.id, qualityLabel = quality.label, scene = scene)
+    fun start(scene: Scene, quality: OfflineQuality, auto: Boolean = false) {
+        val item = OfflineItem(sceneId = scene.id, quality = quality.id, qualityLabel = quality.label, scene = scene, auto = auto)
         synchronized(lock) {
             if (_items.value.any { it.key == item.key && it.state != OfflineItem.FAILED }) return
             _items.value = _items.value.filter { it.key != item.key } + item
@@ -219,7 +222,7 @@ class Downloads(
             .setDescription("Stasharr · ${item.qualityLabel}")
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setDestinationInExternalFilesDir(context, Environment.DIRECTORY_MOVIES, name)
-            .setAllowedOverMetered(true)
+            .setAllowedOverMetered(!(item.auto && AutoDownloads.wifiOnly))
             .setAllowedOverRoaming(false)
         val id = try {
             dm.enqueue(req)

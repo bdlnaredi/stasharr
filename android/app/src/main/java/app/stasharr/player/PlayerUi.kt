@@ -162,6 +162,30 @@ fun PlayerScreen(a: PlayerActivity) {
 
     fun poke() { touches++ }
 
+    // TV remote
+    LaunchedEffect(controls) { a.remoteControlsShown = controls }
+    LaunchedEffect(a.showControlsRequest) {
+        if (a.showControlsRequest > 0) {
+            controls = true
+            poke()
+        }
+    }
+    LaunchedEffect(a.hideControlsRequest) { if (a.hideControlsRequest > 0) controls = false }
+    var lastRemoteSeek by remember { mutableIntStateOf(a.remoteSeek) }
+    LaunchedEffect(a.remoteSeek) {
+        val delta = a.remoteSeek - lastRemoteSeek
+        lastRemoteSeek = a.remoteSeek
+        if (delta == 0) return@LaunchedEffect
+        val forward = delta > 0
+        val prev = seekBubble?.takeIf { it.first == forward }?.second ?: 0
+        seekBubble = forward to prev + kotlin.math.abs(delta)
+        bubbleJob?.cancel()
+        bubbleJob = scope.launch {
+            delay(900)
+            seekBubble = null
+        }
+    }
+
     // hide the controls after a while
     LaunchedEffect(controls, playing, touches, sheet) {
         if (controls && playing && sheet == null) {

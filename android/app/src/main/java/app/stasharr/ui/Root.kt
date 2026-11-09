@@ -3,6 +3,7 @@ package app.stasharr.ui
 import app.stasharr.update.AppUpdate
 import app.stasharr.ui.components.UpdateDialog
 import app.stasharr.alerts.FavoriteAlertsState
+import app.stasharr.ui.screens.AdminScreen
 import app.stasharr.ui.screens.AlertsScreen
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -90,6 +91,7 @@ class Navigator(private val nav: NavHostController, private val context: Context
     fun alerts() = nav.navigate("alerts")
     fun categories() = nav.navigate("categories")
     fun channels() = nav.navigate("channels")
+    fun admin() = nav.navigate("admin")
     fun back() = nav.popBackStack()
 
     /** Opens a website address such as /site/model/12 in the app. */
@@ -230,7 +232,7 @@ private fun MainScaffold() {
             containerColor = Brand.Background,
             contentWindowInsets = WindowInsets(0),
             bottomBar = {
-                NavigationBar(containerColor = Brand.Background.copy(alpha = 0.97f), tonalElevation = 0.dp) {
+                if (!Tv.isTv) NavigationBar(containerColor = Brand.Background.copy(alpha = 0.97f), tonalElevation = 0.dp) {
                     tabs.forEach { t ->
                         val selected = current == t.route
                         NavigationBarItem(
@@ -259,7 +261,37 @@ private fun MainScaffold() {
                 }
             },
         ) { inner ->
-            Box(Modifier.fillMaxSize().padding(bottom = inner.calculateBottomPadding())) {
+            androidx.compose.foundation.layout.Row(Modifier.fillMaxSize()) {
+            // on a TV the sections are down the left side, for the remote
+            if (Tv.isTv) {
+                androidx.compose.material3.NavigationRail(containerColor = Brand.Background) {
+                    androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 12.dp))
+                    tabs.forEach { t ->
+                        androidx.compose.material3.NavigationRailItem(
+                            selected = current == t.route,
+                            onClick = { navigator.tab(t.route) },
+                            icon = { Icon(t.icon, contentDescription = t.label) },
+                            label = { Text(t.label) },
+                            colors = androidx.compose.material3.NavigationRailItemDefaults.colors(
+                                selectedIconColor = Color.White,
+                                selectedTextColor = Color.White,
+                                indicatorColor = Brand.Pink.copy(alpha = 0.85f),
+                                unselectedIconColor = Brand.TextMuted,
+                                unselectedTextColor = Brand.TextMuted,
+                            ),
+                        )
+                    }
+                    if (tabs.none { it.route == "profile" }) {
+                        androidx.compose.material3.NavigationRailItem(
+                            selected = current == "profile",
+                            onClick = { navigator.tab("profile") },
+                            icon = { Icon(Icons.Rounded.Person, contentDescription = "You") },
+                            label = { Text("You") },
+                        )
+                    }
+                }
+            }
+            Box(Modifier.weight(1f).fillMaxSize().padding(bottom = inner.calculateBottomPadding())) {
                 NavHost(
                     navController = nav,
                     startDestination = "home",
@@ -285,6 +317,7 @@ private fun MainScaffold() {
                     composable("alerts") { AlertsScreen() }
                     composable("categories") { StoreCategories() }
                     composable("channels") { StoreChannels() }
+                    composable("admin") { AdminScreen() }
                     composable("playlist/{id}") { PlaylistScreen(it.arguments?.getString("id").orEmpty()) }
                     composable("list/{kind}") {
                         val kind = runCatching { SceneListKind.valueOf(it.arguments?.getString("kind").orEmpty()) }
@@ -292,6 +325,7 @@ private fun MainScaffold() {
                         SceneListScreen(kind)
                     }
                 }
+            }
             }
         }
     }

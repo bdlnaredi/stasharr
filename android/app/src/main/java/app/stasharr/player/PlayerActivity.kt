@@ -1,5 +1,7 @@
 package app.stasharr.player
 
+import app.stasharr.widget.SceneWidget
+import app.stasharr.ui.Tv
 import android.app.PendingIntent
 import android.app.PictureInPictureParams
 import android.app.RemoteAction
@@ -109,6 +111,73 @@ class PlayerActivity : ComponentActivity() {
     internal var aspect by mutableStateOf(Aspect.Fit)
     internal var speed by mutableFloatStateOf(1f)
     internal var subtitlesOn by mutableStateOf(false)
+
+    // TV remote: the screen tells us whether its controls show, and we ask it
+    // to show or hide them and to flash a seek bubble
+    internal var remoteControlsShown = false
+    internal var showControlsRequest by mutableIntStateOf(0)
+    internal var hideControlsRequest by mutableIntStateOf(0)
+    internal var remoteSeek by mutableIntStateOf(0)
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (event.action != android.view.KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
+        when (event.keyCode) {
+            android.view.KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+            android.view.KeyEvent.KEYCODE_MEDIA_PLAY,
+            android.view.KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+                togglePlay()
+                showControlsRequest++
+                return true
+            }
+            android.view.KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
+                seekBy(30.0)
+                remoteSeek += 30
+                return true
+            }
+            android.view.KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                seekBy(-10.0)
+                remoteSeek -= 10
+                return true
+            }
+            android.view.KeyEvent.KEYCODE_MEDIA_NEXT -> {
+                playNext()
+                return true
+            }
+            android.view.KeyEvent.KEYCODE_BACK -> if (remoteControlsShown && Tv.isTv) {
+                hideControlsRequest++
+                return true
+            }
+        }
+        // with the controls hidden, the arrows seek and OK pauses; with them
+        // shown, the arrows move between the buttons
+        if (!remoteControlsShown) {
+            when (event.keyCode) {
+                android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    seekBy(-10.0)
+                    remoteSeek -= 10
+                    return true
+                }
+                android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    seekBy(10.0)
+                    remoteSeek += 10
+                    return true
+                }
+                android.view.KeyEvent.KEYCODE_DPAD_CENTER,
+                android.view.KeyEvent.KEYCODE_ENTER,
+                android.view.KeyEvent.KEYCODE_NUMPAD_ENTER -> {
+                    togglePlay()
+                    showControlsRequest++
+                    return true
+                }
+                android.view.KeyEvent.KEYCODE_DPAD_UP,
+                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    showControlsRequest++
+                    return true
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
 
     private var sceneId = ""
     private var queue = ArrayList<String>()
@@ -637,6 +706,12 @@ class PlayerActivity : ComponentActivity() {
         if (!isInPictureInPictureMode) player?.pause()
         addPlayTime()
         saveProgress()
+        // the Continue watching widget shows the new position
+        val ctx = applicationContext
+        app.appScope.launch {
+            kotlinx.coroutines.delay(3000)
+            SceneWidget.refreshAll(ctx)
+        }
     }
 
     override fun onDestroy() {

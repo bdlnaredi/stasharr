@@ -8,6 +8,7 @@ import app.stasharr.data.Repository
 import app.stasharr.data.Session
 import app.stasharr.player.AutoPreview
 import app.stasharr.ui.SiteMode
+import app.stasharr.ui.Tv
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
@@ -36,6 +37,7 @@ class StasharrApp : Application(), ImageLoaderFactory {
         api = Api(session)
         repo = Repository(api)
         downloads = Downloads(this, repo, api.client, appScope)
+        Tv.detect(this)
         SiteMode.restore(this)
         AutoPreview.restore(this)
         FavoriteAlertsState.restore(this)

@@ -5,10 +5,15 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- also runs on Android TV, with the remote -->
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+
     <application
         android:name=".StasharrApp"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
+        android:banner="@drawable/tv_banner"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:networkSecurityConfig="@xml/network_security_config"
@@ -23,6 +28,7 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
 
@@ -33,6 +39,30 @@
             android:supportsPictureInPicture="true"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Stasharr.Player" />
+        <!-- home screen widgets -->
+        <receiver
+            android:name=".widget.ContinueWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_continue_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_continue" />
+        </receiver>
+        <receiver
+            android:name=".widget.FavouritesWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_favourites_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_favourites" />
+        </receiver>
+
         <!-- Chromecast: play on the TV with Google's standard media receiver -->
         <meta-data
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"

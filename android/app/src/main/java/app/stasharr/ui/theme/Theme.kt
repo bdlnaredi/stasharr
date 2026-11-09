@@ -1,5 +1,7 @@
 package app.stasharr.ui.theme
 
+import app.stasharr.ui.TvFocusIndication
+import app.stasharr.ui.Tv
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -111,5 +113,15 @@ private val Type = Typography(
 @Composable
 fun StasharrTheme(content: @Composable () -> Unit) {
     // always dark, like the big streaming apps
-    MaterialTheme(colorScheme = colors(), typography = Type, content = content)
+    MaterialTheme(colorScheme = colors(), typography = Type) {
+        // on a TV, whatever the remote is on gets an outline
+        if (Tv.isTv) {
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.foundation.LocalIndication provides TvFocusIndication,
+                content = content,
+            )
+        } else {
+            content()
+        }
+    }
 }

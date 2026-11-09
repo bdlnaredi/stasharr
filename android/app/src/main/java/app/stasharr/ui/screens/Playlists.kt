@@ -1,5 +1,6 @@
 package app.stasharr.ui.screens
 
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.Logout
+import androidx.compose.material.icons.rounded.AdminPanelSettings
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.Dns
@@ -278,7 +280,7 @@ private fun InfoRow(icon: ImageVector, title: String, value: String) {
 fun ProfileScreen(me: Me?) {
     val actions = LocalAppActions.current
     val name = me?.username ?: app.session.username ?: "You"
-    Column(Modifier.fillMaxSize().statusBarsPadding()) {
+    Column(Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState()).statusBarsPadding()) {
         Spacer(Modifier.height(30.dp))
         Box(
             Modifier
@@ -311,6 +313,15 @@ fun ProfileScreen(me: Me?) {
             icon = Icons.Rounded.DownloadForOffline,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
+        if (me?.role == "ADMIN") {
+            Spacer(Modifier.height(10.dp))
+            GlassButton(
+                "Admin tools",
+                onClick = { nav.admin() },
+                icon = Icons.Rounded.AdminPanelSettings,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+        }
         Spacer(Modifier.height(16.dp))
         val look = SiteMode.look
         if (look?.enabled == true && !look.active) {

@@ -97,6 +97,8 @@ dependencies {
     implementation("androidx.mediarouter:mediarouter:1.7.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.work:work-runtime-ktx:2.10.0")
+    // home screen widgets
+    implementation("androidx.glance:glance-appwidget:1.1.1")
 
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
