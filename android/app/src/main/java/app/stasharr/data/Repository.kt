@@ -570,4 +570,80 @@ class Repository(private val api: Api) {
         val data = api.gql("mutation(\$id: ID!) { sceneAddO(id: \$id) { count } }", vars { put("id", sceneId) })
         return data.obj("sceneAddO")?.int("count") ?: 0
     }
+
+    // ---------------------------------------------------------------- admin
+
+    suspend fun aiSuggestions(page: Int = 1, perPage: Int = 60): AiSuggestions {
+        val data = api.gql(
+            """query(${'$'}p: Int, ${'$'}n: Int) {
+              aiMarkerSuggestions(page: ${'$'}p, per_page: ${'$'}n) {
+                count scenes suggestions { id label seconds end_seconds score scene { ...SceneCard } }
+              }
+            }""" + SCENE_CARD,
+            vars { put("p", page); put("n", perPage) }
+        )
+        return data["aiMarkerSuggestions"].decode(AiSuggestions())
+    }
+
+    suspend fun aiApprove(ids: List<String>): Int {
+        val data = api.gql("mutation(\$ids: [ID!]!) { aiMarkerApprove(ids: \$ids) }", vars { put("ids", buildJsonArray { ids.forEach { add(JsonPrimitive(it)) } }) })
+        return data.int("aiMarkerApprove")
+    }
+
+    suspend fun aiReject(ids: List<String>): Int {
+        val data = api.gql("mutation(\$ids: [ID!]!) { aiMarkerReject(ids: \$ids) }", vars { put("ids", buildJsonArray { ids.forEach { add(JsonPrimitive(it)) } }) })
+        return data.int("aiMarkerReject")
+    }
+
+    suspend fun autoImportStatus(): AutoImportStatus {
+        val data = api.gql("query { libraryWatcherConfig { enabled identify running poll_minutes watched_paths last_check_at last_result } }")
+        return data["libraryWatcherConfig"].decode(AutoImportStatus())
+    }
+
+    suspend fun autoImportCheckNow() {
+        api.gql("mutation { libraryWatcherCheckNow }")
+    }
+
+    suspend fun autoImportReidentify() {
+        api.gql("mutation { libraryWatcherReidentify }")
+    }
+
+    /** Scenes that auto-import could not fully identify: no studio or no performers. */
+    suspend fun needsAttention(page: Int, perPage: Int): Page<Scene> {
+        val filter = buildJsonObject {
+            putJsonObject("studios") { put("modifier", "IS_NULL") }
+            putJsonObject("OR") { putJsonObject("performer_count") { put("value", 0); put("modifier", "EQUALS") } }
+        }
+        return findScenes(SortState(Sorts.scenes.first()), page, perPage, null, filter)
+    }
+
+    suspend fun jobs(): List<ServerJob> {
+        val data = api.gql("query { jobQueue { id status description progress error subTasks } }")
+        return data["jobQueue"].decode(emptyList())
+    }
+
+    suspend fun stopJob(id: String) {
+        api.gql("mutation(\$id: ID!) { stopJob(job_id: \$id) }", vars { put("id", id) })
+    }
+
+    suspend fun serverStats(days: Int): ServerStats {
+        val data = api.gql(
+            """query(${'$'}d: Int) {
+              stasharrStats(days: ${'$'}d) {
+                days
+                totals { scenes duration size performers tags studios reels reel_views comments users plays }
+                plays_by_day { day plays }
+                top_scenes { plays scene { ...SceneCard } }
+                top_performers { id name count }
+                top_tags { id name count }
+                users { id name role plays last_play last_login }
+                recent_plays { user at scene { ...SceneCard } }
+                generated { name bytes }
+                generated_total
+              }
+            }""" + SCENE_CARD,
+            vars { put("d", days) }
+        )
+        return data["stasharrStats"].decode(ServerStats())
+    }
 }

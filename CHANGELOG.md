@@ -7,6 +7,29 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Android app: TV, auto-download, widgets and admin tools
+- **Android TV:** the same app installs on Android TV and shows in the TV's
+  app row. The sections are down the left side, whatever the remote is on
+  gets a pink outline, and in the player OK pauses, left and right skip 10
+  seconds (fast-forward and rewind buttons too), and up or down shows the
+  controls; Back hides them.
+- **Auto-download:** Downloads → "Download new scenes from favourites".
+  New scenes with pornstars you follow download by themselves (checked
+  about every 30 minutes), optionally only on Wi-Fi, in 480p, 720p, 1080p or
+  the original file. Keep the newest 3, 5, 10 or 20; older automatic
+  downloads are deleted. Downloads you start yourself are never touched.
+- **Home screen widgets:** "Continue watching" and "New from favourites",
+  with pictures; tap a scene to open it. They refresh after you watch
+  something and with each check for new scenes.
+- **Admin tools** (You → Admin tools, admins only):
+  - AI markers: review the tagger's suggestions with a picture of each
+    moment, play it, keep or throw away one or a whole scene.
+  - Auto-import: whether it is running, the last check, Check now and
+    Identify again, and the scenes that still have no studio or performers.
+  - Tasks: what the server is doing, with progress, and Stop.
+  - Statistics: plays, who is watching, most watched scenes, performers and
+    tags, and storage, for 7, 30 or 90 days or a year.
+
 ### Backups to Google Drive
 - **Settings → Maintenance → Google Drive:** connect your own Google Drive
   and every daily backup is uploaded after it is made, into a folder called

@@ -1,5 +1,6 @@
 package app.stasharr.alerts
 
+import app.stasharr.widget.SceneWidget
 import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -53,13 +54,20 @@ object FavoriteAlertsState {
 
     fun restore(context: Context) {
         notify = prefs(context).getBoolean("notify", true)
-        if (notify) schedule(context)
+        AutoDownloads.restore(context)
+        reschedule(context)
     }
 
     fun setNotify(context: Context, on: Boolean) {
         notify = on
         prefs(context).edit().putBoolean("notify", on).apply()
-        if (on) schedule(context) else WorkManager.getInstance(context).cancelUniqueWork(WORK)
+        reschedule(context)
+    }
+
+    /** The check runs while notifications or auto-download are on. */
+    fun reschedule(context: Context) {
+        if (notify || AutoDownloads.enabled) schedule(context)
+        else WorkManager.getInstance(context).cancelUniqueWork(WORK)
     }
 
     /** Fetches the count for the badge. */
@@ -139,6 +147,7 @@ class FavoriteAlertsWorker(context: Context, params: WorkerParameters) : Corouti
         val last = FavoriteAlertsState.lastNotified(ctx)
         val res = runCatching { app.repo.favoriteAlerts(limit = 10, since = last) }.getOrElse { return Result.retry() }
         FavoriteAlertsState.count = res.count
+        runCatching { SceneWidget.refreshAll(ctx) }
         val fresh = res.alerts.filter { last == null || parse(it.addedAt) > parse(last) }
         val newest = res.alerts.maxByOrNull { parse(it.addedAt) }?.addedAt
         // the first check only remembers where things stand, so a new install
@@ -148,6 +157,7 @@ class FavoriteAlertsWorker(context: Context, params: WorkerParameters) : Corouti
             else FavoriteAlertsState.setLastNotified(ctx, OffsetDateTime.now().toString())
             return Result.success()
         }
+        runCatching { AutoDownloads.handle(app, fresh) }
         if (fresh.isEmpty() || !FavoriteAlertsState.notify || !FavoriteAlertsState.canPost(ctx)) {
             if (newest != null) FavoriteAlertsState.setLastNotified(ctx, newest)
             return Result.success()

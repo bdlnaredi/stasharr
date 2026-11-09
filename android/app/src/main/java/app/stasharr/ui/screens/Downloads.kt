@@ -62,6 +62,7 @@ import app.stasharr.data.OfflineItem
 import app.stasharr.data.OfflineQuality
 import app.stasharr.data.Scene
 import app.stasharr.ui.LocalNav
+import app.stasharr.ui.components.AutoDownloadCard
 import app.stasharr.ui.components.GradientText
 import app.stasharr.ui.components.rememberLoad
 import app.stasharr.ui.theme.Brand
@@ -98,6 +99,7 @@ fun DownloadsScreen() {
         }
 
         if (sorted.isEmpty()) {
+            AutoDownloadCard(Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             Column(
                 Modifier.fillMaxSize().padding(32.dp),
                 verticalArrangement = Arrangement.Center,
@@ -120,6 +122,7 @@ fun DownloadsScreen() {
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            item(key = "auto") { AutoDownloadCard() }
             items(sorted, key = { it.key }) { item ->
                 DownloadRow(
                     item = item,
@@ -199,7 +202,7 @@ private fun DownloadRow(
             Text(item.scene.displayTitle, style = MaterialTheme.typography.titleSmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(2.dp))
             val (icon, text, tint) = when (item.state) {
-                OfflineItem.DONE -> Triple(Icons.Rounded.DownloadDone, "${item.qualityLabel} · ${bytes(context, item.size)}", Brand.TextMuted)
+                OfflineItem.DONE -> Triple(Icons.Rounded.DownloadDone, "${item.qualityLabel} · ${bytes(context, item.size)}" + if (item.auto) " · auto" else "", Brand.TextMuted)
                 OfflineItem.FAILED -> Triple(Icons.Rounded.ErrorOutline, item.error ?: "Failed", MaterialTheme.colorScheme.error)
                 OfflineItem.PREPARING -> Triple(
                     Icons.Rounded.Download,
