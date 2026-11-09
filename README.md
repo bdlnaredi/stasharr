@@ -175,6 +175,11 @@ tab, for the whole library under Settings → Auto-import (**Make reels**, or
 Watch them on the **Reels** page, which plays one reel per screen as you
 scroll. Reels are stored in your generated folder under `reels/`.
 
+To turn reels off for everyone, switch off **Reels** under **Settings →
+Auto-import**: they disappear from the menus, scene pages, the site and the
+Android app, and no new ones are made. Existing reels are kept for when you
+switch them back on.
+
 Each reel has its own picture, taken from the reel a third of the way in
 (older reels get one the first time they are shown). The Reels player on the
 site and in the Android app plays reels in a new random order every visit.

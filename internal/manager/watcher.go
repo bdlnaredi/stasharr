@@ -532,7 +532,7 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 		}
 	}
 
-	if cfg.GetWatcherGenerateReels() {
+	if cfg.GetWatcherGenerateReels() && cfg.GetReelsEnabled() {
 		mgr.JobManager.Add(ctx, "Auto-import: making reels", &ReelJob{SceneIDs: intIDs})
 	}
 

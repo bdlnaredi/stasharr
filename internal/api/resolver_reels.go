@@ -103,6 +103,9 @@ func (r *mutationResolver) GenerateReels(ctx context.Context, input GenerateReel
 	if err := access.RequireRole(ctx, access.RoleEditor); err != nil {
 		return "", err
 	}
+	if !config.GetInstance().GetReelsEnabled() {
+		return "", errors.New("reels are switched off (Settings → Auto-import → Reels)")
+	}
 	ids, err := stringslice.StringSliceToIntSlice(input.SceneIds)
 	if err != nil {
 		return "", err
@@ -169,6 +172,7 @@ func watcherConfig() *LibraryWatcherConfig {
 		PollMinutes:     cfg.GetWatcherPollMinutes(),
 		ReelDuration:    cfg.GetReelDuration(),
 		ReelCount:       cfg.GetReelCount(),
+		ReelsEnabled:    cfg.GetReelsEnabled(),
 		IdentifySources: manager.IdentifySourceNames(cfg),
 		WatchedPaths:    []string{},
 	}
@@ -213,6 +217,9 @@ func (r *mutationResolver) ConfigureLibraryWatcher(ctx context.Context, input Li
 	}
 	if input.Identify != nil {
 		cfg.SetBool(config.WatcherIdentify, *input.Identify)
+	}
+	if input.ReelsEnabled != nil {
+		cfg.SetBool(config.ReelsEnabled, *input.ReelsEnabled)
 	}
 	if input.GenerateReels != nil {
 		cfg.SetBool(config.WatcherGenerateReels, *input.GenerateReels)

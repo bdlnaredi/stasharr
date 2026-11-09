@@ -57,6 +57,10 @@ type ReelJob struct {
 func (j *ReelJob) Execute(ctx context.Context, progress *job.Progress) error {
 	mgr := GetInstance()
 	r := mgr.Repository
+	if !mgr.Config.GetReelsEnabled() {
+		logger.Info("[reels] reels are switched off; not making any")
+		return nil
+	}
 
 	duration := j.Duration
 	if duration <= 0 {
