@@ -5,12 +5,16 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
-### Android app updates itself
+### Android app tells you about updates
 - The app checks GitHub for a newer version when it opens (at most every 12
-  hours) and offers it with what's new; **Update** downloads it and Android
-  asks you to confirm the install. **Later** waits for the next version.
-  **You → Check for updates** checks straight away. The first time, Android
-  asks you to allow Stasharr to install apps.
+  hours) and shows what's new; **Download** opens the new version in your
+  browser, and you tap the download to install it over the old one (your
+  login is kept). **Later** waits for the next version. **You → Check for
+  updates** checks straight away.
+- 1.0.44 installed updates by itself, which needs the permission to install
+  apps; Play Protect flags unknown apps with that permission as harmful.
+  From 1.0.45 the app no longer has it, and installing is done by Android
+  from the download, as with the first install.
 - Each Android release now says what's new.
 
 ### Reels on or off

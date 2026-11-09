@@ -490,12 +490,11 @@ over the old one.
 password. Leave them empty if your server has no login. Away from home, use a
 VPN such as Tailscale, or an https address.
 
-**Updates:** the app checks for a newer version when it opens and offers to
-install it (**You → Check for updates** checks straight away). The first
-time, Android asks you to allow Stasharr to install apps; after that each
-update just needs a tap to confirm. Updates only install over a copy signed
-the same way, so if you installed an early build that was signed
-differently, uninstall it once and install the latest APK by hand.
+**Updates:** the app checks for a newer version when it opens and shows
+what's new (**You → Check for updates** checks straight away). **Download**
+opens the new version in your browser; tap the download to install it over
+the old one, and your login is kept. The app never installs anything itself,
+so Play Protect does not flag it for that.
 
 **Storefront:** site users get the site's storefront in the app (admins can
 switch it on under **You → Site layout**): featured banner, ticker, promo,

@@ -92,7 +92,7 @@ jobs:
             echo
             echo "Download **Stasharr-$VERSION_NAME.apk** below on your Android phone and open it to install."
             echo "The first time, Android asks you to allow installing apps from your browser or files app."
-            echo "New versions install over the old one; your login is kept. The app can also update itself: You → Check for updates."
+            echo "New versions install over the old one; your login is kept. The app tells you when there is a new version: You → Check for updates."
           } > "$RUNNER_TEMP/notes.md"
           cat "$RUNNER_TEMP/notes.md"
 
