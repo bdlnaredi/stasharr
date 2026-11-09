@@ -70,6 +70,7 @@ import app.stasharr.data.SortState
 import app.stasharr.data.Sorts
 import app.stasharr.data.StudioFilters
 import app.stasharr.data.TagClip
+import app.stasharr.player.LoopClip
 import app.stasharr.player.AutoPreview
 import app.stasharr.player.PreviewPlayer
 import app.stasharr.player.ScenePreview
@@ -384,19 +385,16 @@ fun BrowseScreen() {
 private fun TagTile(name: String, count: Int, clip: TagClip?, onClick: () -> Unit) {
     val hue = (name.hashCode() and 0xffff) % 360
     val tint = Color.hsv(hue.toFloat(), 0.55f, 0.55f)
-    val key = rememberPreviewKey("tag")
     Box(
         Modifier
             .fillMaxWidth()
             .height(if (clip != null) 110.dp else 72.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(Brush.linearGradient(listOf(tint, Brand.SurfaceHigh)))
-            .previewSpot(key, AutoPreview.enabled && clip != null)
             .clickable(onClick = onClick),
     ) {
         if (clip != null) {
-            AsyncImage(clip.still, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            ScenePreview(clip.video, active = PreviewPlayer.activeCardId == key, modifier = Modifier.fillMaxSize())
+            LoopClip(clip.video, clip.still, Modifier.fillMaxSize())
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)))))
         }
         Column(Modifier.align(Alignment.BottomStart).padding(12.dp)) {

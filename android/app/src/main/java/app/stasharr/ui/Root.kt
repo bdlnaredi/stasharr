@@ -69,6 +69,8 @@ import app.stasharr.player.AutoPreview
 import app.stasharr.ui.store.AgeGate
 import app.stasharr.ui.store.StoreHome
 import app.stasharr.ui.store.StoreModel
+import app.stasharr.ui.store.StoreCategories
+import app.stasharr.ui.store.StoreChannels
 import app.stasharr.ui.store.StoreModels
 import app.stasharr.ui.store.StoreMyList
 import app.stasharr.ui.store.StoreScenes
@@ -86,6 +88,8 @@ class Navigator(private val nav: NavHostController, private val context: Context
     fun list(kind: SceneListKind) = nav.navigate("list/${kind.name}")
     fun downloads() = nav.navigate("downloads")
     fun alerts() = nav.navigate("alerts")
+    fun categories() = nav.navigate("categories")
+    fun channels() = nav.navigate("channels")
     fun back() = nav.popBackStack()
 
     /** Opens a website address such as /site/model/12 in the app. */
@@ -279,6 +283,8 @@ private fun MainScaffold() {
                     }
                     composable("downloads") { DownloadsScreen() }
                     composable("alerts") { AlertsScreen() }
+                    composable("categories") { StoreCategories() }
+                    composable("channels") { StoreChannels() }
                     composable("playlist/{id}") { PlaylistScreen(it.arguments?.getString("id").orEmpty()) }
                     composable("list/{kind}") {
                         val kind = runCatching { SceneListKind.valueOf(it.arguments?.getString("kind").orEmpty()) }

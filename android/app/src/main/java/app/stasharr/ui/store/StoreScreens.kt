@@ -69,6 +69,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.stasharr.app
+import app.stasharr.data.SortState
+import app.stasharr.data.Sorts
 import app.stasharr.data.Performer
 import app.stasharr.data.Reel
 import app.stasharr.data.Scene
@@ -206,7 +208,7 @@ private fun HomeRowView(row: SiteHomeRow, content: Any) {
         "categories" -> {
             val tags = content as List<Tag>
             if (tags.isEmpty()) return
-            StoreHeader(title)
+            StoreHeader(title, onAll = { nav.categories() })
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(tags, key = { it.id }) { t -> CategoryTile(t.name, t.sceneCount, Modifier.width(170.dp), clip = t.clip) { nav.tag(t.id, t.name) } }
             }
@@ -214,7 +216,7 @@ private fun HomeRowView(row: SiteHomeRow, content: Any) {
         "channels" -> {
             val studios = content as List<Studio>
             if (studios.isEmpty()) return
-            StoreHeader(title)
+            StoreHeader(title, onAll = { nav.channels() })
             LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(studios, key = { it.id }) { s -> StudioTile(s, onClick = { nav.studio(s.id) }) }
             }
@@ -513,6 +515,57 @@ fun StoreModels() {
             }
         }
         PagedGrid(state, key = { it.id }, minCell = 110.dp, empty = "No ${starsWord.lowercase()} found") { p -> ModelCard(p, width = null) }
+    }
+}
+
+// ---------------------------------------------------------------- categories and channels
+
+/** Only tags and channels that have scenes. */
+private val hasScenes: JsonObject = buildJsonObject {
+    putJsonObject("scene_count") { put("value", 0); put("modifier", "GREATER_THAN") }
+}
+
+/** Every category, with its clip, sortable and searchable. */
+@Composable
+fun StoreCategories() {
+    val nav = LocalNav.current
+    var sortKey by rememberSaveable { mutableStateOf("scenes_count") }
+    var query by rememberSaveable { mutableStateOf("") }
+    val seed = remember { (1..99_999_999).random() }
+    val q = query.trim()
+    val option = Sorts.tags.first { it.key == sortKey }
+    val state = rememberPaged(sortKey, q) { page ->
+        app.repo.findTags(SortState(option, seed = seed), page, 36, q.ifBlank { null }, hasScenes)
+    }
+    Column(Modifier.fillMaxSize()) {
+        StorePageTitle("Categories")
+        SearchBox(query, { query = it }, "Search categories")
+        ChipRow { Sorts.tags.forEach { o -> Chip(o.label, selected = o.key == sortKey) { sortKey = o.key } } }
+        PagedGrid(state, key = { it.id }, minCell = 160.dp, empty = "No categories found") { t ->
+            CategoryTile(t.name, t.sceneCount, Modifier.fillMaxWidth(), clip = t.clip) { nav.tag(t.id, t.name) }
+        }
+    }
+}
+
+/** Every channel, sortable and searchable. */
+@Composable
+fun StoreChannels() {
+    val nav = LocalNav.current
+    var sortKey by rememberSaveable { mutableStateOf("scenes_count") }
+    var query by rememberSaveable { mutableStateOf("") }
+    val seed = remember { (1..99_999_999).random() }
+    val q = query.trim()
+    val option = Sorts.studios.first { it.key == sortKey }
+    val state = rememberPaged(sortKey, q) { page ->
+        app.repo.findStudios(SortState(option, seed = seed), page, 36, q.ifBlank { null }, hasScenes)
+    }
+    Column(Modifier.fillMaxSize()) {
+        StorePageTitle("Channels")
+        SearchBox(query, { query = it }, "Search channels")
+        ChipRow { Sorts.studios.forEach { o -> Chip(o.label, selected = o.key == sortKey) { sortKey = o.key } } }
+        PagedGrid(state, key = { it.id }, minCell = 160.dp, empty = "No channels found") { st ->
+            StudioTile(st, onClick = { nav.studio(st.id) }, width = null)
+        }
     }
 }
 
