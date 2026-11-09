@@ -7,6 +7,14 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Android app updates itself
+- The app checks GitHub for a newer version when it opens (at most every 12
+  hours) and offers it with what's new; **Update** downloads it and Android
+  asks you to confirm the install. **Later** waits for the next version.
+  **You → Check for updates** checks straight away. The first time, Android
+  asks you to allow Stasharr to install apps.
+- Each Android release now says what's new.
+
 ### Reels on or off
 - **Settings → Auto-import → Reels** has a switch for the whole server. Off
   hides reels everywhere (the menu, scene pages, the site's Reels page and

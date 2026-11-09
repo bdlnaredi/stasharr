@@ -1,5 +1,7 @@
 package app.stasharr.ui
 
+import app.stasharr.update.AppUpdate
+import app.stasharr.ui.components.UpdateDialog
 import app.stasharr.alerts.FavoriteAlertsState
 import app.stasharr.ui.screens.AlertsScreen
 import androidx.compose.material3.Badge
@@ -213,6 +215,10 @@ private fun MainScaffold() {
         }
     }
     val alertsTab = if (store) "mylist" else "profile"
+
+    // a newer app from GitHub: checked on opening, at most every 12 hours
+    androidx.compose.runtime.LaunchedEffect(Unit) { AppUpdate.check(context, auto = true) }
+    UpdateDialog()
 
     AutoPreview.Controller()
     CompositionLocalProvider(LocalNav provides navigator, LocalOpenDownloads provides { navigator.downloads() }) {

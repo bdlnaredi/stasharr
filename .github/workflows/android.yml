@@ -78,6 +78,24 @@ jobs:
           name: Stasharr-${{ env.VERSION_NAME }}
           path: ${{ runner.temp }}/Stasharr-${{ env.VERSION_NAME }}.apk
 
+      # what's new: the change that triggered this build. The app's update
+      # dialog shows the part above the --- line.
+      - name: Release notes
+        if: github.event_name != 'pull_request'
+        env:
+          MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          {
+            echo "What's new: $(printf '%s\n' "$MESSAGE" | head -n 1 | sed 's/ (#[0-9]*)$//')"
+            echo
+            echo "---"
+            echo
+            echo "Download **Stasharr-$VERSION_NAME.apk** below on your Android phone and open it to install."
+            echo "The first time, Android asks you to allow installing apps from your browser or files app."
+            echo "New versions install over the old one; your login is kept. The app can also update itself: You → Check for updates."
+          } > "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
+
       - name: Publish a release
         if: github.event_name != 'pull_request'
         uses: softprops/action-gh-release@v2
@@ -85,8 +103,5 @@ jobs:
           tag_name: android-v${{ env.VERSION_NAME }}
           name: Stasharr for Android ${{ env.VERSION_NAME }}
           make_latest: true
-          body: |
-            Download **Stasharr-${{ env.VERSION_NAME }}.apk** below on your Android phone and open it to install.
-            The first time, Android asks you to allow installing apps from your browser or files app.
-            New versions install over the old one; your login is kept.
+          body_path: ${{ runner.temp }}/notes.md
           files: ${{ runner.temp }}/Stasharr-${{ env.VERSION_NAME }}.apk

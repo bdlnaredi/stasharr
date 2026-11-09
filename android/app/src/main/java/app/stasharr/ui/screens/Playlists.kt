@@ -61,6 +61,7 @@ import app.stasharr.BuildConfig
 import app.stasharr.app
 import app.stasharr.alerts.FavoriteAlertsState
 import app.stasharr.ui.store.AlertsRow
+import app.stasharr.update.AppUpdate
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import app.stasharr.data.Me
@@ -376,6 +377,23 @@ fun ProfileScreen(me: Me?) {
         }
         InfoRow(Icons.Rounded.Dns, "Server", app.session.serverUrl.orEmpty())
         InfoRow(Icons.Rounded.VerifiedUser, "App version", BuildConfig.VERSION_NAME)
+        run {
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            val scope = androidx.compose.runtime.rememberCoroutineScope()
+            androidx.compose.material3.TextButton(
+                onClick = { scope.launch { AppUpdate.check(ctx, auto = false) } },
+                enabled = !AppUpdate.checking,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            ) {
+                Text(
+                    when {
+                        AppUpdate.checking -> "Checking for updates…"
+                        AppUpdate.available != null -> "Update to ${AppUpdate.available?.version}"
+                        else -> "Check for updates"
+                    }
+                )
+            }
+        }
         Spacer(Modifier.height(24.dp))
         GlassButton(
             "Sign out",
