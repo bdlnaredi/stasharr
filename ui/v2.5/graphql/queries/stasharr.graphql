@@ -369,3 +369,36 @@ query StasharrStats($days: Int) {
     generated_total
   }
 }
+
+fragment GoogleDriveBackupData on GoogleDriveBackup {
+  client_id
+  has_client_secret
+  connected
+  email
+  enabled
+  keep
+  folder_name
+  last_upload
+  last_error
+  sign_in {
+    user_code
+    verification_url
+    expires_in
+  }
+  sign_in_error
+}
+
+query GoogleDriveBackup {
+  googleDriveBackup {
+    ...GoogleDriveBackupData
+  }
+}
+
+query GoogleDriveFiles {
+  googleDriveFiles {
+    id
+    name
+    size
+    created_at
+  }
+}

@@ -187,3 +187,33 @@ mutation SiteRateScene($id: ID!, $rating100: Int) {
     rating100
   }
 }
+
+mutation ConfigureGoogleDrive($input: GoogleDriveBackupInput!) {
+  configureGoogleDrive(input: $input) {
+    ...GoogleDriveBackupData
+  }
+}
+
+mutation StartGoogleDriveSignIn {
+  startGoogleDriveSignIn {
+    user_code
+    verification_url
+    expires_in
+  }
+}
+
+mutation CancelGoogleDriveSignIn {
+  cancelGoogleDriveSignIn
+}
+
+mutation DisconnectGoogleDrive {
+  disconnectGoogleDrive
+}
+
+mutation UploadBackupToGoogleDrive($id: ID!) {
+  uploadBackupToGoogleDrive(id: $id)
+}
+
+mutation DownloadGoogleDriveBackup($id: ID!) {
+  downloadGoogleDriveBackup(id: $id)
+}

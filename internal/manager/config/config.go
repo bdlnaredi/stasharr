@@ -2447,3 +2447,34 @@ const ReelsEnabled = "stasharr.reels.enabled"
 
 // GetReelsEnabled: when off, reels are hidden everywhere and none are made.
 func (i *Config) GetReelsEnabled() bool { return i.getBoolDefault(ReelsEnabled, true) }
+
+// Stasharr: backups to Google Drive
+
+const (
+	GDriveEnabled      = "stasharr.gdrive.enabled"
+	GDriveClientID     = "stasharr.gdrive.client_id"
+	GDriveClientSecret = "stasharr.gdrive.client_secret"
+	GDriveRefreshToken = "stasharr.gdrive.refresh_token"
+	GDriveEmail        = "stasharr.gdrive.email"
+	GDriveFolderID     = "stasharr.gdrive.folder_id"
+	GDriveKeep         = "stasharr.gdrive.keep"
+	GDriveLastUpload   = "stasharr.gdrive.last_upload"
+	GDriveLastError    = "stasharr.gdrive.last_error"
+)
+
+func (i *Config) GetGDriveEnabled() bool        { return i.getBoolDefault(GDriveEnabled, false) }
+func (i *Config) GetGDriveClientID() string     { return i.getString(GDriveClientID) }
+func (i *Config) GetGDriveClientSecret() string { return i.getString(GDriveClientSecret) }
+func (i *Config) GetGDriveRefreshToken() string { return i.getString(GDriveRefreshToken) }
+func (i *Config) GetGDriveEmail() string        { return i.getString(GDriveEmail) }
+func (i *Config) GetGDriveFolderID() string     { return i.getString(GDriveFolderID) }
+func (i *Config) GetGDriveLastError() string    { return i.getString(GDriveLastError) }
+
+// GetGDriveKeep returns how many backups to keep on Google Drive.
+func (i *Config) GetGDriveKeep() int {
+	v := i.getInt(GDriveKeep)
+	if v < 1 || v > 365 {
+		return 7
+	}
+	return v
+}

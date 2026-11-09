@@ -228,6 +228,8 @@ interface IScenePlayerProps {
   onComplete: () => void;
   onNext: () => void;
   onPrevious: () => void;
+  /** Stasharr: show the cast button whatever the interface setting says */
+  chromecast?: boolean;
 }
 
 export const ScenePlayer: React.FC<IScenePlayerProps> = PatchComponent(
@@ -242,6 +244,7 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = PatchComponent(
     onComplete,
     onNext,
     onPrevious,
+    chromecast,
   }) => {
     const { configuration } = useConfigurationContext();
     const interfaceConfig = configuration?.interface;
@@ -279,7 +282,7 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = PatchComponent(
 
     useScript(
       "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1",
-      uiConfig?.enableChromecast
+      chromecast ?? uiConfig?.enableChromecast
     );
 
     const file = useMemo(
@@ -378,7 +381,7 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = PatchComponent(
         },
         plugins: {
           airPlay: {
-            addButtonToControlBar: uiConfig?.enableChromecast ?? false,
+            addButtonToControlBar: chromecast ?? uiConfig?.enableChromecast ?? false,
           },
           chromecast: {},
           vttThumbnails: {
@@ -449,6 +452,7 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = PatchComponent(
     }, [
       uiConfig?.showAbLoopControls,
       uiConfig?.enableChromecast,
+      chromecast,
       interfaceConfig?.autostartVideo,
     ]);
 

@@ -386,6 +386,7 @@ export const ScenePage: React.FC = () => {
           hideScrubberOverride
           autoplay
           permitLoop={false}
+          chromecast
           initialTimestamp={initial}
           sendSetTimestamp={(fn) => {
             seek.current = fn;

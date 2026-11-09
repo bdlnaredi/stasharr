@@ -6,6 +6,7 @@ import { Icon } from "src/components/Shared/Icon";
 import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 import { useToast } from "src/hooks/Toast";
 import { SettingRow, formatBytes, formatDate } from "./util";
+import { GoogleDriveSection } from "./GoogleDriveSection";
 
 function hourLabel(h: number) {
   const suffix = h < 12 ? "am" : "pm";
@@ -225,6 +226,8 @@ export const MaintenancePanel: React.FC = () => {
           </Table>
         )}
       </div>
+
+      <GoogleDriveSection latestBackupID={backups[0]?.id} />
 
       <div className="setting-section">
         <div className="stasharr-section-head">
