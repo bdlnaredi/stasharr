@@ -14,6 +14,7 @@ import (
 	"github.com/stashapp/stash/internal/dlna"
 	"github.com/stashapp/stash/internal/log"
 	"github.com/stashapp/stash/internal/manager/config"
+	"github.com/stashapp/stash/pkg/access"
 	"github.com/stashapp/stash/pkg/ffmpeg"
 	"github.com/stashapp/stash/pkg/fsutil"
 	"github.com/stashapp/stash/pkg/gallery"
@@ -34,6 +35,9 @@ import (
 // Called at startup
 func Initialize(cfg *config.Config, l *log.Logger) (*Manager, error) {
 	ctx := context.TODO()
+
+	// Stasharr: reels can be switched off for the whole server
+	access.ReelsEnabled = cfg.GetReelsEnabled
 
 	db := sqlite.NewDatabase()
 	repo := db.Repository()

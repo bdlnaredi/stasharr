@@ -5,6 +5,12 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Reels on or off
+- **Settings → Auto-import → Reels** has a switch for the whole server. Off
+  hides reels everywhere (the menu, scene pages, the site's Reels page and
+  home row, the Android app's Reels tab) and stops making new ones. Reels
+  already made are kept, so switching back on brings them back.
+
 ### Menus fit on one line
 - Admin menu bar: Audio, Playlists, Reels and Describe are under **More**
   on wide screens (phones and tablets still list them all), and on screens

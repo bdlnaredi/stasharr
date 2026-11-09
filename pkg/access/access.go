@@ -119,8 +119,15 @@ func (p *Principal) CanDownload() bool {
 	return p.Policy.CanDownload
 }
 
+// ReelsEnabled reports whether reels are switched on for the whole server.
+// The manager sets it from the configuration; when off, nobody sees reels.
+var ReelsEnabled = func() bool { return true }
+
 // CanViewReels reports whether p may view generated reels.
 func (p *Principal) CanViewReels() bool {
+	if !ReelsEnabled() {
+		return false
+	}
 	if p == nil || p.Role == RoleAdmin || p.TierID == nil {
 		return true
 	}

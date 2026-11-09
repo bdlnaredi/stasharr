@@ -27,7 +27,8 @@ export const AutoImportPanel: React.FC = () => {
   const { data, loading, refetch } = GQL.useLibraryWatcherConfigQuery({
     fetchPolicy: "network-only",
   });
-  const [configure] = GQL.useConfigureLibraryWatcherMutation();
+  // refreshing Me updates the menus when reels are switched on or off
+  const [configure] = GQL.useConfigureLibraryWatcherMutation({ refetchQueries: ["Me"] });
   const [generateReels] = GQL.useGenerateReelsMutation();
   const [checkNow] = GQL.useLibraryWatcherCheckNowMutation();
   const [reidentify] = GQL.useLibraryWatcherReidentifyMutation();
@@ -297,13 +298,24 @@ export const AutoImportPanel: React.FC = () => {
           scene gets a few, each from a different high point: the loudest and
           busiest parts, with the parts right after markers preferred.
         </div>
+        <Row
+          heading="Reels"
+          sub="Off hides reels everywhere (menu, scene pages, the site and the app) and stops making new ones. Reels already made are kept, so switching back on brings them back."
+        >
+          <Form.Switch
+            id="reels-enabled"
+            disabled={disabled}
+            checked={cfg.reels_enabled}
+            onChange={() => save({ reels_enabled: !cfg.reels_enabled })}
+          />
+        </Row>
         <Row heading="Reel length (seconds)" sub="Between 5 and 90.">
           <Form.Control
             className="text-input"
             type="number"
             min={5}
             max={90}
-            disabled={disabled}
+            disabled={disabled || !cfg.reels_enabled}
             defaultValue={cfg.reel_duration}
             onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
               const v = parseFloat(e.currentTarget.value);
@@ -322,7 +334,7 @@ export const AutoImportPanel: React.FC = () => {
             type="number"
             min={1}
             max={5}
-            disabled={disabled}
+            disabled={disabled || !cfg.reels_enabled}
             defaultValue={cfg.reel_count}
             onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
               const v = parseInt(e.currentTarget.value, 10);
@@ -336,10 +348,10 @@ export const AutoImportPanel: React.FC = () => {
           heading="Make reels for the whole library"
           sub="Runs as a task. Make reels does scenes that have none yet; Remake all replaces every existing reel with the new style. This can take a while."
         >
-          <Button variant="secondary" onClick={() => makeAllReels(false)}>
+          <Button variant="secondary" disabled={!cfg.reels_enabled} onClick={() => makeAllReels(false)}>
             Make reels
           </Button>{" "}
-          <Button variant="secondary" onClick={() => makeAllReels(true)}>
+          <Button variant="secondary" disabled={!cfg.reels_enabled} onClick={() => makeAllReels(true)}>
             Remake all
           </Button>
         </Row>

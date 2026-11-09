@@ -62,6 +62,8 @@ type LibraryWatcherConfig {
   audio_extensions: [String!]!
   "Minutes between checks for changes that file events miss (network shares). 0 turns polling off."
   poll_minutes: Int!
+  "Reels on or off for the whole server. Off hides them everywhere and stops making them; existing reels are kept."
+  reels_enabled: Boolean!
   "Default reel length in seconds"
   reel_duration: Float!
   "Reels made per scene, each from a different part"
@@ -88,6 +90,7 @@ input LibraryWatcherConfigInput {
   audio_enabled: Boolean
   audio_extensions: [String!]
   poll_minutes: Int
+  reels_enabled: Boolean
   reel_duration: Float
   reel_count: Int
 }

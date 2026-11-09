@@ -2440,3 +2440,10 @@ func (i *Config) GetAIReview() bool { return i.getBoolDefault(AIReview, true) }
 
 // GetAILabelsJSON is the saved label list, or empty for the defaults.
 func (i *Config) GetAILabelsJSON() string { return i.getString(AILabels) }
+
+// Stasharr: reels switched on or off for the whole server
+
+const ReelsEnabled = "stasharr.reels.enabled"
+
+// GetReelsEnabled: when off, reels are hidden everywhere and none are made.
+func (i *Config) GetReelsEnabled() bool { return i.getBoolDefault(ReelsEnabled, true) }
