@@ -135,6 +135,14 @@ func (s *Manager) ScheduledBackup() (string, error) {
 	if removed > 0 {
 		msg += fmt.Sprintf(". Removed %d old backup(s).", removed)
 	}
+	if gdriveReady() {
+		if err := UploadToGDrive(context.Background(), dest); err != nil {
+			logger.Warnf("[gdrive] %v", err)
+			msg += " Upload to Google Drive failed."
+		} else {
+			msg += " Uploaded to Google Drive."
+		}
+	}
 	Notify(EventBackup, "Backup finished", msg)
 	return dest, nil
 }
@@ -513,4 +521,9 @@ func (s *Manager) scenesMatchedTo(ctx context.Context, endpoint string) ([]strin
 		return nil
 	})
 	return ids, err
+}
+
+// BackupFilePath returns the file of a backup from ListBackups.
+func (s *Manager) BackupFilePath(id string) (string, error) {
+	return s.backupPath(id)
 }

@@ -7,6 +7,23 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Backups to Google Drive
+- **Settings → Maintenance → Google Drive:** connect your own Google Drive
+  and every daily backup is uploaded after it is made, into a folder called
+  "Stasharr backups". Choose how many to keep there (older ones are
+  deleted), upload the newest backup by hand, and copy a backup from Drive
+  back to the server to restore it.
+- Uses your own Google Cloud OAuth client ("TVs and Limited Input
+  devices"); the settings page walks through making one. You sign in with
+  a code on google.com/device, and Stasharr can only see the files it put
+  on your Drive.
+
+### Cast from the site
+- The site's video player has a **Chromecast** button (in Chrome and Edge).
+  Casting needs the site to be opened over HTTPS, for example through a
+  reverse proxy; on plain http the browser hides the button. The admin
+  interface keeps its own switch under Settings → Interface.
+
 ### Android app: categories and channels
 - **Tag clips play in the app:** category tiles on the home screen, the
   Categories page and Browse → Tags now play their clips side by side

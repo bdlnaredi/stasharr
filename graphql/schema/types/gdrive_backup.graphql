@@ -1,0 +1,61 @@
+# Stasharr: backups to Google Drive. Admin only.
+
+type GoogleDriveBackup {
+  "The client ID of the admin's Google OAuth client"
+  client_id: String!
+  "A client secret is saved (it is never sent back)"
+  has_client_secret: Boolean!
+  "Signed in to a Google account"
+  connected: Boolean!
+  email: String
+  "Upload every scheduled backup"
+  enabled: Boolean!
+  "How many backups to keep on Google Drive"
+  keep: Int!
+  folder_name: String!
+  last_upload: Time
+  last_error: String
+  "Set while waiting for the code to be entered on Google's page"
+  sign_in: GoogleDriveSignIn
+  "Why the last sign in did not finish"
+  sign_in_error: String
+}
+
+type GoogleDriveSignIn {
+  user_code: String!
+  verification_url: String!
+  expires_in: Int!
+}
+
+type GoogleDriveFile {
+  id: ID!
+  name: String!
+  size: Int!
+  created_at: Time!
+}
+
+input GoogleDriveBackupInput {
+  client_id: String
+  "Leave out to keep the saved secret"
+  client_secret: String
+  enabled: Boolean
+  keep: Int
+}
+
+extend type Query {
+  googleDriveBackup: GoogleDriveBackup!
+  "Backups on Google Drive, newest first"
+  googleDriveFiles: [GoogleDriveFile!]!
+}
+
+extend type Mutation {
+  configureGoogleDrive(input: GoogleDriveBackupInput!): GoogleDriveBackup!
+  "Asks Google for a code to enter on google.com/device"
+  startGoogleDriveSignIn: GoogleDriveSignIn!
+  cancelGoogleDriveSignIn: Boolean!
+  disconnectGoogleDrive: Boolean!
+  "Uploads a backup from the list of backups now. Returns the job id."
+  uploadBackupToGoogleDrive(id: ID!): ID!
+  "Copies a backup from Google Drive to the backup folder. Returns the job id."
+  downloadGoogleDriveBackup(id: ID!): ID!
+}

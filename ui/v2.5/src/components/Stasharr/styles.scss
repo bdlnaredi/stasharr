@@ -1110,3 +1110,33 @@ video.tag-card-image {
     }
   }
 }
+
+// Google Drive sign in
+.stasharr-gdrive-code {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  margin-top: 0.75rem;
+  padding: 1rem;
+}
+
+.stasharr-gdrive-usercode {
+  font-family: monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  margin: 0.5rem 0;
+}
+
+.stasharr-help {
+  font-size: 0.9rem;
+
+  summary {
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+  }
+
+  li {
+    margin-bottom: 0.4rem;
+  }
+}
