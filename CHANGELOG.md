@@ -7,6 +7,15 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Android app: categories and channels
+- **Tag clips play in the app:** category tiles on the home screen, the
+  Categories page and Browse → Tags now play their clips side by side
+  (up to four at once) while they are on screen, instead of one at a time.
+  Previews off under You shows the still picture only.
+- **View all** on the Categories and Channels home rows opens a page with
+  every category or channel, a search box and sort options: most scenes,
+  name, recently added, most performers or latest scene, rating, and
+  random.
 ### Android app tells you about updates
 - The app checks GitHub for a newer version when it opens (at most every 12
   hours) and shows what's new; **Download** opens the new version in your
