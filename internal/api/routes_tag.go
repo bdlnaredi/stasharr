@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/stashapp/stash/internal/manager"
+	"github.com/stashapp/stash/internal/manager/config"
 	"github.com/stashapp/stash/internal/static"
 	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/models"
@@ -71,6 +72,9 @@ func (rs tagRoutes) Image(w http.ResponseWriter, r *http.Request) {
 // tagClipFile returns the tag's clip file when the viewer may see the scene
 // it was cut from.
 func (rs tagRoutes) tagClipFile(r *http.Request, still bool) string {
+	if !config.GetInstance().GetTagClipsEnabled() {
+		return ""
+	}
 	tag := r.Context().Value(tagKey).(*models.Tag)
 	var path string
 	_ = rs.withReadTxn(r, func(ctx context.Context) error {

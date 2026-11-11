@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/stashapp/stash/internal/manager"
+	"github.com/stashapp/stash/internal/manager/config"
 	"github.com/stashapp/stash/pkg/access"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/sliceutil/stringslice"
@@ -13,6 +14,9 @@ import (
 )
 
 func (r *tagResolver) Clip(ctx context.Context, obj *models.Tag) (*TagClip, error) {
+	if !config.GetInstance().GetTagClipsEnabled() {
+		return nil, nil
+	}
 	var ret *TagClip
 	err := r.withReadTxn(ctx, func(ctx context.Context) error {
 		c, err := sqlite.FindTagClip(ctx, obj.ID)

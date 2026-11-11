@@ -6,12 +6,17 @@ import (
 	"strconv"
 
 	"github.com/stashapp/stash/internal/manager"
+	"github.com/stashapp/stash/internal/manager/config"
 	"github.com/stashapp/stash/pkg/access"
 	"github.com/stashapp/stash/pkg/sliceutil/stringslice"
 	"github.com/stashapp/stash/pkg/sqlite"
 )
 
 func (r *queryResolver) SearchMoments(ctx context.Context, query string, limit *int) ([]*SearchMoment, error) {
+	if !config.GetInstance().GetSearchEnabled() {
+		// switched off: no matching moments anywhere
+		return []*SearchMoment{}, nil
+	}
 	n := 24
 	if limit != nil && *limit > 0 && *limit <= 100 {
 		n = *limit

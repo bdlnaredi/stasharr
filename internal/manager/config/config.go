@@ -2478,3 +2478,26 @@ func (i *Config) GetGDriveKeep() int {
 	}
 	return v
 }
+
+// Stasharr: switches for the generated features
+
+const (
+	// AIEnabled switches AI markers on or off; off stops looking at scenes.
+	AIEnabled = "stasharr.ai.enabled"
+	// AILabelsVersion is the version of the label list last saved.
+	AILabelsVersion = "stasharr.ai.labels_version"
+	// SearchEnabled switches search by description on or off.
+	SearchEnabled = "stasharr.search.enabled"
+	// TagClipsEnabled switches tag clips on or off.
+	TagClipsEnabled = "stasharr.tagclips.enabled"
+)
+
+func (i *Config) GetAIEnabled() bool       { return i.getBoolDefault(AIEnabled, true) }
+func (i *Config) GetAILabelsVersion() int  { return i.getInt(AILabelsVersion) }
+func (i *Config) GetSearchEnabled() bool   { return i.getBoolDefault(SearchEnabled, true) }
+func (i *Config) GetTagClipsEnabled() bool { return i.getBoolDefault(TagClipsEnabled, true) }
+
+// SceneBadgesEnabled shows Trans, Lesbian and Bisexual ribbons on scenes.
+const SceneBadgesEnabled = "stasharr.badges.enabled"
+
+func (i *Config) GetSceneBadgesEnabled() bool { return i.getBoolDefault(SceneBadgesEnabled, true) }

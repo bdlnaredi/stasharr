@@ -7,6 +7,42 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### More accurate AI markers
+- **It learns from your reviews.** Every suggestion you keep or throw away
+  is remembered for its label, and frames that look like ones you threw
+  away score lower next time (higher for ones you kept). Throwing away
+  wrong cumshots makes them rarer. The label list shows how many it learned
+  from, and **Forget what it learned** starts over. Suggestions made before
+  this update also teach it when the scene is in the search index.
+- **Several descriptions per label**, split by `|`, are averaged, which
+  describes a label far better than one sentence.
+- **When** limits a label to the start or the end of a scene, and **Sure**
+  asks for more confidence for one label.
+- **Cumshot** now uses four descriptions, is only looked for in the last
+  30% of a scene and needs 50% confidence. New helper labels (face and body
+  close-ups, which were mistaken for cumshots most) soak up those frames.
+  Saved label lists get the new wording unless the wording was changed.
+- **Look at every scene again** re-checks the whole library with the new
+  labels; suggestions waiting for review are replaced, markers already
+  kept stay.
+- Needs the updated tagger image (`ghcr.io/bdlnaredi/stasharr-tagger`);
+  an older one still works without learning.
+
+### Switches for generated features
+- **Settings → AI markers → Generated features:** turn Reels, AI markers,
+  Tag clips, Search by description and the scene ribbons on or off for the
+  whole server. Off stops making new ones and hides them on the site, in
+  the admin interface and in the Android app; what was made is kept.
+
+### Trans, lesbian and bisexual ribbons
+- Scene pictures get a ribbon across the corner in the flag's colours:
+  **Trans** when a performer is trans or the scene has a tag like Trans,
+  Transsexual, TS or Shemale; **Lesbian** for a Lesbian tag, or two or more
+  women and no men (unless a tag says a man is there, such as Blowjob or
+  FFM); **Bi** for a Bisexual tag. On the site, in the admin interface and
+  in the Android app, with a matching label next to the title on scene
+  pages.
+
 ### Android app: TV, auto-download, widgets and admin tools
 - **Android TV:** the same app installs on Android TV and shows in the TV's
   app row. The sections are down the left side, whatever the remote is on

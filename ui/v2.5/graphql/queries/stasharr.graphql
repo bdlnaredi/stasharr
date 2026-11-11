@@ -190,6 +190,7 @@ query AITaggerStatus {
     device
     gpu
     model
+    learns
     done
     total
   }
@@ -227,8 +228,12 @@ mutation ConfigureAIMarkers($input: AIMarkerConfigInput!) {
   }
 }
 
-mutation RunAIMarkers($scene_ids: [ID!]) {
-  runAIMarkers(scene_ids: $scene_ids)
+mutation RunAIMarkers($scene_ids: [ID!], $redo: Boolean) {
+  runAIMarkers(scene_ids: $scene_ids, redo: $redo)
+}
+
+mutation AIForgetExamples($label: String) {
+  aiForgetExamples(label: $label)
 }
 
 mutation AIMarkerApprove($ids: [ID!]!) {

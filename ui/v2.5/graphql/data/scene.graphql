@@ -1,6 +1,7 @@
 fragment SceneData on Scene {
   id
   title
+  stasharr_badges
   code
   details
   director

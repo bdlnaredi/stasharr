@@ -672,7 +672,7 @@ body.stasharr-no-download {
   align-items: center;
   display: grid;
   gap: 8px;
-  grid-template-columns: 34px minmax(110px, 1fr) minmax(200px, 3fr) 52px 36px;
+  grid-template-columns: 34px minmax(110px, 1fr) minmax(200px, 3fr) 130px 90px 52px 36px;
 
   &.head {
     color: #8a9ba8;
@@ -773,14 +773,30 @@ body.stasharr-no-download {
 
 @media (max-width: 640px) {
   .stasharr-ai-label {
-    grid-template-columns: 30px 1fr 44px 34px;
+    grid-template-columns: 30px 1fr 1fr 44px 34px;
+
+    > :nth-child(2) {
+      grid-column: 2 / span 2;
+    }
 
     > :nth-child(3) {
       grid-column: 1 / -1;
       order: 5;
     }
 
-    &.head > :nth-child(3) {
+    > :nth-child(4) {
+      grid-column: 1 / span 3;
+      order: 6;
+    }
+
+    > :nth-child(5) {
+      grid-column: 4 / -1;
+      order: 7;
+    }
+
+    &.head > :nth-child(3),
+    &.head > :nth-child(4),
+    &.head > :nth-child(5) {
       display: none;
     }
   }
@@ -1139,4 +1155,70 @@ video.tag-card-image {
   li {
     margin-bottom: 0.4rem;
   }
+}
+
+// Trans, Lesbian and Bisexual ribbons on scene pictures
+.stasharr-ribbon {
+  height: 92px;
+  overflow: hidden;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 92px;
+  z-index: 3;
+
+  span {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 4px 0;
+    position: absolute;
+    right: -34px;
+    text-align: center;
+    text-transform: uppercase;
+    top: 18px;
+    transform: rotate(45deg);
+    white-space: nowrap;
+    width: 140px;
+  }
+}
+
+.stasharr-ribbon-trans span,
+.stasharr-badge-pill.stasharr-ribbon-trans {
+  background: linear-gradient(180deg, #5bcefa 0 20%, #f5a9b8 20% 40%, #fff 40% 60%, #f5a9b8 60% 80%, #5bcefa 80%);
+  color: #1d2a3a;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.9);
+}
+
+.stasharr-ribbon-lesbian span,
+.stasharr-badge-pill.stasharr-ribbon-lesbian {
+  background: linear-gradient(180deg, #d52d00 0 20%, #ff9a56 20% 40%, #fff 40% 60%, #d362a4 60% 80%, #a30262 80%);
+  color: #2a1020;
+  text-shadow: 0 0 3px rgba(255, 255, 255, 0.9);
+}
+
+.stasharr-ribbon-bisexual span,
+.stasharr-badge-pill.stasharr-ribbon-bisexual {
+  background: linear-gradient(180deg, #d60270 0 40%, #9b4f96 40% 60%, #0038a8 60%);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.stasharr-badge-pills {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.stasharr-badge-pill {
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  text-transform: uppercase;
 }

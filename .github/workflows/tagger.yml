@@ -68,6 +68,13 @@ jobs:
           blue = sum(a * b for a, b in zip(v, txt["vectors"][1]))
           print("dim", img["dim"], "red", red, "blue", blue)
           assert img["dim"] == len(v) > 100 and red > blue
+          # several descriptions for one label, and vectors with the scores
+          both = post("/classify", {"labels": ["a plain red square | a red picture", "a plain blue square | a blue picture"], "images": [base64.b64encode(png).decode()], "vectors": True})
+          print("ensemble", both["scores"])
+          assert both["scores"][0][0] > both["scores"][0][1], "expected the red label to win"
+          assert len(both["vectors"]) == 1 and len(both["vectors"][0]) == img["dim"]
+          health = json.load(urllib.request.urlopen("http://127.0.0.1:2705/health", timeout=30))
+          assert "vectors" in health["features"]
           PY
       - if: failure()
         run: docker logs tagger

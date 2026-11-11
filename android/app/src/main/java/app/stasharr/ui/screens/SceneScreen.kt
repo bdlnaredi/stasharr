@@ -79,6 +79,7 @@ import app.stasharr.data.Playlist
 import app.stasharr.data.Scene
 import app.stasharr.player.ScenePreview
 import app.stasharr.ui.LocalNav
+import app.stasharr.ui.components.SceneRibbon
 import app.stasharr.ui.components.Chip
 import app.stasharr.ui.components.GlassButton
 import app.stasharr.ui.components.GradientButton
@@ -190,6 +191,7 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         delayMs = 200,
                     )
+                    SceneRibbon(scene.badges, Modifier.align(Alignment.TopStart).size(84.dp))
                     Box(
                         Modifier
                             .align(Alignment.Center)

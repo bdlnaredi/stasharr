@@ -57,6 +57,9 @@ type TagClipJob struct {
 
 func (j *TagClipJob) Execute(ctx context.Context, progress *job.Progress) error {
 	mgr := GetInstance()
+	if !mgr.Config.GetTagClipsEnabled() {
+		return errors.New("tag clips are switched off (Settings → AI markers)")
+	}
 	r := mgr.Repository
 
 	ids := j.TagIDs

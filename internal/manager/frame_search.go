@@ -98,6 +98,9 @@ type SearchIndexJob struct {
 
 func (j *SearchIndexJob) Execute(ctx context.Context, progress *job.Progress) error {
 	mgr := GetInstance()
+	if !mgr.Config.GetSearchEnabled() {
+		return errors.New("search by description is switched off (Settings → AI markers)")
+	}
 	url := mgr.Config.GetAIURL()
 	if url == "" {
 		return errors.New("set the Stasharr Tagger address first (Settings → AI markers)")

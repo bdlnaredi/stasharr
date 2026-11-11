@@ -76,6 +76,8 @@ data class Scene(
     @SerialName("o_counter") val oCounter: Int? = null,
     @SerialName("play_count") val playCount: Int? = null,
     @SerialName("resume_time") val resumeTime: Double? = null,
+    /** trans, lesbian or bisexual: shown as a ribbon on the picture */
+    @SerialName("stasharr_badges") val badges: List<String> = emptyList(),
     val files: List<MediaFile> = emptyList(),
     val paths: Paths = Paths(),
     val studio: StudioRef? = null,

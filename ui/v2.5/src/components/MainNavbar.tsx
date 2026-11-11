@@ -252,6 +252,9 @@ export const MainNavbar: React.FC = () => {
   const { canViewReels, isEditor, isAdmin, me } = useCurrentUser();
   const siteConfig = GQL.useSiteConfigQuery({ fetchPolicy: "cache-first", skip: !isAdmin });
   const siteOn = !!siteConfig.data?.siteConfig.enabled;
+  // Describe is hidden when search by description is switched off
+  const aiConfig = GQL.useAiMarkerConfigQuery({ fetchPolicy: "cache-first", skip: !isAdmin });
+  const searchOn = aiConfig.data?.aiMarkerConfig.search_enabled !== false;
 
   const [expanded, setExpanded] = useState(false);
 
@@ -263,9 +266,9 @@ export const MainNavbar: React.FC = () => {
       getAudioMenuItem(),
       playlistsMenuItem,
       ...(canViewReels ? [reelsMenuItem] : []),
-      describeMenuItem,
+      ...(searchOn ? [describeMenuItem] : []),
     ],
-    [canViewReels]
+    [canViewReels, searchOn]
   );
 
   const menuItems = useMemo(() => {
