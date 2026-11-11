@@ -113,8 +113,7 @@ extend type Query {
 extend type Mutation {
   "Admin only"
   configureAIMarkers(input: AIMarkerConfigInput!): AIMarkerConfig!
-  "Admin only. Looks at these scenes again, or every scene not looked at yet. Returns the job id."
-  "redo looks at every scene again; waiting suggestions are replaced, kept markers stay"
+  "Admin only. Looks at these scenes again, or every scene not looked at yet (redo: every scene; waiting suggestions are replaced, kept markers stay). Returns the job id."
   runAIMarkers(scene_ids: [ID!], redo: Boolean): ID!
   "Forgets what AI markers learned from reviews, for one label or all"
   aiForgetExamples(label: String): Boolean!
