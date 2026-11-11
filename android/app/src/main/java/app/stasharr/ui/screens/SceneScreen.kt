@@ -79,6 +79,7 @@ import app.stasharr.data.Playlist
 import app.stasharr.data.Scene
 import app.stasharr.player.ScenePreview
 import app.stasharr.ui.LocalNav
+import app.stasharr.ui.components.SceneBadgePills
 import app.stasharr.ui.components.SceneRibbon
 import app.stasharr.ui.components.Chip
 import app.stasharr.ui.components.GlassButton
@@ -214,6 +215,7 @@ private fun SceneDetails(scene: Scene, onChanged: () -> Unit) {
                     fontWeight = FontWeight.Black,
                     lineHeight = 32.sp,
                 )
+                SceneBadgePills(scene.badges, Modifier.padding(top = 6.dp))
                 Spacer(Modifier.height(6.dp))
                 Text(scene.metaLine(), color = Brand.TextMuted, style = MaterialTheme.typography.bodyMedium)
                 if (scene.studio != null) {

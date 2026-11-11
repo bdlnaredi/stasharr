@@ -1,4 +1,4 @@
-import { SceneRibbon } from "src/components/Shared/SceneRibbon";
+import { SceneBadgePills, SceneRibbon } from "src/components/Shared/SceneRibbon";
 import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
@@ -68,9 +68,17 @@ export function resolutionBadge(width: number, height: number): string | null {
   return null;
 }
 
+const WEEK = 7 * 24 * 3600 * 1000;
+
+/** New: released in the last week. Without a release date, added in the
+ * last week. Old videos added today are not new. */
 export function isNew(s: SiteScene): boolean {
+  const now = Date.now();
   const added = new Date(s.created_at).getTime();
-  return Date.now() - added < 7 * 24 * 3600 * 1000;
+  if (Number.isNaN(added) || now - added >= WEEK) return false;
+  if (!s.date) return true;
+  const released = new Date(`${s.date}T00:00:00`).getTime();
+  return !Number.isNaN(released) && now - released < WEEK + 24 * 3600 * 1000;
 }
 
 export function ageFrom(birthdate?: string | null): number | null {
@@ -161,6 +169,7 @@ export const SceneTile: React.FC<{
         <Link to={`/site/scene/${scene.id}`} className="site-scene-title">
           {sceneTitle(scene)}
         </Link>
+        <SceneBadgePills badges={scene.stasharr_badges} />
         {shown.length > 0 && (
           <div className="site-scene-models">
             {shown.map((p, i) => (

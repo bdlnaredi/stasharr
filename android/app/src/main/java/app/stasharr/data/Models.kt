@@ -89,11 +89,19 @@ data class Scene(
     val captions: List<Caption>? = null,
     @SerialName("created_at") val createdAt: String? = null,
 ) {
-    /** Added in the last week. */
+    /**
+     * New: released in the last week. Without a release date, added in the
+     * last week. Old videos added today are not new.
+     */
     val isNew: Boolean
-        get() = createdAt?.let {
-            runCatching { java.time.OffsetDateTime.parse(it).toInstant() }.getOrNull()
-        }?.let { java.time.Duration.between(it, java.time.Instant.now()).toDays() < 7 } ?: false
+        get() {
+            val now = java.time.Instant.now()
+            val added = createdAt?.let { runCatching { java.time.OffsetDateTime.parse(it).toInstant() }.getOrNull() } ?: return false
+            if (java.time.Duration.between(added, now).toDays() >= 7) return false
+            val released = date?.takeIf { it.isNotBlank() }?.let { runCatching { java.time.LocalDate.parse(it.take(10)) }.getOrNull() }
+                ?: return true
+            return java.time.temporal.ChronoUnit.DAYS.between(released, java.time.LocalDate.now()) <= 7
+        }
 
     /** The women in it, or everyone when there are none listed as women. */
     val stars: List<PerformerRef>

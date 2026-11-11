@@ -7,6 +7,13 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### "New" means new
+- The **New** badge on the site and in the app is only on scenes released
+  in the last week (or, without a release date, added in the last week).
+  Older videos that were just imported no longer show as new.
+- The red Trans, Lesbian and Bi labels also show under scene titles on
+  cards, on the site and in the app.
+
 ### More accurate AI markers
 - **It learns from your reviews.** Every suggestion you keep or throw away
   is remembered for its label, and frames that look like ones you threw

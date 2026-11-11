@@ -337,6 +337,7 @@ fun SceneCard(scene: Scene, onClick: () -> Unit, modifier: Modifier = Modifier, 
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(horizontal = 2.dp),
         )
+        SceneBadgePills(scene.badges, Modifier.padding(horizontal = 2.dp, vertical = 2.dp))
         val sub = listOfNotNull(scene.studio?.name, scene.year).joinToString(" • ")
         if (sub.isNotBlank()) {
             Text(

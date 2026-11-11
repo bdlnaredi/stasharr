@@ -74,6 +74,7 @@ import app.stasharr.player.rememberPreviewKey
 import app.stasharr.player.ScenePreview
 import app.stasharr.ui.LocalNav
 import app.stasharr.ui.SiteMode
+import app.stasharr.ui.components.SceneBadgePills
 import app.stasharr.ui.components.Badge
 import app.stasharr.ui.components.GradientText
 import app.stasharr.ui.components.SceneThumb
@@ -205,6 +206,7 @@ fun StoreSceneCard(scene: Scene, modifier: Modifier = Modifier, width: Dp? = 260
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(horizontal = 2.dp),
         )
+        SceneBadgePills(scene.badges, Modifier.padding(horizontal = 2.dp, vertical = 2.dp))
         val stars = scene.stars.take(3).joinToString(", ") { it.name }
         if (stars.isNotBlank()) {
             Text(stars, style = MaterialTheme.typography.bodySmall, color = Brand.Pink, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 2.dp))
