@@ -1,6 +1,10 @@
 package app.stasharr.ui.components
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -61,6 +65,29 @@ fun SceneRibbon(badges: List<String>, modifier: Modifier = Modifier) {
                 drawRect(ribbonGold, topLeft = Offset(c.x - length / 2, top + band - edge), size = Size(length, edge))
                 drawText(text, topLeft = Offset(c.x - text.size.width / 2f, c.y - text.size.height / 2f))
             }
+        }
+    }
+}
+
+/** The same as small red labels, under a scene's title. */
+@Composable
+fun SceneBadgePills(badges: List<String>, modifier: Modifier = Modifier) {
+    val list = badges.filter { it in ribbonLabels }
+    if (list.isEmpty()) return
+    androidx.compose.foundation.layout.Row(modifier, horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp)) {
+        list.forEach { b ->
+            androidx.compose.material3.Text(
+                ribbonLabels.getValue(b),
+                color = Color.White,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                    .background(Brush.verticalGradient(ribbonRed))
+                    .border(1.dp, ribbonGold, androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                    .padding(horizontal = 7.dp, vertical = 1.dp),
+            )
         }
     }
 }
