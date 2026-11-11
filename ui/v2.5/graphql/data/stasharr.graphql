@@ -89,6 +89,7 @@ fragment LibraryWatcherConfigData on LibraryWatcherConfig {
   reel_duration
   reel_count
   reels_enabled
+  reels_ai
   identify_sources
   running
   watched_paths

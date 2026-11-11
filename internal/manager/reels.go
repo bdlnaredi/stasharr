@@ -291,6 +291,9 @@ func planReels(ctx context.Context, vf *models.VideoFile, markers []*models.Scen
 	var scores []float64
 	source := ""
 
+	// the tagger, when it is running, judges what is worth showing
+	aiScores, aiAct, _ := aiReelScores(ctx, vf)
+
 	if vf.Interactive {
 		if s, err := funscriptScores(video.GetFunscriptPath(vf.Path), total); err == nil && len(s) > 0 {
 			scores = zscores(s, true)
@@ -307,6 +310,20 @@ func planReels(ctx context.Context, vf *models.VideoFile, markers []*models.Scen
 		}
 	}
 
+	if aiScores != nil {
+		// the tagger counts most; loudness and motion (or the heatmap) help
+		// to choose between moments it likes equally
+		if scores == nil {
+			scores = make([]float64, len(aiScores))
+		}
+		for i := range scores {
+			if i < len(aiScores) {
+				scores[i] = 2*aiScores[i] + 0.5*scores[i]
+			}
+		}
+		source = ReelSourceAI
+	}
+
 	// markers usually mark the start of an action: favour the clip that
 	// follows each marker
 	if times := distinctMarkerTimes(markers, total, 10); len(times) > 0 {
@@ -320,9 +337,16 @@ func planReels(ctx context.Context, vf *models.VideoFile, markers []*models.Scen
 				scores[i] += 1.5
 			}
 		}
-		source = ReelSourceMarkers
+		if source != ReelSourceAI {
+			source = ReelSourceMarkers
+		}
 	}
 
+	if aiScores != nil {
+		if clips := pickVariedPeaks(scores, aiAct, count, duration, total); len(clips) > 0 {
+			return &reelPlan{source: source, clips: clips}
+		}
+	}
 	if scores != nil {
 		if clips := pickPeaks(scores, count, duration, total); len(clips) > 0 {
 			return &reelPlan{source: source, clips: clips}

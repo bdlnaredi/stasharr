@@ -13,7 +13,7 @@ type Reel {
   duration: Float!
   width: Int!
   height: Int!
-  "How the moments were chosen: MARKERS, HEATMAP or ANALYSIS"
+  "How the moments were chosen: AI, MARKERS, HEATMAP or ANALYSIS"
   source: String!
   segments: [ReelSegment!]!
   "URL of the reel video"
@@ -68,6 +68,8 @@ type LibraryWatcherConfig {
   reel_duration: Float!
   "Reels made per scene, each from a different part"
   reel_count: Int!
+  "The Stasharr Tagger picks the reel moments, and AI markers remake a scene's reels when they look at it"
+  reels_ai: Boolean!
   "The identify sources used, in order"
   identify_sources: [String!]!
   "Whether the watcher is running"
@@ -93,6 +95,7 @@ input LibraryWatcherConfigInput {
   reels_enabled: Boolean
   reel_duration: Float
   reel_count: Int
+  reels_ai: Boolean
 }
 
 extend type Scene {

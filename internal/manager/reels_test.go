@@ -103,3 +103,39 @@ func TestCollapsePaths(t *testing.T) {
 		t.Errorf("got %v", got)
 	}
 }
+
+func TestPickVariedPeaks(t *testing.T) {
+	// 300 seconds: act 0 strong at 50-80 and 200-230, act 1 a bit weaker at 120-150
+	n := 300
+	scores := make([]float64, n)
+	act := make([]int, n)
+	for i := range act {
+		act[i] = -1
+	}
+	for i := 50; i < 80; i++ {
+		scores[i], act[i] = 3, 0
+	}
+	for i := 200; i < 230; i++ {
+		scores[i], act[i] = 3, 0
+	}
+	for i := 120; i < 150; i++ {
+		scores[i], act[i] = 2.5, 1
+	}
+	got := pickVariedPeaks(scores, act, 2, 15, float64(n))
+	if len(got) != 2 {
+		t.Fatalf("got %d reels, want 2", len(got))
+	}
+	// the second reel should show the other act, not the second act-0 peak
+	acts := map[int]bool{}
+	for _, g := range got {
+		acts[act[int(g.Start)+5]] = true
+	}
+	if !acts[0] || !acts[1] {
+		t.Errorf("want one reel of each act, got %+v", got)
+	}
+	for i := 1; i < len(got); i++ {
+		if got[i].Start < got[i-1].End {
+			t.Errorf("reels overlap: %+v", got)
+		}
+	}
+}

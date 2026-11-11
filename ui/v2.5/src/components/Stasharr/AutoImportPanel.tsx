@@ -295,8 +295,11 @@ export const AutoImportPanel: React.FC = () => {
         <h1>Reels</h1>
         <div className="sub-heading">
           Short vertical clips, each one continuous part of a scene. Every
-          scene gets a few, each from a different high point: the loudest and
-          busiest parts, with the parts right after markers preferred.
+          scene gets a few, each from a different high point. With the
+          Stasharr Tagger running, it picks the moments: the most action and
+          the best picture, a different act in each reel. Without it, the
+          loudest and busiest parts are used, with the parts right after
+          markers preferred.
         </div>
         <Row
           heading="Reels"
@@ -307,6 +310,17 @@ export const AutoImportPanel: React.FC = () => {
             disabled={disabled}
             checked={cfg.reels_enabled}
             onChange={() => save({ reels_enabled: !cfg.reels_enabled })}
+          />
+        </Row>
+        <Row
+          heading="Let the AI tagger pick the moments"
+          sub="Uses the Stasharr Tagger (Settings → AI markers) when it is running. When AI markers look at a scene, its reels are remade with the moments the tagger picked."
+        >
+          <Form.Switch
+            id="reels-ai"
+            disabled={disabled || !cfg.reels_enabled}
+            checked={cfg.reels_ai}
+            onChange={() => save({ reels_ai: !cfg.reels_ai })}
           />
         </Row>
         <Row heading="Reel length (seconds)" sub="Between 5 and 90.">

@@ -445,8 +445,20 @@ func (j *AIMarkerJob) Execute(ctx context.Context, progress *job.Progress) error
 			case err == nil:
 				logger.Infof("[ai markers] scene %d: %d marker(s) found", id, n)
 			case errors.Is(err, context.Canceled):
+				return
 			default:
 				logger.Errorf("[ai markers] scene %d: %v", id, err)
+				return
+			}
+			// while the tagger is looking at this scene anyway, let it pick
+			// the scene's reels too
+			if cfg.GetReelsEnabled() && cfg.GetReelsAI() {
+				progress.ExecuteTask(fmt.Sprintf("Reels for scene %d", id), func() {
+					if _, err := GenerateReels(ctx, id, cfg.GetReelDuration(), cfg.GetReelCount(), true); err != nil &&
+						!errors.Is(err, errReelAudio) && !errors.Is(err, context.Canceled) {
+						logger.Warnf("[reels] scene %d: %v", id, err)
+					}
+				})
 			}
 		})
 		progress.Increment()

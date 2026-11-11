@@ -29,6 +29,8 @@ function sceneTitle(reel: Reel) {
 
 function sourceLabel(source: string) {
   switch (source) {
+    case "AI":
+      return "picked by AI";
     case "MARKERS":
       return "from markers";
     case "HEATMAP":
