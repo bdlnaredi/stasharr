@@ -173,6 +173,7 @@ func watcherConfig() *LibraryWatcherConfig {
 		ReelDuration:    cfg.GetReelDuration(),
 		ReelCount:       cfg.GetReelCount(),
 		ReelsEnabled:    cfg.GetReelsEnabled(),
+		ReelsAi:         cfg.GetReelsAI(),
 		IdentifySources: manager.IdentifySourceNames(cfg),
 		WatchedPaths:    []string{},
 	}
@@ -220,6 +221,9 @@ func (r *mutationResolver) ConfigureLibraryWatcher(ctx context.Context, input Li
 	}
 	if input.ReelsEnabled != nil {
 		cfg.SetBool(config.ReelsEnabled, *input.ReelsEnabled)
+	}
+	if input.ReelsAi != nil {
+		cfg.SetBool(config.ReelsAI, *input.ReelsAi)
 	}
 	if input.GenerateReels != nil {
 		cfg.SetBool(config.WatcherGenerateReels, *input.GenerateReels)

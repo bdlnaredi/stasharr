@@ -7,6 +7,20 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Reels picked by AI
+- With the Stasharr Tagger running, it picks each reel's moments: it looks
+  at a frame every few seconds and scores how much is happening (your AI
+  marker labels) and how good the picture is. Talking, title cards, dark or
+  blurry shots and empty rooms score low, and each reel of a scene shows a
+  different act where the scene has them. Loudness, motion and markers
+  still help to choose between equally good moments.
+- When AI markers look at a scene, its reels are remade with these moments,
+  so reels improve as the tagger works through the library. **Remake all**
+  under Auto-import → Reels redoes every reel now.
+- Switch: **Let the AI tagger pick the moments** (Auto-import → Reels, and
+  under Settings → AI markers → Generated features). Reels picked this way
+  say "picked by AI".
+
 ### "New" means new
 - The **New** badge on the site and in the app is only on scenes released
   in the last week (or, without a release date, added in the last week).

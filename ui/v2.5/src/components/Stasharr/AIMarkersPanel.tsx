@@ -402,6 +402,27 @@ const FeatureSwitches: React.FC<{ cfg: Cfg; save: (input: GQL.AiMarkerConfigInpu
           onChange={() => setReels(!reelsOn)}
         />
       </SettingRow>
+      {reelsOn && (
+        <SettingRow
+          heading="Reels picked by AI"
+          sub="The tagger picks each reel's moments (most action, best picture, a different act per reel). AI markers remake a scene's reels when they look at it. Reel length and count are under Auto-import → Reels, with Remake all."
+        >
+          <Form.Switch
+            id="feature-reels-ai"
+            checked={!!watcher.data?.libraryWatcherConfig.reels_ai}
+            onChange={async () => {
+              try {
+                await configureWatcher({
+                  variables: { input: { reels_ai: !watcher.data?.libraryWatcherConfig.reels_ai } },
+                });
+                await watcher.refetch();
+              } catch (e) {
+                Toast.error(e);
+              }
+            }}
+          />
+        </SettingRow>
+      )}
       <SettingRow heading="AI markers" sub="The tagger looks at scenes and suggests markers. Markers already kept stay either way.">
         <Form.Switch
           id="feature-ai"

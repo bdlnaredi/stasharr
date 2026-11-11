@@ -2501,3 +2501,8 @@ func (i *Config) GetTagClipsEnabled() bool { return i.getBoolDefault(TagClipsEna
 const SceneBadgesEnabled = "stasharr.badges.enabled"
 
 func (i *Config) GetSceneBadgesEnabled() bool { return i.getBoolDefault(SceneBadgesEnabled, true) }
+
+// ReelsAI lets the Stasharr Tagger choose the moments for reels.
+const ReelsAI = "stasharr.reels.ai"
+
+func (i *Config) GetReelsAI() bool { return i.getBoolDefault(ReelsAI, true) }
