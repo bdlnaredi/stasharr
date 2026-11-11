@@ -1,3 +1,4 @@
+import { SceneBadgePills } from "src/components/Shared/SceneRibbon";
 import { Tab, Nav, Dropdown, Button } from "react-bootstrap";
 import React, {
   useCallback,
@@ -772,6 +773,7 @@ const ScenePage: React.FC<IProps> = PatchComponent("ScenePage", (props) => {
             <h3 className={cx("scene-header", { "no-studio": !scene.studio })}>
               <TruncatedText lineCount={2} text={title} />
             </h3>
+            <SceneBadgePills badges={scene.stasharr_badges} />
           </div>
 
           <div className="scene-subheader">

@@ -1,3 +1,4 @@
+import { SceneRibbon } from "src/components/Shared/SceneRibbon";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { Button, ButtonGroup, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { useHistory } from "react-router-dom";
@@ -444,6 +445,7 @@ const SceneCardImage = React.memo(
           disabled={props.selecting}
         />
         <RatingBanner rating={props.scene.rating100} />
+        <SceneRibbon badges={props.scene.stasharr_badges} />
         <SceneSpecsOverlay scene={props.scene} />
         {maybeRenderInteractiveSpeedOverlay()}
       </>

@@ -13,7 +13,7 @@ import kotlinx.serialization.json.putJsonObject
 
 private const val SCENE_CARD = """
 fragment SceneCard on Scene {
-  id title date rating100 resume_time play_count
+  id title date rating100 resume_time play_count stasharr_badges
   files { duration width height video_codec audio_codec }
   paths { screenshot preview }
   studio { id name }
@@ -24,7 +24,7 @@ fragment SceneCard on Scene {
 
 private const val SCENE_FULL = """
 fragment SceneFull on Scene {
-  id title details date rating100 o_counter play_count resume_time in_watch_later
+  id title details date rating100 o_counter play_count resume_time in_watch_later stasharr_badges
   files { path duration width height video_codec audio_codec size format }
   paths { screenshot preview stream caption }
   captions { language_code caption_type }

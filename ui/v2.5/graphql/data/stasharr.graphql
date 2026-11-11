@@ -190,6 +190,10 @@ fragment MaintenanceConfigData on MaintenanceConfig {
 }
 
 fragment AIMarkerConfigData on AIMarkerConfig {
+  enabled
+  search_enabled
+  tag_clips_enabled
+  scene_badges_enabled
   url
   interval
   min_confidence
@@ -201,11 +205,17 @@ fragment AIMarkerConfigData on AIMarkerConfig {
     prompt
     enabled
     marker
+    when
+    min_confidence
+    kept_examples
+    thrown_examples
   }
   default_labels {
     name
     prompt
     enabled
     marker
+    when
+    min_confidence
   }
 }

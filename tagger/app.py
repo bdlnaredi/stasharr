@@ -13,7 +13,7 @@ import io
 import os
 import threading
 import time
-from typing import List
+from typing import List, Optional
 
 import torch
 import open_clip
@@ -81,14 +81,26 @@ def _ready():
 
 
 def _text_features(labels: List[str]) -> torch.Tensor:
+    """One vector per label. A label can hold several descriptions split by
+    "|"; their vectors are averaged, which describes the label far better
+    than any single sentence (prompt ensembling)."""
     key = (MODEL, PRETRAINED, tuple(labels))
     cached = _text_cache.get(key)
     if cached is not None:
         return cached
-    tokens = _state["tokenizer"](labels).to(DEVICE)
+    parts, owner = [], []
+    for i, label in enumerate(labels):
+        pieces = [p.strip() for p in label.split("|") if p.strip()] or [label]
+        parts.extend(pieces)
+        owner.extend([i] * len(pieces))
+    tokens = _state["tokenizer"](parts).to(DEVICE)
     with torch.no_grad():
         feats = _state["model"].encode_text(tokens)
         feats = feats / feats.norm(dim=-1, keepdim=True)
+        index = torch.tensor(owner, device=feats.device)
+        summed = torch.zeros(len(labels), feats.shape[1], device=feats.device, dtype=feats.dtype)
+        summed.index_add_(0, index, feats)
+        feats = summed / summed.norm(dim=-1, keepdim=True)
     if len(_text_cache) > 32:
         _text_cache.clear()
     _text_cache[key] = feats
@@ -100,12 +112,16 @@ class ClassifyRequest(BaseModel):
     labels: List[str]
     # JPEG or PNG frames, base64 encoded
     images: List[str]
+    # also send back each frame's vector, so Stasharr can learn from the
+    # markers an admin keeps or throws away
+    vectors: bool = False
 
 
 class ClassifyResponse(BaseModel):
     # one row per image, one score per label; each row adds up to 1
     scores: List[List[float]]
     seconds: float
+    vectors: Optional[List[List[float]]] = None
 
 
 @app.get("/health")
@@ -118,6 +134,8 @@ def health():
         "gpu": torch.cuda.get_device_name(0) if DEVICE == "cuda" and torch.cuda.is_available() else None,
         "model": f"{MODEL} ({PRETRAINED})",
         "threads": THREADS,
+        # what this version can do, so Stasharr knows what to send
+        "features": ["ensemble", "vectors"],
     }
 
 
@@ -146,7 +164,14 @@ def classify(req: ClassifyRequest):
         img_feats = _state["model"].encode_image(pixels)
         img_feats = img_feats / img_feats.norm(dim=-1, keepdim=True)
         probs = (100.0 * img_feats @ text.T).float().softmax(dim=-1)
-    return ClassifyResponse(scores=[[round(float(x), 5) for x in row] for row in probs.cpu()], seconds=round(time.time() - started, 3))
+    vectors = None
+    if req.vectors:
+        vectors = [[round(x, 4) for x in r] for r in img_feats.float().cpu().tolist()]
+    return ClassifyResponse(
+        scores=[[round(float(x), 5) for x in row] for row in probs.cpu()],
+        seconds=round(time.time() - started, 3),
+        vectors=vectors,
+    )
 
 
 # ---------------------------------------------------------------- embeddings

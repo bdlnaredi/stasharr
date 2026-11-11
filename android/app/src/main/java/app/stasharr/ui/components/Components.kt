@@ -284,6 +284,7 @@ fun SceneThumb(
             )
         }
         Box(Modifier.fillMaxSize().background(thumbScrim))
+        SceneRibbon(scene.badges, Modifier.align(Alignment.TopStart))
         Row(
             Modifier.align(Alignment.TopEnd).padding(6.dp),
             horizontalArrangement = Arrangement.spacedBy(4.dp),

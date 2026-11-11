@@ -1,3 +1,4 @@
+import { SceneBadgePills } from "src/components/Shared/SceneRibbon";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useHistory, useLocation, useParams } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
@@ -429,7 +430,10 @@ export const ScenePage: React.FC = () => {
                 {scene.studio.name}
               </Link>
             )}
-            <h1 className={titleSize(sceneTitle(scene))}>{sceneTitle(scene)}</h1>
+            <h1 className={titleSize(sceneTitle(scene))}>
+              {sceneTitle(scene)}
+              <SceneBadgePills badges={scene.stasharr_badges} />
+            </h1>
             <div className="site-hero-meta">
               {scene.date && <span>{formatDate(scene.date)}</span>}
               {f?.duration ? <span>{formatTime(f.duration)}</span> : null}

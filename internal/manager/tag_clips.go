@@ -57,6 +57,9 @@ type TagClipJob struct {
 
 func (j *TagClipJob) Execute(ctx context.Context, progress *job.Progress) error {
 	mgr := GetInstance()
+	if !mgr.Config.GetTagClipsEnabled() {
+		return errors.New("tag clips are switched off (Settings → AI markers)")
+	}
 	r := mgr.Repository
 
 	ids := j.TagIDs
@@ -300,12 +303,12 @@ func tagMomentFromFrames(ctx context.Context, c tagClipChoice) (float64, bool) {
 	var scores [][]float64
 	for i := 0; i < len(frames); i += 32 {
 		end := min(i+32, len(frames))
-		s, err := classify(ctx, c.tagger, prompts, frames[i:end])
+		res, err := classify(ctx, c.tagger, prompts, frames[i:end], false)
 		if err != nil {
 			logger.Debugf("[tag clips] tagger: %v", err)
 			return 0, false
 		}
-		scores = append(scores, s...)
+		scores = append(scores, res.Scores...)
 	}
 
 	// smooth with the neighbours, then take the best free spot

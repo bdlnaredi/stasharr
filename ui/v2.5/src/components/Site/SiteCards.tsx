@@ -1,3 +1,4 @@
+import { SceneRibbon } from "src/components/Shared/SceneRibbon";
 import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
@@ -142,6 +143,7 @@ export const SceneTile: React.FC<{
             className={playing ? "visible" : ""}
           />
         )}
+        <SceneRibbon badges={scene.stasharr_badges} />
         <div className="site-thumb-badges">
           {isNew(scene) && <span className="site-badge site-badge-new">{t("New")}</span>}
           {badge && <span className="site-badge">{badge}</span>}

@@ -12,29 +12,45 @@ import (
 	"github.com/stashapp/stash/internal/manager"
 	"github.com/stashapp/stash/internal/manager/config"
 	"github.com/stashapp/stash/pkg/access"
+	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/sliceutil/stringslice"
 	"github.com/stashapp/stash/pkg/sqlite"
 )
 
-func toAILabels(in []manager.AILabel) []*AIMarkerLabel {
+func toAILabels(in []manager.AILabel, counts []sqlite.AIExampleCount) []*AIMarkerLabel {
 	ret := make([]*AIMarkerLabel, len(in))
 	for i, l := range in {
-		ret[i] = &AIMarkerLabel{Name: l.Name, Prompt: l.Prompt, Enabled: l.Enabled, Marker: l.Marker}
+		ret[i] = &AIMarkerLabel{Name: l.Name, Prompt: l.Prompt, Enabled: l.Enabled, Marker: l.Marker, When: l.When, MinConfidence: l.MinConfidence}
+		for _, c := range counts {
+			if strings.EqualFold(c.Label, l.Name) {
+				ret[i].KeptExamples, ret[i].ThrownExamples = c.Kept, c.Thrown
+			}
+		}
 	}
 	return ret
 }
 
-func aiMarkerConfig() *AIMarkerConfig {
+func (r *Resolver) aiMarkerConfig(ctx context.Context) *AIMarkerConfig {
 	cfg := config.GetInstance()
+	var counts []sqlite.AIExampleCount
+	_ = r.withReadTxn(ctx, func(ctx context.Context) error {
+		var err error
+		counts, err = sqlite.AIExampleCounts(ctx)
+		return err
+	})
 	return &AIMarkerConfig{
-		URL:           cfg.GetAIURL(),
-		Interval:      cfg.GetAIInterval(),
-		MinConfidence: cfg.GetAIMinConfidence(),
-		MinSeconds:    cfg.GetAIMinSeconds(),
-		Auto:          cfg.GetAIAuto(),
-		Review:        cfg.GetAIReview(),
-		Labels:        toAILabels(manager.AILabels(cfg)),
-		DefaultLabels: toAILabels(manager.DefaultAILabels),
+		Enabled:            cfg.GetAIEnabled(),
+		SearchEnabled:      cfg.GetSearchEnabled(),
+		TagClipsEnabled:    cfg.GetTagClipsEnabled(),
+		SceneBadgesEnabled: cfg.GetSceneBadgesEnabled(),
+		URL:                cfg.GetAIURL(),
+		Interval:           cfg.GetAIInterval(),
+		MinConfidence:      cfg.GetAIMinConfidence(),
+		MinSeconds:         cfg.GetAIMinSeconds(),
+		Auto:               cfg.GetAIAuto(),
+		Review:             cfg.GetAIReview(),
+		Labels:             toAILabels(manager.AILabels(cfg), counts),
+		DefaultLabels:      toAILabels(manager.DefaultAILabels, nil),
 	}
 }
 
@@ -42,7 +58,7 @@ func (r *queryResolver) AiMarkerConfig(ctx context.Context) (*AIMarkerConfig, er
 	if err := access.RequireRole(ctx, access.RoleAdmin); err != nil {
 		return nil, err
 	}
-	return aiMarkerConfig(), nil
+	return r.aiMarkerConfig(ctx), nil
 }
 
 func (r *mutationResolver) ConfigureAIMarkers(ctx context.Context, input AIMarkerConfigInput) (*AIMarkerConfig, error) {
@@ -50,6 +66,18 @@ func (r *mutationResolver) ConfigureAIMarkers(ctx context.Context, input AIMarke
 		return nil, err
 	}
 	cfg := config.GetInstance()
+	if input.Enabled != nil {
+		cfg.SetBool(config.AIEnabled, *input.Enabled)
+	}
+	if input.SearchEnabled != nil {
+		cfg.SetBool(config.SearchEnabled, *input.SearchEnabled)
+	}
+	if input.TagClipsEnabled != nil {
+		cfg.SetBool(config.TagClipsEnabled, *input.TagClipsEnabled)
+	}
+	if input.SceneBadgesEnabled != nil {
+		cfg.SetBool(config.SceneBadgesEnabled, *input.SceneBadgesEnabled)
+	}
 	if input.URL != nil {
 		u := strings.TrimRight(strings.TrimSpace(*input.URL), "/")
 		if u != "" {
@@ -85,6 +113,7 @@ func (r *mutationResolver) ConfigureAIMarkers(ctx context.Context, input AIMarke
 		cfg.SetBool(config.AIReview, *input.Review)
 	}
 	if input.Labels != nil {
+		cfg.SetInt(config.AILabelsVersion, manager.AILabelsVersion)
 		if len(input.Labels) == 0 {
 			cfg.SetString(config.AILabels, "")
 		} else {
@@ -103,7 +132,22 @@ func (r *mutationResolver) ConfigureAIMarkers(ctx context.Context, input AIMarke
 					return nil, fmt.Errorf("the label %q is listed twice", name)
 				}
 				seen[strings.ToLower(name)] = true
-				labels = append(labels, manager.AILabel{Name: name, Prompt: prompt, Enabled: l.Enabled, Marker: l.Marker})
+				label := manager.AILabel{Name: name, Prompt: prompt, Enabled: l.Enabled, Marker: l.Marker}
+				if l.When != nil {
+					switch *l.When {
+					case "", "start", "end":
+						label.When = *l.When
+					default:
+						return nil, fmt.Errorf("%q: when must be start, end or empty", name)
+					}
+				}
+				if l.MinConfidence != nil {
+					if *l.MinConfidence < 0 || *l.MinConfidence >= 1 {
+						return nil, fmt.Errorf("%q: confidence must be between 0 and 1", name)
+					}
+					label.MinConfidence = *l.MinConfidence
+				}
+				labels = append(labels, label)
 			}
 			b, err := json.Marshal(labels)
 			if err != nil {
@@ -115,7 +159,7 @@ func (r *mutationResolver) ConfigureAIMarkers(ctx context.Context, input AIMarke
 	if err := cfg.Write(); err != nil {
 		return nil, err
 	}
-	return aiMarkerConfig(), nil
+	return r.aiMarkerConfig(ctx), nil
 }
 
 func (r *queryResolver) AiTaggerStatus(ctx context.Context) (*AITaggerStatus, error) {
@@ -143,6 +187,7 @@ func (r *queryResolver) AiTaggerStatus(ctx context.Context) (*AITaggerStatus, er
 		return ret, nil
 	}
 	ret.Reachable = true
+	ret.Learns = st.Has("vectors")
 	ret.Ok = st.OK
 	ret.Loading = st.Loading
 	ret.Error = st.Error
@@ -196,9 +241,12 @@ func (r *queryResolver) AiMarkerSuggestions(ctx context.Context, page *int, perP
 	return ret, nil
 }
 
-func (r *mutationResolver) RunAIMarkers(ctx context.Context, sceneIds []string) (string, error) {
+func (r *mutationResolver) RunAIMarkers(ctx context.Context, sceneIds []string, redo *bool) (string, error) {
 	if err := access.RequireRole(ctx, access.RoleAdmin); err != nil {
 		return "", err
+	}
+	if !config.GetInstance().GetAIEnabled() {
+		return "", errors.New("AI markers are switched off")
 	}
 	if config.GetInstance().GetAIURL() == "" {
 		return "", errors.New("set the Stasharr Tagger address first")
@@ -207,12 +255,16 @@ func (r *mutationResolver) RunAIMarkers(ctx context.Context, sceneIds []string) 
 	if err != nil {
 		return "", err
 	}
+	again := redo != nil && *redo
 	name := "AI markers: every scene not looked at yet"
+	if again && len(ids) == 0 {
+		name = "AI markers: every scene again"
+	}
 	if len(ids) > 0 {
 		name = fmt.Sprintf("AI markers: %d scene(s)", len(ids))
 	}
 	// jobs run without the requesting user, so they see the whole library
-	jobID := manager.GetInstance().JobManager.Add(context.WithoutCancel(access.WithPrincipal(ctx, nil)), name, &manager.AIMarkerJob{SceneIDs: ids})
+	jobID := manager.GetInstance().JobManager.Add(context.WithoutCancel(access.WithPrincipal(ctx, nil)), name, &manager.AIMarkerJob{SceneIDs: ids, Redo: again})
 	return strconv.Itoa(jobID), nil
 }
 
@@ -231,6 +283,7 @@ func (r *mutationResolver) AiMarkerApprove(ctx context.Context, ids []string) (i
 			return err
 		}
 		for _, s := range list {
+			learnFrom(ctx, s, true)
 			ok, err := manager.SaveAIMarker(ctx, r.repository, s.SceneID, s.Label, s.Seconds, s.EndSeconds)
 			if err != nil {
 				return err
@@ -257,8 +310,13 @@ func (r *mutationResolver) AiMarkerReject(ctx context.Context, ids []string) (in
 	}
 	n := 0
 	err = r.withTxn(ctx, func(ctx context.Context) error {
-		for _, id := range intIDs {
-			if err := sqlite.AIDeleteSuggestion(ctx, id); err != nil {
+		list, err := sqlite.AIFindSuggestions(ctx, intIDs)
+		if err != nil {
+			return err
+		}
+		for _, s := range list {
+			learnFrom(ctx, s, false)
+			if err := sqlite.AIDeleteSuggestion(ctx, s.ID); err != nil {
 				return err
 			}
 			n++
@@ -266,4 +324,32 @@ func (r *mutationResolver) AiMarkerReject(ctx context.Context, ids []string) (in
 		return nil
 	})
 	return n, err
+}
+
+// learnFrom keeps a reviewed suggestion as an example for its label. A
+// failure only means nothing is learned from this one.
+func learnFrom(ctx context.Context, s *sqlite.AIMarkerSuggestion, kept bool) {
+	e, err := manager.AIExampleFromSuggestion(ctx, s, kept)
+	if err != nil || e == nil {
+		return
+	}
+	if err := sqlite.AIAddExample(ctx, s.SceneID, *e); err != nil {
+		logger.Warnf("[ai markers] saving example: %v", err)
+	}
+}
+
+func (r *mutationResolver) AiForgetExamples(ctx context.Context, label *string) (bool, error) {
+	if err := access.RequireRole(ctx, access.RoleAdmin); err != nil {
+		return false, err
+	}
+	l := ""
+	if label != nil {
+		l = strings.TrimSpace(*label)
+	}
+	if err := r.withTxn(ctx, func(ctx context.Context) error {
+		return sqlite.AIForgetExamples(ctx, l)
+	}); err != nil {
+		return false, err
+	}
+	return true, nil
 }

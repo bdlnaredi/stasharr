@@ -536,13 +536,19 @@ func (w *LibraryWatcher) afterScan(ctx context.Context, progress *job.Progress, 
 		mgr.JobManager.Add(ctx, "Auto-import: making reels", &ReelJob{SceneIDs: intIDs})
 	}
 
-	if cfg.GetAIAuto() && cfg.GetAIURL() != "" {
-		mgr.JobManager.Add(ctx, "Auto-import: AI markers", &AIMarkerJob{SceneIDs: intIDs})
-		mgr.JobManager.Add(ctx, "Auto-import: search index", &SearchIndexJob{SceneIDs: intIDs})
+	if cfg.GetAIURL() != "" {
+		if cfg.GetAIAuto() && cfg.GetAIEnabled() {
+			mgr.JobManager.Add(ctx, "Auto-import: AI markers", &AIMarkerJob{SceneIDs: intIDs})
+		}
+		if cfg.GetSearchEnabled() {
+			mgr.JobManager.Add(ctx, "Auto-import: search index", &SearchIndexJob{SceneIDs: intIDs})
+		}
 	}
 
 	// new scenes can bring new tags; give them clips
-	mgr.JobManager.Add(ctx, "Auto-import: tag clips", &TagClipJob{})
+	if cfg.GetTagClipsEnabled() {
+		mgr.JobManager.Add(ctx, "Auto-import: tag clips", &TagClipJob{})
+	}
 
 	return nil
 }

@@ -22,7 +22,11 @@ function clock(sec: number): string {
 
 // ---------------------------------------------------------------- status
 
-const TaggerStatus: React.FC<{ onRun: () => void; hasURL: boolean }> = ({ onRun, hasURL }) => {
+const TaggerStatus: React.FC<{ onRun: (redo?: boolean) => void; hasURL: boolean; enabled: boolean }> = ({
+  onRun,
+  hasURL,
+  enabled,
+}) => {
   const { data, loading, refetch } = GQL.useAiTaggerStatusQuery({ fetchPolicy: "network-only" });
   const st = data?.aiTaggerStatus;
 
@@ -57,6 +61,12 @@ const TaggerStatus: React.FC<{ onRun: () => void; hasURL: boolean }> = ({ onRun,
             </span>
           )}
           {st?.error && !st.ok && <span className="text-muted">{st.error}</span>}
+          {st?.ok && !st.learns && (
+            <span className="text-warning">
+              This tagger is an older version: update its image so it can learn from your reviews and use
+              several descriptions per label.
+            </span>
+          )}
           <Button size="sm" variant="secondary" onClick={() => refetch()}>
             Check again
           </Button>
@@ -71,8 +81,19 @@ const TaggerStatus: React.FC<{ onRun: () => void; hasURL: boolean }> = ({ onRun,
             <span>
               {st.done.toLocaleString()} of {st.total.toLocaleString()}
             </span>
-            <Button size="sm" variant="primary" disabled={!st.ok || st.done >= st.total} onClick={onRun}>
+            <Button size="sm" variant="primary" disabled={!enabled || !st.ok || st.done >= st.total} onClick={() => onRun()}>
               Look at the rest
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!enabled || !st.ok || st.done === 0}
+              title="After changing labels: look at every scene again. Suggestions waiting for review are replaced; markers you kept stay."
+              onClick={() => {
+                if (window.confirm("Look at every scene again? Suggestions waiting for review are replaced. Markers you already kept stay.")) onRun(true);
+              }}
+            >
+              Look at every scene again
             </Button>
           </div>
         </SettingRow>
@@ -87,12 +108,27 @@ const LabelsEditor: React.FC<{ cfg: Cfg; save: (input: GQL.AiMarkerConfigInput, 
   cfg,
   save,
 }) => {
-  const strip = (ls: readonly Label[]) => ls.map((l) => ({ name: l.name, prompt: l.prompt, enabled: l.enabled, marker: l.marker }));
+  const strip = (ls: readonly Label[]) =>
+    ls.map((l) => ({
+      name: l.name,
+      prompt: l.prompt,
+      enabled: l.enabled,
+      marker: l.marker,
+      when: l.when,
+      min_confidence: l.min_confidence,
+    }));
+  const learned = useMemo(() => {
+    const m = new Map<string, { kept: number; thrown: number }>();
+    cfg.labels.forEach((l) => m.set(l.name.toLowerCase(), { kept: l.kept_examples, thrown: l.thrown_examples }));
+    return m;
+  }, [cfg.labels]);
+  const [forget] = GQL.useAiForgetExamplesMutation();
+  const anyLearned = cfg.labels.some((l) => l.kept_examples + l.thrown_examples > 0);
   const [labels, setLabels] = useState(strip(cfg.labels));
   useEffect(() => setLabels(strip(cfg.labels)), [cfg.labels]);
   const dirty = JSON.stringify(labels) !== JSON.stringify(strip(cfg.labels));
 
-  function set(i: number, change: Partial<Label>) {
+  function set(i: number, change: Partial<ReturnType<typeof strip>[number]>) {
     setLabels(labels.map((l, j) => (j === i ? { ...l, ...change } : l)));
   }
 
@@ -101,14 +137,23 @@ const LabelsEditor: React.FC<{ cfg: Cfg; save: (input: GQL.AiMarkerConfigInput, 
       <h1>What to look for</h1>
       <div className="sub-heading">
         Each label becomes a marker title and tag. The description is what the model compares frames with, so
-        plain, visual wording works best. Labels that do not make markers help the model ignore talking, title
-        cards and empty rooms.
+        plain, visual wording works best. Several descriptions split by <code>|</code> work better than one.
+        Labels that do not make markers help the model ignore talking, title cards, close-ups and empty rooms.
+        <b>When</b> limits a label to the start or end of a scene (a cumshot is near the end), and{" "}
+        <b>Sure</b> asks for more confidence for one label.
+      </div>
+      <div className="sub-heading">
+        <b>It learns from your reviews:</b> every suggestion you keep or throw away teaches it what that label
+        looks like in your library, and similar frames are scored up or down next time. Throwing away wrong
+        cumshots makes them rarer.
       </div>
       <div className="stasharr-ai-labels">
         <div className="stasharr-ai-label head">
           <span>On</span>
           <span>Name</span>
           <span>Description for the model</span>
+          <span>When</span>
+          <span>Sure</span>
           <span>Marker</span>
           <span />
         </div>
@@ -116,7 +161,43 @@ const LabelsEditor: React.FC<{ cfg: Cfg; save: (input: GQL.AiMarkerConfigInput, 
           <div className={`stasharr-ai-label ${l.enabled ? "" : "off"}`} key={i}>
             <Form.Check checked={l.enabled} onChange={() => set(i, { enabled: !l.enabled })} />
             <Form.Control className="text-input" value={l.name} onChange={(e) => set(i, { name: e.currentTarget.value })} />
-            <Form.Control className="text-input" value={l.prompt} onChange={(e) => set(i, { prompt: e.currentTarget.value })} />
+            <div>
+              <Form.Control className="text-input" value={l.prompt} onChange={(e) => set(i, { prompt: e.currentTarget.value })} />
+              {(() => {
+                const n = learned.get(l.name.toLowerCase());
+                if (!n || n.kept + n.thrown === 0) return null;
+                return (
+                  <small className="text-muted">
+                    Learned from {n.kept} kept and {n.thrown} thrown away
+                  </small>
+                );
+              })()}
+            </div>
+            <Form.Control
+              as="select"
+              className="input-control"
+              value={l.when}
+              title="Where in a scene this can be found"
+              onChange={(e) => set(i, { when: e.currentTarget.value })}
+            >
+              <option value="">Anywhere</option>
+              <option value="start">Start</option>
+              <option value="end">Near the end</option>
+            </Form.Control>
+            <Form.Control
+              as="select"
+              className="input-control"
+              value={String(l.min_confidence)}
+              title="How sure the model must be for this label"
+              onChange={(e) => set(i, { min_confidence: Number(e.currentTarget.value) })}
+            >
+              <option value="0">Usual</option>
+              {[0.4, 0.5, 0.6, 0.7, 0.8].map((n) => (
+                <option key={n} value={n}>
+                  {Math.round(n * 100)}%
+                </option>
+              ))}
+            </Form.Control>
             <Form.Check
               title="Make markers for this label"
               checked={l.marker}
@@ -132,7 +213,9 @@ const LabelsEditor: React.FC<{ cfg: Cfg; save: (input: GQL.AiMarkerConfigInput, 
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => setLabels([...labels, { name: "", prompt: "a photo of ", enabled: true, marker: true }])}
+          onClick={() =>
+            setLabels([...labels, { name: "", prompt: "a photo of ", enabled: true, marker: true, when: "", min_confidence: 0 }])
+          }
         >
           Add a label
         </Button>
@@ -145,6 +228,19 @@ const LabelsEditor: React.FC<{ cfg: Cfg; save: (input: GQL.AiMarkerConfigInput, 
         >
           Original labels
         </Button>
+        {anyLearned && (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={async () => {
+              if (!window.confirm("Forget everything it learned from your reviews?")) return;
+              await forget({ variables: {} });
+              await save({}, "Forgotten");
+            }}
+          >
+            Forget what it learned
+          </Button>
+        )}
         {dirty && (
           <Button size="sm" variant="primary" onClick={() => save({ labels }, "Labels saved")}>
             Save labels
@@ -268,6 +364,91 @@ const ReviewList: React.FC = () => {
 
 // ---------------------------------------------------------------- panel
 
+// ---------------------------------------------------------------- switches
+
+/** One place to turn each generated feature on or off. */
+const FeatureSwitches: React.FC<{ cfg: Cfg; save: (input: GQL.AiMarkerConfigInput, msg?: string) => Promise<void> }> = ({
+  cfg,
+  save,
+}) => {
+  const Toast = useToast();
+  const watcher = GQL.useLibraryWatcherConfigQuery({ fetchPolicy: "network-only" });
+  const [configureWatcher] = GQL.useConfigureLibraryWatcherMutation();
+  const reelsOn = watcher.data?.libraryWatcherConfig.reels_enabled;
+
+  async function setReels(on: boolean) {
+    try {
+      await configureWatcher({ variables: { input: { reels_enabled: on } } });
+      await watcher.refetch();
+      Toast.success(on ? "Reels on" : "Reels off");
+    } catch (e) {
+      Toast.error(e);
+    }
+  }
+
+  return (
+    <div className="setting-section">
+      <h1>Generated features</h1>
+      <div className="sub-heading">
+        Turn each one on or off for the whole server. Off stops making new ones and hides them everywhere
+        (site, admin interface and Android app); what was already made is kept, so turning it back on brings
+        it back.
+      </div>
+      <SettingRow heading="Reels" sub="Short clips from each scene, the Reels page and home row.">
+        <Form.Switch
+          id="feature-reels"
+          disabled={reelsOn === undefined}
+          checked={!!reelsOn}
+          onChange={() => setReels(!reelsOn)}
+        />
+      </SettingRow>
+      <SettingRow heading="AI markers" sub="The tagger looks at scenes and suggests markers. Markers already kept stay either way.">
+        <Form.Switch
+          id="feature-ai"
+          checked={cfg.enabled}
+          onChange={() => save({ enabled: !cfg.enabled }, cfg.enabled ? "AI markers off" : "AI markers on")}
+        />
+      </SettingRow>
+      <SettingRow heading="Tag clips" sub="A moving picture for every tag, on category tiles and tag pages.">
+        <Form.Switch
+          id="feature-tagclips"
+          checked={cfg.tag_clips_enabled}
+          onChange={() =>
+            save({ tag_clips_enabled: !cfg.tag_clips_enabled }, cfg.tag_clips_enabled ? "Tag clips off" : "Tag clips on")
+          }
+        />
+      </SettingRow>
+      <SettingRow
+        heading="Trans, lesbian and bisexual ribbons"
+        sub="A ribbon across the corner of scene pictures, worked out from the performers' genders (trans) and the tags (Trans, TS, Lesbian, Bisexual…). Two or more women and no men also count as lesbian."
+      >
+        <Form.Switch
+          id="feature-badges"
+          checked={cfg.scene_badges_enabled}
+          onChange={() =>
+            save(
+              { scene_badges_enabled: !cfg.scene_badges_enabled },
+              cfg.scene_badges_enabled ? "Ribbons off" : "Ribbons on"
+            )
+          }
+        />
+      </SettingRow>
+      <SettingRow heading="Search by description" sub="Matching moments on the site's search page and the Describe page.">
+        <Form.Switch
+          id="feature-search"
+          checked={cfg.search_enabled}
+          onChange={() =>
+            save(
+              { search_enabled: !cfg.search_enabled },
+              cfg.search_enabled ? "Search by description off" : "Search by description on"
+            )
+          }
+        />
+      </SettingRow>
+    </div>
+  );
+};
+
 export const AIMarkersPanel: React.FC = () => {
   const Toast = useToast();
   const { data, loading, refetch } = GQL.useAiMarkerConfigQuery({ fetchPolicy: "network-only" });
@@ -289,9 +470,9 @@ export const AIMarkersPanel: React.FC = () => {
     }
   }
 
-  async function runRest() {
+  async function runRest(redo?: boolean) {
     try {
-      await run({ variables: {} });
+      await run({ variables: { redo: !!redo } });
       Toast.success("Looking at scenes. See Settings → Tasks for progress.");
     } catch (e) {
       Toast.error(e);
@@ -300,6 +481,7 @@ export const AIMarkersPanel: React.FC = () => {
 
   return (
     <div className="stasharr-ai-panel">
+      <FeatureSwitches cfg={cfg} save={save} />
       <div className="setting-section">
         <h1>AI markers</h1>
         <SettingRow
@@ -365,11 +547,11 @@ export const AIMarkersPanel: React.FC = () => {
           </Form.Control>
         </SettingRow>
       </div>
-      <TaggerStatus key={cfg.url} hasURL={!!cfg.url} onRun={runRest} />
-      <ReviewList />
-      <LabelsEditor cfg={cfg} save={save} />
-      <TagClipsSection />
-      <SearchIndexSection onToast={(m) => Toast.success(m)} onError={(e) => Toast.error(e)} />
+      <TaggerStatus key={cfg.url} hasURL={!!cfg.url} onRun={runRest} enabled={cfg.enabled} />
+      {cfg.enabled && <ReviewList />}
+      {cfg.enabled && <LabelsEditor cfg={cfg} save={save} />}
+      {cfg.tag_clips_enabled && <TagClipsSection />}
+      {cfg.search_enabled && <SearchIndexSection onToast={(m) => Toast.success(m)} onError={(e) => Toast.error(e)} />}
     </div>
   );
 };

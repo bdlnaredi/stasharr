@@ -8,6 +8,13 @@ type AIMarkerLabel {
   enabled: Boolean!
   "false: only used to recognise frames that should not get a marker"
   marker: Boolean!
+  "Where in a scene it can be found: end, start, or empty for anywhere"
+  when: String!
+  "This label's own confidence, 0 to 1; 0 uses the general one"
+  min_confidence: Float!
+  "Reviewed suggestions it learned from"
+  kept_examples: Int!
+  thrown_examples: Int!
 }
 
 input AIMarkerLabelInput {
@@ -15,9 +22,19 @@ input AIMarkerLabelInput {
   prompt: String!
   enabled: Boolean!
   marker: Boolean!
+  when: String
+  min_confidence: Float
 }
 
 type AIMarkerConfig {
+  "AI markers on or off"
+  enabled: Boolean!
+  "Search by description on or off"
+  search_enabled: Boolean!
+  "Tag clips on or off"
+  tag_clips_enabled: Boolean!
+  "Trans, Lesbian and Bisexual ribbons on scenes"
+  scene_badges_enabled: Boolean!
   "The Stasharr Tagger's address, e.g. http://stasharr-tagger:2705. Empty turns AI markers off."
   url: String!
   "Seconds between frames that are looked at"
@@ -35,6 +52,10 @@ type AIMarkerConfig {
 }
 
 input AIMarkerConfigInput {
+  enabled: Boolean
+  search_enabled: Boolean
+  tag_clips_enabled: Boolean
+  scene_badges_enabled: Boolean
   url: String
   interval: Float
   min_confidence: Float
@@ -55,6 +76,8 @@ type AITaggerStatus {
   "The NVIDIA card's name"
   gpu: String
   model: String
+  "The tagger can average several descriptions per label and learn from reviews"
+  learns: Boolean!
   "Scenes looked at"
   done: Int!
   "Scenes in the library"
@@ -90,10 +113,17 @@ extend type Query {
 extend type Mutation {
   "Admin only"
   configureAIMarkers(input: AIMarkerConfigInput!): AIMarkerConfig!
-  "Admin only. Looks at these scenes again, or every scene not looked at yet. Returns the job id."
-  runAIMarkers(scene_ids: [ID!]): ID!
+  "Admin only. Looks at these scenes again, or every scene not looked at yet (redo: every scene; waiting suggestions are replaced, kept markers stay). Returns the job id."
+  runAIMarkers(scene_ids: [ID!], redo: Boolean): ID!
+  "Forgets what AI markers learned from reviews, for one label or all"
+  aiForgetExamples(label: String): Boolean!
   "Admin only. Turns suggestions into markers. Returns how many were made."
   aiMarkerApprove(ids: [ID!]!): Int!
   "Admin only. Throws suggestions away."
   aiMarkerReject(ids: [ID!]!): Int!
+}
+
+extend type Scene {
+  "Ribbons for the scene: trans, lesbian or bisexual, from the performers' genders and the tags"
+  stasharr_badges: [String!]!
 }

@@ -1,6 +1,7 @@
 fragment SlimSceneData on Scene {
   id
   title
+  stasharr_badges
   code
   details
   director
