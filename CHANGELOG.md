@@ -35,7 +35,8 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   the admin interface and in the Android app; what was made is kept.
 
 ### Trans, lesbian and bisexual ribbons
-- Scene pictures get a ribbon across the corner in the flag's colours:
+- Scene pictures get a deep red ribbon with gold edges and white lettering
+  across the corner:
   **Trans** when a performer is trans or the scene has a tag like Trans,
   Transsexual, TS or Shemale; **Lesbian** for a Lesbian tag, or two or more
   women and no men (unless a tag says a man is there, such as Blowjob or

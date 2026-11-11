@@ -1157,54 +1157,43 @@ video.tag-card-image {
   }
 }
 
-// Trans, Lesbian and Bisexual ribbons on scene pictures
+// Trans, Lesbian and Bisexual ribbons on scene pictures: deep red with a
+// thin gold edge and white lettering
 .stasharr-ribbon {
-  height: 92px;
+  height: 96px;
   overflow: hidden;
   pointer-events: none;
   position: absolute;
   right: 0;
   top: 0;
-  width: 92px;
+  width: 96px;
   z-index: 3;
 
   span {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    border-bottom: 1px solid #d4af37;
+    border-top: 1px solid #d4af37;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
     display: block;
     font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    font-weight: 700;
+    letter-spacing: 0.16em;
     padding: 4px 0;
     position: absolute;
-    right: -34px;
+    right: -36px;
     text-align: center;
     text-transform: uppercase;
-    top: 18px;
+    top: 20px;
     transform: rotate(45deg);
     white-space: nowrap;
-    width: 140px;
+    width: 150px;
   }
 }
 
-.stasharr-ribbon-trans span,
-.stasharr-badge-pill.stasharr-ribbon-trans {
-  background: linear-gradient(180deg, #5bcefa 0 20%, #f5a9b8 20% 40%, #fff 40% 60%, #f5a9b8 60% 80%, #5bcefa 80%);
-  color: #1d2a3a;
-  text-shadow: 0 0 3px rgba(255, 255, 255, 0.9);
-}
-
-.stasharr-ribbon-lesbian span,
-.stasharr-badge-pill.stasharr-ribbon-lesbian {
-  background: linear-gradient(180deg, #d52d00 0 20%, #ff9a56 20% 40%, #fff 40% 60%, #d362a4 60% 80%, #a30262 80%);
-  color: #2a1020;
-  text-shadow: 0 0 3px rgba(255, 255, 255, 0.9);
-}
-
-.stasharr-ribbon-bisexual span,
-.stasharr-badge-pill.stasharr-ribbon-bisexual {
-  background: linear-gradient(180deg, #d60270 0 40%, #9b4f96 40% 60%, #0038a8 60%);
+.stasharr-ribbon span,
+.stasharr-badge-pill {
+  background: linear-gradient(180deg, #c8102e 0%, #9b0a20 45%, #6e0014 100%);
   color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .stasharr-badge-pills {
@@ -1215,10 +1204,11 @@ video.tag-card-image {
 }
 
 .stasharr-badge-pill {
+  border: 1px solid #d4af37;
   border-radius: 4px;
   font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   padding: 2px 8px;
   text-transform: uppercase;
 }
