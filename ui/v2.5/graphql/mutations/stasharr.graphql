@@ -271,3 +271,7 @@ mutation TierRequestDecide($id: ID!, $approve: Boolean!) {
     ...TierRequestData
   }
 }
+
+mutation ConfigureHealth($min_free_gb: Int!) {
+  configureHealth(min_free_gb: $min_free_gb)
+}

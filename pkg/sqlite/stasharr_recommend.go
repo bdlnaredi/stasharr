@@ -375,5 +375,7 @@ GROUP BY scene_id ORDER BY MAX(o_date) DESC LIMIT %d`, userCond, recHistoryScene
 	if err != nil {
 		return nil, err
 	}
+	// what the scenes they like look like
+	blendTaste(ctx, seeds, watched, scores)
 	return ranked(scores, watched, limit), nil
 }

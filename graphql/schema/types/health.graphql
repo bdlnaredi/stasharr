@@ -1,0 +1,76 @@
+# Stasharr: the Health page and cleanup suggestions. Admin only.
+
+type HealthDisk {
+  "What is on the disk: Library, Generated files, Database…"
+  labels: [String!]!
+  paths: [String!]!
+  total: Int64!
+  free: Int64!
+  low: Boolean!
+}
+
+type HealthFailedTask {
+  description: String!
+  error: String!
+  at: Time!
+}
+
+type HealthProblem {
+  "warning or error"
+  level: String!
+  text: String!
+}
+
+type HealthReport {
+  disks: [HealthDisk!]!
+  "Below this many GB free (or under 5%) a disk counts as low"
+  min_free_gb: Int!
+  database_size: Int64!
+  scenes: Int!
+  backups_enabled: Boolean!
+  last_backup: Time
+  drive_connected: Boolean!
+  drive_last_error: String
+  tagger_set: Boolean!
+  tagger_ok: Boolean!
+  tagger_detail: String
+  watcher_enabled: Boolean!
+  watcher_running: Boolean!
+  watcher_last_check: Time
+  notify_targets: Int!
+  failed_tasks: [HealthFailedTask!]!
+  problems: [HealthProblem!]!
+  version: String!
+}
+
+enum CleanupKind {
+  "Not played by anyone for months, and added before that"
+  UNWATCHED
+  "Never played, added over a month ago"
+  NEVER
+  "Two stars or less"
+  LOW_RATED
+}
+
+type CleanupItem {
+  scene: Scene!
+  size: Int64!
+  plays: Int!
+  last_played: Time
+  rating: Float
+}
+
+type CleanupResult {
+  count: Int!
+  total_size: Int64!
+  items: [CleanupItem!]!
+}
+
+extend type Query {
+  stasharrHealth: HealthReport!
+  cleanupSuggestions(kind: CleanupKind!, months: Int, limit: Int): CleanupResult!
+}
+
+extend type Mutation {
+  configureHealth(min_free_gb: Int!): Int!
+}

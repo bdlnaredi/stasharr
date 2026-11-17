@@ -1284,3 +1284,85 @@ video.tag-card-image {
 .stasharr-sharing {
   max-width: 260px;
 }
+
+// Health page
+.stasharr-health-allgood {
+  color: #5cb85c;
+  font-weight: 600;
+}
+
+.stasharr-health-problems {
+  margin: 0;
+  padding-left: 1.2rem;
+
+  li.error {
+    color: #e74c3c;
+  }
+
+  li.warning {
+    color: #f0ad4e;
+  }
+}
+
+.stasharr-health-disk {
+  margin-bottom: 1rem;
+
+  .progress {
+    height: 8px;
+    margin: 4px 0;
+  }
+}
+
+.stasharr-health-check {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.stasharr-health-dot {
+  border-radius: 50%;
+  flex: 0 0 10px;
+  height: 10px;
+  margin-top: 6px;
+  width: 10px;
+
+  &.ok {
+    background: #5cb85c;
+  }
+
+  &.warn {
+    background: #f0ad4e;
+  }
+
+  &.bad {
+    background: #e74c3c;
+  }
+}
+
+// Cleanup suggestions
+.stasharr-cleanup-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.stasharr-cleanup-total {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0.75rem 0;
+}
+
+.stasharr-cleanup-thumb {
+  aspect-ratio: 16 / 9;
+  border-radius: 4px;
+  object-fit: cover;
+  width: 100px;
+}
+
+.stasharr-cleanup tr {
+  cursor: pointer;
+}

@@ -2506,3 +2506,15 @@ func (i *Config) GetSceneBadgesEnabled() bool { return i.getBoolDefault(SceneBad
 const ReelsAI = "stasharr.reels.ai"
 
 func (i *Config) GetReelsAI() bool { return i.getBoolDefault(ReelsAI, true) }
+
+// HealthMinFreeGB: a disk with less free space is low (Health page and
+// notification).
+const HealthMinFreeGB = "stasharr.health.min_free_gb"
+
+func (i *Config) GetHealthMinFreeGB() int {
+	v := i.getInt(HealthMinFreeGB)
+	if v <= 0 {
+		return 20
+	}
+	return v
+}

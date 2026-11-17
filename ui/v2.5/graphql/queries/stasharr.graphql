@@ -451,3 +451,66 @@ query StaffPicks {
     ...PlaylistData
   }
 }
+
+query StasharrHealth {
+  stasharrHealth {
+    disks {
+      labels
+      paths
+      total
+      free
+      low
+    }
+    min_free_gb
+    database_size
+    scenes
+    backups_enabled
+    last_backup
+    drive_connected
+    drive_last_error
+    tagger_set
+    tagger_ok
+    tagger_detail
+    watcher_enabled
+    watcher_running
+    watcher_last_check
+    notify_targets
+    failed_tasks {
+      description
+      error
+      at
+    }
+    problems {
+      level
+      text
+    }
+    version
+  }
+}
+
+query CleanupSuggestions($kind: CleanupKind!, $months: Int, $limit: Int) {
+  cleanupSuggestions(kind: $kind, months: $months, limit: $limit) {
+    count
+    total_size
+    items {
+      size
+      plays
+      last_played
+      rating
+      scene {
+        id
+        title
+        date
+        files {
+          path
+          duration
+          width
+          height
+        }
+        paths {
+          screenshot
+        }
+      }
+    }
+  }
+}

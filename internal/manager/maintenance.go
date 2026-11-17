@@ -42,6 +42,9 @@ func (s *Manager) startMaintenanceLoop() {
 			time.Sleep(3 * time.Minute)
 			for {
 				s.runDueMaintenance()
+				if s.Database != nil && s.Database.Ready() == nil && !s.Database.NeedsMigration() {
+					s.healthTick()
+				}
 				time.Sleep(10 * time.Minute)
 			}
 		}()
