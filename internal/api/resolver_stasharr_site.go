@@ -297,11 +297,12 @@ func (r *queryResolver) SiteScenes(ctx context.Context, kind SiteSceneKind, page
 var siteRowTypes = []string{
 	"continue", "latest", "models", "trending", "popular", "recommended",
 	"favorites", "liked", "reels", "top_rated", "categories", "channels", "tag",
+	"staff_picks",
 }
 
 var defaultHomeRows = []string{
 	"continue", "latest", "models", "trending", "favorites", "recommended",
-	"reels", "top_rated", "categories", "channels",
+	"staff_picks", "reels", "top_rated", "categories", "channels",
 }
 
 type storedHomeRow struct {

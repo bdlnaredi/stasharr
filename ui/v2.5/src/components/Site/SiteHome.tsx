@@ -302,6 +302,25 @@ const ExtrasRow: React.FC<{ which: "continue" | "recommended"; title: string }> 
   return <SceneRail title={title} link={which === "continue" ? "/site/my-list" : undefined} scenes={scenes} />;
 };
 
+// one rail per playlist the admins put on the site
+const StaffPicksRow: React.FC<{ title: string }> = ({ title }) => {
+  const { data } = GQL.useSiteStaffPicksQuery({ fetchPolicy: "cache-and-network" });
+  const picks = (data?.staffPicks ?? []).filter((p) => p.scenes.length > 0).slice(0, 4);
+  if (picks.length === 0) return null;
+  return (
+    <>
+      {picks.map((p, i) => (
+        <SceneRail
+          key={p.id}
+          title={picks.length === 1 || i === 0 ? `${title}: ${p.name}` : p.name}
+          link={`/site/playlist/${p.id}`}
+          scenes={p.scenes}
+        />
+      ))}
+    </>
+  );
+};
+
 const CategoriesRow: React.FC<{ title: string }> = ({ title }) => {
   const { data } = GQL.useSiteTagsQuery({
     variables: {
@@ -366,6 +385,8 @@ export function defaultRowTitle(type: string, femaleOnly: boolean): string {
       return "Categories";
     case "channels":
       return "Channels";
+    case "staff_picks":
+      return "Staff picks";
     default:
       return "";
   }
@@ -401,6 +422,8 @@ const HomeRow: React.FC<{ row: GQL.SiteConfigDataFragment["home_rows"][number] }
       return <ChannelsRow title={title} />;
     case "tag":
       return row.tag ? <TagRow tag={row.tag} title={row.title} /> : null;
+    case "staff_picks":
+      return <StaffPicksRow title={title} />;
     default:
       return null;
   }

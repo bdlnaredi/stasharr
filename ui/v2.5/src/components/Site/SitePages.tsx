@@ -874,6 +874,84 @@ export const MyListPage: React.FC = () => {
       <Section title={t("Liked scenes")}>
         {likedScenes.length === 0 ? <Empty text={t("Tap the heart on a scene to like it.")} /> : <SceneGrid scenes={likedScenes} />}
       </Section>
+      <PlaylistsSection mine={(lists.data?.findPlaylists ?? []).filter((p) => !p.watch_later)} />
+    </div>
+  );
+};
+
+// your own playlists (with who can see them) and the ones others share
+const PlaylistsSection: React.FC<{
+  mine: GQL.SiteMyListQuery["findPlaylists"];
+}> = ({ mine }) => {
+  const shared = GQL.useSiteSharedPlaylistsQuery({ fetchPolicy: "cache-and-network" });
+  const [update] = GQL.usePlaylistUpdateMutation({ refetchQueries: ["SiteMyList"] });
+  const others = shared.data?.sharedPlaylists ?? [];
+  if (mine.length === 0 && others.length === 0) return null;
+  return (
+    <>
+      {mine.length > 0 && (
+        <Section title={t("Your playlists")}>
+          <div className="site-playlist-list">
+            {mine.map((p) => (
+              <div key={p.id} className="site-playlist-row">
+                <Link to={`/site/playlist/${p.id}`}>{p.name}</Link>
+                <span className="site-muted">{count(p.scene_count, "scene")}</span>
+                <select
+                  value={p.sharing}
+                  aria-label={t("Who can see it")}
+                  onChange={(e) => update({ variables: { input: { id: p.id, sharing: e.currentTarget.value } } }).catch(() => {})}
+                >
+                  <option value="">{t("Only me")}</option>
+                  <option value="users">{t("Everyone with an account")}</option>
+                  {p.sharing === "site" && <option value="site">{t("Staff pick")}</option>}
+                </select>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+      {others.length > 0 && (
+        <Section title={t("Shared playlists")}>
+          <div className="site-playlist-tiles">
+            {others.map((p) => (
+              <Link key={p.id} to={`/site/playlist/${p.id}`} className="site-playlist-tile">
+                <div className="site-playlist-cover">
+                  {p.cover?.paths.screenshot && <img src={p.cover.paths.screenshot} alt="" loading="lazy" />}
+                  <span>{count(p.scene_count, "scene")}</span>
+                </div>
+                <div className="site-playlist-name">{p.name}</div>
+                <div className="site-muted">
+                  {p.sharing === "site" ? t("Staff pick") : t("by {name}", { name: p.owner })}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </Section>
+      )}
+    </>
+  );
+};
+
+export const PlaylistPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const { data, loading } = GQL.useSitePlaylistQuery({ variables: { id }, fetchPolicy: "cache-and-network" });
+  if (loading && !data) return <Loading />;
+  const p = data?.findPlaylist;
+  if (!p) {
+    return (
+      <div className="site-page">
+        <Empty text={t("This playlist is not shared, or no longer exists.")} />
+      </div>
+    );
+  }
+  return (
+    <div className="site-page">
+      <h1 className="site-page-title">{p.name}</h1>
+      <div className="site-muted site-playlist-by">
+        {p.sharing === "site" ? t("Staff pick") : !p.mine ? t("by {name}", { name: p.owner }) : null}
+        {p.description ? ` · ${p.description}` : ""}
+      </div>
+      {p.scenes.length === 0 ? <Empty text={t("Nothing here yet.")} /> : <SceneGrid scenes={p.scenes} />}
     </div>
   );
 };

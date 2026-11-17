@@ -29,6 +29,8 @@ const (
 	EventJobFailed = "job_failed"
 	EventBackup    = "backup"
 	EventResync    = "resync"
+	EventAccounts  = "accounts"
+	EventHealth    = "health"
 )
 
 // NotifyEvents describes every event, in display order.
@@ -38,6 +40,8 @@ var NotifyEvents = []struct{ ID, Label string }{
 	{EventJobFailed, "A task failed"},
 	{EventBackup, "Scheduled backup finished or failed"},
 	{EventResync, "Metadata refresh from StashDB finished"},
+	{EventAccounts, "New accounts from invites, and tier upgrade requests"},
+	{EventHealth, "Low disk space and other problems on the Health page"},
 }
 
 // Notification target kinds.

@@ -4,6 +4,7 @@ import * as GQL from "src/core/generated-graphql";
 import { useToast } from "src/hooks/Toast";
 import { baseURL } from "src/core/createClient";
 import { useCurrentUser } from "./CurrentUser";
+import { TierRequestSection, TwoStepSection } from "./AccountSecurity";
 import { canInstall, isInstalled, onInstallChange, promptInstall } from "./pwa";
 
 // Install Stasharr as an app on this phone or computer.
@@ -178,6 +179,8 @@ export const AccountPanel: React.FC = () => {
         </div>
       )}
     </div>
+    <TwoStepSection />
+    <TierRequestSection />
     <InstallAppSection />
     </>
   );

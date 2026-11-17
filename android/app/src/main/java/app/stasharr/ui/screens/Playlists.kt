@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.stasharr.ui.components.Chip
 import app.stasharr.BuildConfig
 import app.stasharr.app
 import app.stasharr.alerts.FavoriteAlertsState
@@ -127,6 +128,11 @@ private fun PlaylistCard(p: Playlist, onClick: () -> Unit) {
         }
         Spacer(Modifier.height(6.dp))
         Text(p.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        when {
+            p.sharing == "site" -> Text("Staff pick", style = MaterialTheme.typography.bodySmall, color = Brand.Pink)
+            !p.mine -> Text("by ${p.owner}", style = MaterialTheme.typography.bodySmall, color = Brand.TextMuted)
+            p.sharing == "users" -> Text("Shared", style = MaterialTheme.typography.bodySmall, color = Brand.Pink)
+        }
         if (p.description.isNotBlank()) {
             Text(p.description, style = MaterialTheme.typography.bodySmall, color = Brand.TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
@@ -138,6 +144,7 @@ fun PlaylistsScreen() {
     val nav = LocalNav.current
     val scope = rememberCoroutineScope()
     val loader = rememberLoad(Unit) { app.repo.playlists() }
+    val shared = rememberLoad(Unit) { runCatching { app.repo.sharedPlaylists() }.getOrDefault(emptyList()) }
     var creating by remember { mutableStateOf(false) }
     var name by remember { mutableStateOf("") }
 
@@ -162,6 +169,13 @@ fun PlaylistsScreen() {
                             modifier = Modifier.padding(top = 12.dp),
                         )
                     }
+                }
+                val others = shared.value.orEmpty()
+                if (others.isNotEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text("Shared by others", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
+                    }
+                    items(others, key = { "s" + it.id }) { p -> PlaylistCard(p) { nav.playlist(p.id) } }
                 }
             }
         }
@@ -208,7 +222,12 @@ fun PlaylistScreen(id: String) {
                     }
                     Column(Modifier.align(Alignment.BottomStart).padding(20.dp)) {
                         Text(p.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-                        Text("${scenes.size} scenes • ${formatDuration(scenes.sumOf { it.duration })}", color = Brand.TextMuted)
+                        Text(
+                            "${scenes.size} scenes • ${formatDuration(scenes.sumOf { it.duration })}" +
+                                if (!p.mine) " • by ${p.owner}" else "",
+                            color = Brand.TextMuted,
+                        )
+                        if (p.mine && !p.watchLater) PlaylistSharing(p)
                         Spacer(Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             GradientButton("Play all", icon = Icons.Rounded.PlayArrow, onClick = {
@@ -250,6 +269,29 @@ fun PlaylistScreen(id: String) {
                         color = Brand.TextMuted,
                         modifier = Modifier.padding(24.dp),
                     )
+                }
+            }
+        }
+    }
+}
+
+/** Who can see a playlist: only me, or everyone with an account. */
+@Composable
+private fun PlaylistSharing(p: Playlist) {
+    val scope = rememberCoroutineScope()
+    var sharing by remember(p.id) { mutableStateOf(p.sharing) }
+    val choices = buildList {
+        add("" to "Only me")
+        add("users" to "Everyone")
+        if (sharing == "site") add("site" to "Staff pick")
+    }
+    Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        choices.forEach { (value, label) ->
+            Chip(label, selected = sharing == value) {
+                val before = sharing
+                sharing = value
+                scope.launch {
+                    if (runCatching { app.repo.setPlaylistSharing(p.id, value) }.isFailure) sharing = before
                 }
             }
         }

@@ -1212,3 +1212,75 @@ video.tag-card-image {
   padding: 2px 8px;
   text-transform: uppercase;
 }
+
+// two-step sign in setup
+.stasharr-two-step-setup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1rem;
+
+  ol {
+    padding-left: 1.2rem;
+  }
+
+  code {
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    word-break: break-all;
+  }
+
+  > div:last-child {
+    flex: 1;
+    min-width: 240px;
+  }
+}
+
+.stasharr-two-step-qr {
+  background: #fff;
+  border-radius: 8px;
+  flex: 0 0 200px;
+  height: 200px;
+  padding: 4px;
+  width: 200px;
+
+  svg {
+    height: 100%;
+    width: 100%;
+  }
+}
+
+.stasharr-recovery {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  margin: 0.75rem 0;
+  padding: 1rem;
+
+  pre {
+    color: inherit;
+    font-size: 1.05rem;
+    margin: 0.75rem 0;
+  }
+}
+
+.stasharr-tier-request {
+  max-width: 480px;
+}
+
+.stasharr-invite-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+
+  .input-control,
+  .text-input {
+    max-width: 220px;
+    width: auto;
+  }
+}
+
+.stasharr-sharing {
+  max-width: 260px;
+}

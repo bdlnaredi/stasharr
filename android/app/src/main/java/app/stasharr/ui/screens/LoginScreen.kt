@@ -108,6 +108,9 @@ fun LoginScreen(onDone: () -> Unit) {
     var password by rememberSaveable { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    // two-step sign in: shown after a right password when the account has it
+    var needCode by rememberSaveable { mutableStateOf(false) }
+    var code by rememberSaveable { mutableStateOf("") }
 
     fun connect() {
         val url = normaliseServer(server)
@@ -122,7 +125,7 @@ fun LoginScreen(onDone: () -> Unit) {
                 app.session.sessionCookie = null
                 app.session.serverUrl = url
                 if (username.isNotBlank()) {
-                    app.api.login(username.trim(), password)
+                    app.api.login(username.trim(), password, code.takeIf { needCode })
                     app.session.username = username.trim()
                     app.session.password = password
                 } else {
@@ -134,6 +137,10 @@ fun LoginScreen(onDone: () -> Unit) {
                 server = url
                 onDone()
             } catch (e: ApiException) {
+                if (e.needsCode) {
+                    needCode = true
+                    code = ""
+                }
                 error = if (e.unauthorized && username.isBlank()) {
                     "This server needs a username and password"
                 } else {
@@ -207,6 +214,12 @@ fun LoginScreen(onDone: () -> Unit) {
                     password, { password = it }, "Password", Icons.Rounded.Lock,
                     keyboard = KeyboardType.Password, password = true, imeAction = ImeAction.Done,
                 )
+                if (needCode) {
+                    Field(
+                        code, { code = it }, "Two-step code (or a recovery code)", Icons.Rounded.Lock,
+                        keyboard = KeyboardType.Ascii, imeAction = ImeAction.Done,
+                    )
+                }
                 Text(
                     "Leave these empty if your server has no login.",
                     color = Brand.TextMuted,

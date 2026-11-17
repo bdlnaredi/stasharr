@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/stashapp/stash/pkg/access"
@@ -23,6 +24,7 @@ type playlistRow struct {
 	Description string    `db:"description"`
 	WatchLater  bool      `db:"watch_later"`
 	SmartRule   string    `db:"smart_rule"`
+	Sharing     string    `db:"sharing"`
 	CreatedAt   Timestamp `db:"created_at"`
 	UpdatedAt   Timestamp `db:"updated_at"`
 }
@@ -35,12 +37,13 @@ func (r playlistRow) resolve() *models.Playlist {
 		Description: r.Description,
 		WatchLater:  r.WatchLater,
 		RuleJSON:    r.SmartRule,
+		Sharing:     r.Sharing,
 		CreatedAt:   r.CreatedAt.Timestamp,
 		UpdatedAt:   r.UpdatedAt.Timestamp,
 	}
 }
 
-const playlistColumns = "id, user_id, name, description, watch_later, smart_rule, created_at, updated_at"
+const playlistColumns = "id, user_id, name, description, watch_later, smart_rule, sharing, created_at, updated_at"
 
 // WatchLaterName is the name of every user's Watch later playlist.
 const WatchLaterName = "Watch later"
@@ -106,9 +109,36 @@ func (s *PlaylistStore) Create(ctx context.Context, p *models.Playlist) error {
 
 func (s *PlaylistStore) Update(ctx context.Context, p *models.Playlist) error {
 	p.UpdatedAt = time.Now()
-	_, err := dbWrapper.Exec(ctx, "UPDATE playlists SET name = ?, description = ?, smart_rule = ?, updated_at = ? WHERE id = ?",
-		p.Name, p.Description, p.RuleJSON, Timestamp{p.UpdatedAt}, p.ID)
+	_, err := dbWrapper.Exec(ctx, "UPDATE playlists SET name = ?, description = ?, smart_rule = ?, sharing = ?, updated_at = ? WHERE id = ?",
+		p.Name, p.Description, p.RuleJSON, p.Sharing, Timestamp{p.UpdatedAt}, p.ID)
 	return err
+}
+
+// SharedPlaylists returns playlists shared with everyone ("users") or put
+// on the site ("site"), excluding the given account's own, newest first.
+func (s *PlaylistStore) SharedPlaylists(ctx context.Context, sharing []string, notUserID *int) ([]*models.Playlist, error) {
+	if len(sharing) == 0 {
+		return nil, nil
+	}
+	q := "SELECT " + playlistColumns + " FROM playlists WHERE watch_later = 0 AND sharing IN (?" + strings.Repeat(", ?", len(sharing)-1) + ")"
+	var args []interface{}
+	for _, v := range sharing {
+		args = append(args, v)
+	}
+	if notUserID != nil {
+		q += " AND user_id != ?"
+		args = append(args, *notUserID)
+	}
+	q += " ORDER BY updated_at DESC LIMIT 200"
+	var rows []playlistRow
+	if err := dbWrapper.Select(ctx, &rows, q, args...); err != nil {
+		return nil, err
+	}
+	ret := make([]*models.Playlist, len(rows))
+	for i, r := range rows {
+		ret[i] = r.resolve()
+	}
+	return ret, nil
 }
 
 func (s *PlaylistStore) touch(ctx context.Context, id int) error {

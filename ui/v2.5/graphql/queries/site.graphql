@@ -208,6 +208,9 @@ query SiteSimilar($scene_id: ID!) {
 query SiteMyList {
   findPlaylists {
     id
+    name
+    sharing
+    scene_count
     watch_later
     scenes {
       ...SiteSceneCard
@@ -341,4 +344,46 @@ query FavoriteAlerts($limit: Int, $since: Time) {
 
 mutation MarkFavoriteAlertsSeen {
   markFavoriteAlertsSeen
+}
+
+query SiteStaffPicks {
+  staffPicks {
+    id
+    name
+    description
+    scenes(limit: 12) {
+      ...SiteSceneCard
+    }
+  }
+}
+
+query SitePlaylist($id: ID!) {
+  findPlaylist(id: $id) {
+    id
+    name
+    description
+    owner
+    mine
+    sharing
+    watch_later
+    scenes {
+      ...SiteSceneCard
+    }
+  }
+}
+
+query SiteSharedPlaylists {
+  sharedPlaylists {
+    id
+    name
+    owner
+    sharing
+    scene_count
+    cover {
+      id
+      paths {
+        screenshot
+      }
+    }
+  }
 }

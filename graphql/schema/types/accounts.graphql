@@ -1,0 +1,111 @@
+# Stasharr: two-step sign in, invites, tier upgrade requests.
+
+type TwoStepSetup {
+  "The key to type into an authenticator app"
+  secret: String!
+  "otpauth:// link; opening it on a phone adds the account to the app"
+  url: String!
+  "The same link as a QR code (SVG)"
+  qr_svg: String!
+}
+
+type TwoStepStatus {
+  enabled: Boolean!
+  "Recovery codes not used yet"
+  recovery_left: Int!
+  "Devices trusted for 90 days after signing in with a code"
+  trusted_devices: Int!
+}
+
+type UserInvite {
+  id: ID!
+  code: String!
+  tier: UserTier
+  role: UserRole!
+  max_uses: Int!
+  uses: Int!
+  note: String!
+  expires_at: Time
+  created_at: Time!
+  usable: Boolean!
+}
+
+input UserInviteInput {
+  tier_id: ID
+  "VIEWER or EDITOR"
+  role: UserRole
+  max_uses: Int
+  "Days the link works; 0 or empty for no end"
+  days: Int
+  note: String
+}
+
+enum TierRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+type TierRequest {
+  id: ID!
+  username: String!
+  tier: UserTier!
+  message: String!
+  status: TierRequestStatus!
+  created_at: Time!
+  decided_at: Time
+}
+
+type TierChoice {
+  id: ID!
+  name: String!
+  description: String
+  current: Boolean!
+}
+
+extend type User {
+  two_step_enabled: Boolean!
+}
+
+extend type CurrentUser {
+  two_step_enabled: Boolean!
+}
+
+extend type Query {
+  "The signed in account's two-step sign in"
+  myTwoStep: TwoStepStatus!
+  "Tiers a signed in account can ask for"
+  tierChoices: [TierChoice!]!
+  "The signed in account's upgrade requests"
+  myTierRequests: [TierRequest!]!
+  "Admin only"
+  userInvites: [UserInvite!]!
+  "Admin only: pending requests first"
+  tierRequests: [TierRequest!]!
+}
+
+extend type Mutation {
+  "Starts setting up two-step sign in; confirm with a code from the app"
+  twoStepStart: TwoStepSetup!
+  "Turns two-step sign in on; returns 8 one-time recovery codes"
+  twoStepConfirm(code: String!): [String!]!
+  "Turns it off; needs the account's password"
+  twoStepDisable(password: String!): Boolean!
+  "New recovery codes; the old ones stop working"
+  twoStepRecoveryCodes: [String!]!
+  "Signs out the devices that skip the code"
+  twoStepForgetDevices: Boolean!
+  "Admin only: turns two-step sign in off for an account that lost its phone"
+  userResetTwoStep(id: ID!): Boolean!
+
+  "Admin only"
+  userInviteCreate(input: UserInviteInput!): UserInvite!
+  "Admin only"
+  userInviteDelete(id: ID!): Boolean!
+
+  "Asks the admin for another tier"
+  tierRequestCreate(tier_id: ID!, message: String): TierRequest!
+  tierRequestCancel: Boolean!
+  "Admin only: approve moves the account to the tier"
+  tierRequestDecide(id: ID!, approve: Boolean!): TierRequest!
+}

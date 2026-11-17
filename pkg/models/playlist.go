@@ -15,7 +15,10 @@ type Playlist struct {
 	WatchLater  bool   `json:"watch_later"`
 	// RuleJSON is a JSON SmartRule. When set, the playlist's
 	// scenes come from the rule instead of being added by hand.
-	RuleJSON  string    `json:"smart_rule"`
+	RuleJSON string `json:"smart_rule"`
+	// Sharing is "" (private), "users" (every signed in account) or
+	// "site" (a Staff pick on the site).
+	Sharing   string    `json:"sharing"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -41,6 +44,9 @@ type PlaylistReaderWriter interface {
 	Create(ctx context.Context, p *Playlist) error
 	Update(ctx context.Context, p *Playlist) error
 	Destroy(ctx context.Context, id int) error
+	// SharedPlaylists returns playlists with one of the sharing values,
+	// leaving out the given account's own.
+	SharedPlaylists(ctx context.Context, sharing []string, notUserID *int) ([]*Playlist, error)
 
 	// SceneIDs returns the scenes of a playlist in order, filtered by the
 	// caller's access policy.

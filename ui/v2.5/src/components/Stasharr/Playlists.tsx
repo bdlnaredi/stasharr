@@ -19,6 +19,7 @@ import { useToast } from "src/hooks/Toast";
 import { SceneQueue } from "src/models/sceneQueue";
 import { SceneCard } from "src/components/Scenes/SceneCard";
 import { NewPlaylistModal } from "./PlaylistButtons";
+import { useCurrentUser } from "./CurrentUser";
 import { formatDuration, sceneName } from "./util";
 
 const refetchPlaylists = ["FindPlaylists", "FindPlaylist", "ScenePlaylists"];
@@ -42,7 +43,10 @@ const PlaylistCard: React.FC<{ playlist: GQL.PlaylistDataFragment }> = ({
         <h5>
           {playlist.name}
           {playlist.smart && <span className="stasharr-smart-badge">Smart</span>}
+          {playlist.sharing === "site" && <span className="stasharr-smart-badge">Staff pick</span>}
+          {playlist.sharing === "users" && playlist.mine && <span className="stasharr-smart-badge">Shared</span>}
         </h5>
+        {!playlist.mine && <div className="text-muted small">by {playlist.owner}</div>}
         {playlist.description && (
           <div className="text-muted stasharr-playlist-desc">
             {playlist.description}
@@ -80,10 +84,12 @@ const PlaylistList: React.FC = () => {
   const { data, loading } = GQL.useFindPlaylistsQuery({
     fetchPolicy: "cache-and-network",
   });
+  const shared = GQL.useSharedPlaylistsQuery({ fetchPolicy: "cache-and-network" });
   const [showNew, setShowNew] = useState(false);
   const history = useHistory();
 
   const playlists = data?.findPlaylists ?? [];
+  const others = shared.data?.sharedPlaylists ?? [];
 
   return (
     <div className="stasharr-playlists">
@@ -109,6 +115,17 @@ const PlaylistList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {others.length > 0 && (
+        <div className="stasharr-playlists-section">
+          <h3>Shared by others</h3>
+          <div className="stasharr-playlist-grid">
+            {others.map((p) => (
+              <PlaylistCard key={p.id} playlist={p} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {showNew && (
         <NewPlaylistModal
@@ -146,6 +163,8 @@ const PlaylistDetails: React.FC = () => {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const { me } = useCurrentUser();
+  const isAdmin = me?.role === GQL.UserRole.Admin;
 
   const playlist = data?.findPlaylist;
   const scenes = useMemo(() => playlist?.scenes ?? [], [playlist]);
@@ -282,7 +301,27 @@ const PlaylistDetails: React.FC = () => {
               )}
               <div className="text-muted">
                 {scenes.length} scene{scenes.length === 1 ? "" : "s"}
+                {!p.mine && ` · by ${p.owner}`}
               </div>
+              {p.mine && !p.watch_later && (
+                <Form.Control
+                  as="select"
+                  className="input-control stasharr-sharing mt-2"
+                  value={p.sharing}
+                  title="Who can see this playlist"
+                  onChange={async (e) => {
+                    try {
+                      await update({ variables: { input: { id: p.id, sharing: e.currentTarget.value } } });
+                    } catch (err) {
+                      Toast.error(err);
+                    }
+                  }}
+                >
+                  <option value="">Only me</option>
+                  <option value="users">Everyone with an account</option>
+                  {(isAdmin || p.sharing === "site") && <option value="site">Staff pick on the site</option>}
+                </Form.Control>
+              )}
             </>
           )}
         </div>
@@ -294,18 +333,20 @@ const PlaylistDetails: React.FC = () => {
             <Button variant="secondary" disabled={ids.length < 2} onClick={() => play(true)}>
               <Icon icon={faRandom} /> Shuffle
             </Button>{" "}
-            <Button
-              variant="secondary"
-              title="Edit"
-              onClick={() => {
-                setName(p.name);
-                setDescription(p.description);
-                setEditing(true);
-              }}
-            >
-              <Icon icon={faPen} />
-            </Button>{" "}
-            {!p.watch_later && (
+            {p.mine && (
+              <Button
+                variant="secondary"
+                title="Edit"
+                onClick={() => {
+                  setName(p.name);
+                  setDescription(p.description);
+                  setEditing(true);
+                }}
+              >
+                <Icon icon={faPen} />
+              </Button>
+            )}{" "}
+            {p.mine && !p.watch_later && (
               <Button variant="danger" title="Delete playlist" onClick={() => onDelete()}>
                 <Icon icon={faTrashAlt} />
               </Button>
@@ -342,7 +383,7 @@ const PlaylistDetails: React.FC = () => {
                   {[s.studio?.name, s.date].filter(Boolean).join(" · ")}
                 </div>
               </div>
-              {!p.smart && (
+              {!p.smart && p.mine && (
               <div className="stasharr-playlist-item-actions">
                 <Button variant="link" disabled={i === 0} title="Move up" onClick={() => move(i, -1)}>
                   <Icon icon={faArrowUp} />

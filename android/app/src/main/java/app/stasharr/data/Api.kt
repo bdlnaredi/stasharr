@@ -43,6 +43,11 @@ class Session(context: Context) {
         get() = prefs.getString("cookie", null)
         set(v) = prefs.edit().putString("cookie", v).apply()
 
+    /** Trusted device token after two-step sign in; skips the code for 90 days. */
+    var deviceToken: String?
+        get() = prefs.getString("device", null)
+        set(v) = prefs.edit().putString("device", v).apply()
+
     /** True after signing out, until the user signs in again. */
     var loggedOut: Boolean
         get() = prefs.getBoolean("logged_out", false)
@@ -51,11 +56,19 @@ class Session(context: Context) {
     val isSetUp: Boolean get() = !serverUrl.isNullOrBlank()
 
     fun clear() {
+        // the trusted device stays, so signing in again needs no code
+        val device = deviceToken
         prefs.edit().clear().apply()
+        if (device != null) deviceToken = device
     }
 }
 
-class ApiException(message: String, val unauthorized: Boolean = false) : IOException(message)
+class ApiException(
+    message: String,
+    val unauthorized: Boolean = false,
+    /** The account has two-step sign in and needs (another) code. */
+    val needsCode: Boolean = false,
+) : IOException(message)
 
 /** Keeps the server's session cookie, and remembers it between app starts. */
 private class SessionCookieJar(private val session: Session) : CookieJar {
@@ -116,19 +129,26 @@ class Api(private val session: Session) {
         (baseUrl.trimEnd('/') + path).toHttpUrlOrNull()
             ?: throw ApiException("That server address doesn't look right")
 
-    private fun loginBlocking(user: String, pass: String) {
-        val body = FormBody.Builder().add("username", user).add("password", pass).build()
-        val req = Request.Builder().url(url("/login")).post(body).build()
+    private fun loginBlocking(user: String, pass: String, code: String? = null) {
+        val form = FormBody.Builder().add("username", user).add("password", pass)
+        session.deviceToken?.let { form.add("device", it) }
+        if (!code.isNullOrBlank()) form.add("code", code.trim())
+        val req = Request.Builder().url(url("/login")).post(form.build()).build()
         plainClient.newCall(req).execute().use { res ->
+            res.header("X-Stasharr-Device")?.let { session.deviceToken = it }
+            val step = res.header("X-Stasharr-Two-Step")
             when {
+                step == "needed" -> throw ApiException("Enter the code from your authenticator app", unauthorized = true, needsCode = true)
+                step == "wrong" -> throw ApiException("That code is not right. Try the newest code.", unauthorized = true, needsCode = true)
+                res.code == 429 -> throw ApiException(res.body?.string()?.trim()?.ifBlank { null } ?: "Too many wrong attempts. Try again later.")
                 res.code == 401 -> throw ApiException("Wrong username or password", unauthorized = true)
                 !res.isSuccessful -> throw ApiException("Login failed (${res.code})")
             }
         }
     }
 
-    suspend fun login(user: String, pass: String) = withContext(Dispatchers.IO) {
-        loginBlocking(user, pass)
+    suspend fun login(user: String, pass: String, code: String? = null) = withContext(Dispatchers.IO) {
+        loginBlocking(user, pass, code)
     }
 
     /** Runs a GraphQL query and returns its "data" object. */

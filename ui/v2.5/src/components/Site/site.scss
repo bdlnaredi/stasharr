@@ -3079,3 +3079,88 @@ body.site-mode {
   display: flex;
   margin: 4px 0 2px;
 }
+
+// playlists on My list and shared playlists
+.site-playlist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.site-playlist-row {
+  align-items: center;
+  background: var(--site-card, rgba(255, 255, 255, 0.04));
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 14px;
+
+  a {
+    color: inherit;
+    flex: 1;
+    font-weight: 600;
+    min-width: 140px;
+  }
+
+  select {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: inherit;
+    padding: 4px 8px;
+  }
+}
+
+.site-playlist-tiles {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.site-playlist-tile {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    color: inherit;
+  }
+}
+
+.site-playlist-cover {
+  aspect-ratio: 16 / 9;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+
+  img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  span {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 4px;
+    bottom: 6px;
+    font-size: 12px;
+    padding: 2px 6px;
+    position: absolute;
+    right: 6px;
+  }
+}
+
+.site-playlist-name {
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.site-playlist-by {
+  margin: -8px 0 16px;
+}
+
+.site-muted {
+  color: var(--site-muted);
+  font-size: 13px;
+}

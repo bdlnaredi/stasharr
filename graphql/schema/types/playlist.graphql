@@ -15,6 +15,12 @@ type Playlist {
   cover: Scene
   "Scenes in playlist order; limit returns only the first ones"
   scenes(limit: Int): [Scene!]!
+  "'' private, 'users' every signed in account, 'site' a Staff pick on the site"
+  sharing: String!
+  "Who made it"
+  owner: String!
+  "Made by the signed in account"
+  mine: Boolean!
   created_at: Time!
   updated_at: Time!
 }
@@ -48,6 +54,8 @@ input PlaylistUpdateInput {
   id: ID!
   name: String
   description: String
+  "'' private, 'users' every signed in account, 'site' Staff pick (admins)"
+  sharing: String
   "Changes the rule of a smart playlist"
   smart_rule: SmartPlaylistRuleInput
 }
@@ -63,6 +71,10 @@ extend type Query {
   "The current user's playlists, Watch later first"
   findPlaylists: [Playlist!]!
   findPlaylist(id: ID!): Playlist
+  "Playlists other accounts share, newest first"
+  sharedPlaylists: [Playlist!]!
+  "Playlists the admins put on the site"
+  staffPicks: [Playlist!]!
   "Scenes the current user started but did not finish, most recent first"
   continueWatching(limit: Int): [Scene!]!
 }
