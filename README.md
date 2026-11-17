@@ -32,6 +32,13 @@ things Stash does not do on its own:
 - **Smart playlists, notifications, scheduled backups and metadata refresh**
 - **A new login page** with pictures or previews from the library behind it
 - **Tag clips**: every tag gets a short looping clip of its moment
+- **Invites and two-step sign in**: invite links that make accounts in a
+  tier, upgrade requests, authenticator-app codes and a wrong-password limit
+- **Shared playlists and Staff picks**, **search by description**, alerts for
+  favourite pornstars, Trans, Lesbian and Bi ribbons on scenes
+- **Health page and cleanup suggestions**, backups to **Google Drive**
+- **Android TV**, home screen widgets, auto-download and smooth streaming
+  that adapts to the connection
 
 Everything else works exactly like Stash, and an existing Stash database is
 upgraded in place the first time Stasharr starts. The web interface runs on
@@ -116,6 +123,27 @@ Users without a tier see the whole library. Admins are never restricted.
 Each user can also get their own **API key** (key button in the user list) for
 apps and scripts. Users change their own password under **Settings → Account**.
 
+### Invites and upgrade requests
+
+Under **Settings → Users & tiers → Invites**, make a link that lets someone
+create their own account in a tier (as a viewer or editor), for a number of
+accounts and days. The link opens a sign-up form on the login page. People
+can ask for another tier on their **Account** page; pending requests are at
+the top of **Users & tiers**, where you approve or decline them.
+
+### Signing in safely
+
+- After 5 wrong passwords or codes for an account from one address (or 20
+  from one address) within 15 minutes, sign in from there is refused for 15
+  minutes.
+- **Two-step sign in:** under **Settings → Account** (or the site's Account
+  page), scan the QR code with an authenticator app (Google Authenticator,
+  Microsoft Authenticator, Aegis…) and type the code to turn it on. Keep the
+  8 recovery codes it shows. After that, sign in asks for the app's code;
+  a device that signed in with a code is remembered for 90 days. If someone
+  loses their phone, an admin can **Reset 2-step** in the user list. The
+  Android app asks for the code too.
+
 ### What is per user
 
 | Per user | Shared by everyone |
@@ -157,6 +185,11 @@ scene gets 3 reels by default, each from a different high point, so a reel
 plays like a real moment from the scene rather than a montage. The high
 points are found from:
 
+0. **The Stasharr Tagger**, when it runs: it scores each moment for action
+   (your AI marker labels) and picture quality, skips talking, title cards
+   and dark or blurry shots, and gives each reel of a scene a different act.
+   AI markers remake a scene's reels when they look at it. Switch: **Let the
+   AI tagger pick the moments** (Settings → Auto-import → Reels)
 1. **Interactive heatmap**: for scenes with a funscript, the most intense parts
 2. **Audio and motion**: otherwise ffmpeg finds the loudest, busiest parts,
    skipping intros and credits. It only reads the audio and the key frames, so
@@ -308,6 +341,10 @@ Every user has their own playlists:
   shuffled, reorder it, rename it or delete it
 - **Continue watching**: scenes you started but did not finish appear at the
   top of the home page and the Playlists page, and pick up where you left off
+- **Sharing**: each playlist can be *Only me*, *Everyone with an account*, or
+  (for admins) a *Staff pick on the site*, which shows as a home row on the
+  site. Shared playlists are under "Shared by others"; people only see the
+  scenes their tier allows
 
 ### Smart playlists
 
@@ -325,6 +362,17 @@ Gotify or any webhook when auto-import adds new scenes, when a new scene
 cannot be identified, when a task fails, and when a scheduled backup or
 metadata refresh finishes. **Send test** checks the settings.
 
+## Health and cleanup
+
+- **Settings → Health** shows the free space on every disk Stasharr uses,
+  the last backup, auto-import, the tagger, notifications and tasks that
+  failed, with any problems at the top. A notification goes out when a disk
+  has less free space than you set (20 GB by default) or under 5%.
+- **Settings → Cleanup suggestions** lists scenes not watched for months,
+  never watched, or rated two stars or less, biggest first, with the space
+  they take. Pick some and remove them; with the trash bin on they can be
+  restored.
+
 ## Backups and metadata refresh
 
 Under **Settings → Backups & refresh**:
@@ -333,6 +381,10 @@ Under **Settings → Backups & refresh**:
   default). Scheduled backups go in a `stasharr-auto` folder inside the
   backup folder. Any backup in the list can be **restored**; the current
   database is backed up first, so a restore can be undone.
+- **Google Drive** uploads every daily backup to a "Stasharr backups"
+  folder on your Drive, keeping the newest few there, and copies one back
+  to restore it. It uses your own free Google Cloud sign-in key; the page
+  shows how to make one (about 5 minutes).
 - **Refresh automatically** checks StashDB, ThePornDB and your other
   stash-boxes again every few days for scenes, performers and studios you
   have already matched, and adds new details, images, performers and tags.
@@ -365,8 +417,9 @@ and no extra service:
 - **Recommended for you** (on the home page) looks at what you play, O and
   rate, builds a picture of the performers, studios and tags you like, and
   suggests scenes you have not watched yet. Low ratings push similar scenes
-  down. Every user gets their own, and it only shows once you have some
-  history.
+  down. With the search index from the Stasharr Tagger, it also learns what
+  you like to look at, so scenes that look like your favourites rank higher.
+  Every user gets their own, and it only shows once you have some history.
 
 ## Site front end
 
@@ -514,6 +567,25 @@ server makes first (it takes a few minutes and is kept on the server for a
 week). Downloads are under **You → Downloads** and the download button on
 Home, and still play when the server can't be reached. A user's tier must
 allow downloading.
+
+**Smooth streaming:** on mobile data the app starts with **Auto**, which
+moves to a smaller size when the connection slows down and back up when it
+recovers. On Wi-Fi it plays the original file. Change this under the
+player's **Playback → Start scenes with**.
+
+**Android TV:** the same app installs on Android TV and shows in the TV's
+app row. Use the remote: OK pauses, left and right skip 10 seconds, up or
+down shows the controls.
+
+**Widgets:** add "Continue watching" or "New from favourites" to the home
+screen (press and hold the home screen → Widgets → Stasharr).
+
+**Auto-download:** at the top of Downloads, switch on "Download new scenes
+from favourites", optionally only on Wi-Fi, and choose how many to keep.
+
+**Admin tools:** admins get **You → Admin tools**: review AI markers,
+auto-import status and scenes that need attention, server tasks and
+statistics.
 
 The app plays the original file first, as Android plays far more formats
 than a browser, and falls back to the server's conversions when it cannot.
