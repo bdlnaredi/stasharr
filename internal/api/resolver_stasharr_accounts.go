@@ -71,7 +71,7 @@ func (r *mutationResolver) TwoStepStart(ctx context.Context) (*TwoStepSetup, err
 	if err != nil {
 		return nil, err
 	}
-	return &TwoStepSetup{Secret: s.Secret, URL: s.URL, QrSvg: code.SVG()}, nil
+	return &TwoStepSetup{Secret: s.Secret, URL: s.URL, QRSVG: code.SVG()}, nil
 }
 
 func (r *mutationResolver) TwoStepConfirm(ctx context.Context, code string) ([]string, error) {
@@ -341,7 +341,7 @@ func (r *queryResolver) TierChoices(ctx context.Context) ([]*TierChoice, error) 
 			ret = append(ret, &TierChoice{
 				ID:          strconv.Itoa(t.ID),
 				Name:        t.Name,
-				Description: t.Description,
+				Description: description(t.Description),
 				Current:     current != nil && *current == t.ID,
 			})
 		}
@@ -480,4 +480,11 @@ func (r *mutationResolver) TierRequestDecide(ctx context.Context, id string, app
 		userService().Invalidate()
 	}
 	return ret, err
+}
+
+func description(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }
