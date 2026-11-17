@@ -78,8 +78,11 @@
                     document.getElementById("code").select();
                 } else if (xhr.status == 429) {
                     shake(xhr.responseText || "Too many wrong attempts. Try again later.");
-                } else {
+                } else if (xhr.status == 401) {
                     shake(localeStrings.invalid_credentials);
+                } else {
+                    // a problem on the server, not a wrong password
+                    shake((xhr.responseText || "").trim() || localeStrings.internal_error);
                 }
             }
         };

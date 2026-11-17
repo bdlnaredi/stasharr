@@ -277,6 +277,12 @@ func (s *UserService) SecondStep(ctx context.Context, username, code, device, de
 	if !s.dbReady() {
 		return "", nil
 	}
+	// before the database is migrated after an update, the two-step tables
+	// may not exist yet; nobody can have two-step sign in on then, and the
+	// admin must be able to sign in to migrate
+	if db := GetInstance().Database; db == nil || db.Ready() != nil || db.NeedsMigration() {
+		return "", nil
+	}
 	id := s.UserIDForLogin(ctx, username)
 	if id < 0 {
 		return "", nil
