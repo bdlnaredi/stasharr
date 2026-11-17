@@ -3,7 +3,7 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 `android-v…` releases. Everything that is not listed here works as in
 [Stash](https://github.com/stashapp/stash).
 
-## v2.9 (2026-11-17)
+## v2.10 (2026-11-17)
 
 ### Smoother streaming
 - A new **Auto** stream for every scene lists all its sizes (240p up to the
@@ -203,6 +203,8 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 - Settings: the list of sections on the left scrolls on its own when it is
   taller than the window, so everything down to Troubleshooting mode can
   be reached.
+
+## v2.9 (2026-11-09)
 
 ### Android app
 - **Comments in the app:** under every scene, and on reels through a new
