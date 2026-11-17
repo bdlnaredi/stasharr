@@ -677,12 +677,24 @@ fun PlayerScreen(a: PlayerActivity) {
                     sheet = null
                 }
             }
+            SheetLabel("Start scenes with")
+            var streaming by remember { mutableStateOf(a.streaming) }
+            Streaming.entries.forEach { s ->
+                OptionRow(s.label, subtitle = s.description, selected = s == streaming) {
+                    a.streaming = s
+                    streaming = s
+                }
+            }
             if (a.sources.size > 1) {
                 SheetLabel("Quality")
                 a.sources.forEachIndexed { i, src ->
                     OptionRow(
                         src.label,
-                        subtitle = if (src.isDirect) "The file as it is, played by your phone" else "Converted by your server",
+                        subtitle = when {
+                            src.isDirect -> "The file as it is, played by your phone"
+                            src.isAuto -> "Smaller when the connection slows down, bigger when it recovers"
+                            else -> "Converted by your server"
+                        },
                         selected = i == a.sourceIndex,
                     ) {
                         a.chooseSource(i)

@@ -60,6 +60,8 @@ import kotlinx.coroutines.launch
 data class Source(val label: String, val url: String) {
     val isDirect: Boolean get() = url.substringBefore('?').endsWith("/stream")
     val isHls: Boolean get() = url.substringBefore('?').endsWith(".m3u8")
+    /** The server's stream that changes size with the connection. */
+    val isAuto: Boolean get() = url.substringBefore('?').endsWith(".auto.m3u8")
     /** A file downloaded to the phone. */
     val isLocal: Boolean get() = url.startsWith("file:")
     /** Whether the player can jump around in it; other conversions restart from a time. */
@@ -418,7 +420,12 @@ class PlayerActivity : ComponentActivity() {
                 }
                 sources = (if (local != null) listOf(Source("Downloaded", android.net.Uri.fromFile(local).toString())) else emptyList()) +
                     (if (online != null) buildSources(online) else emptyList())
-                sourceIndex = if (decoder == Decoder.Server && local == null) firstServerSource() else 0
+                sourceIndex = when {
+                    local != null -> 0
+                    useAuto() && sources.any { it.isAuto } -> sources.indexOfFirst { it.isAuto }
+                    decoder == Decoder.Server -> firstServerSource()
+                    else -> 0
+                }
                 if (sources.isEmpty()) {
                     error = "This scene has no file to play"
                 } else {
@@ -432,6 +439,22 @@ class PlayerActivity : ComponentActivity() {
 
     private fun firstServerSource(): Int = sources.indexOfFirst { !it.isDirect && !it.isLocal }.coerceAtLeast(0)
 
+    /** Whether to start with the stream that follows the connection. */
+    private fun useAuto(): Boolean = when (prefs.streaming) {
+        Streaming.Original -> false
+        Streaming.Auto -> true
+        Streaming.AutoOnMobile -> {
+            val cm = getSystemService(CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+            cm?.isActiveNetworkMetered == true
+        }
+    }
+
+    internal var streaming: Streaming
+        get() = prefs.streaming
+        set(v) {
+            prefs.streaming = v
+        }
+
     /** The original file first (the phone plays far more than a browser), then the server's conversions. */
     private fun buildSources(s: Scene): List<Source> {
         val list = mutableListOf<Source>()
@@ -442,12 +465,14 @@ class PlayerActivity : ComponentActivity() {
             val u = it.url.substringBefore('?')
             when {
                 u.endsWith("/stream") -> 0
+                u.endsWith(".auto.m3u8") -> 1
                 u.endsWith(".m3u8") -> 1
                 u.endsWith(".mp4") || u.endsWith(".mp3") -> 2
                 else -> 3
             }
         }.forEach { st ->
             val label = (st.label ?: "Server")
+                .replace("HLS Auto", "Auto (follows the connection)")
                 .replace("Direct stream", "Original")
                 .replace("HLS", "Server")
                 .replace("MP4", "Server MP4")

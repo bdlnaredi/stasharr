@@ -7,6 +7,16 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Smoother streaming
+- A new **Auto** stream for every scene lists all its sizes (240p up to the
+  original), with segments that line up, so the player moves to a smaller
+  size when the connection slows down and back up when it recovers,
+  instead of stalling.
+- **Android app:** Player → Playback → "Start scenes with": Original, **Auto
+  on mobile data** (the new default: the original file on Wi-Fi, Auto on
+  mobile data) or Always auto. Auto is also in the quality list. Auto needs
+  the server to convert, which takes some processor.
+
 ### Recommendations by taste
 - "Recommended for you" now also learns what each person likes to look at,
   not just which performers, tags and studios: scenes that look like the

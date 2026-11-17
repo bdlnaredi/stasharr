@@ -49,6 +49,12 @@ var (
 		mimeType:  ffmpeg.MimeHLS,
 		extension: ".m3u8",
 	}
+	// Stasharr: adaptive HLS, see AdaptiveVariants
+	hlsAutoEndpointType = endpointType{
+		label:     "HLS Auto",
+		mimeType:  ffmpeg.MimeHLS,
+		extension: ".auto.m3u8",
+	}
 	dashEndpointType = endpointType{
 		label:     "DASH",
 		mimeType:  ffmpeg.MimeDASH,
@@ -223,6 +229,12 @@ func GetSceneStreamPaths(scene *models.Scene, directStreamURL *url.URL, maxStrea
 		dashStreams = append(dashStreams, makeStreamEndpoint(dashEndpointType, models.StreamingResolutionEnumLow))
 	}
 
+	// Stasharr: one HLS stream with every size, so players switch to a
+	// smaller one when the connection slows down
+	if len(hlsStreams) >= 2 {
+		hlsStreams = append([]*SceneStreamEndpoint{makeStreamEndpoint(hlsAutoEndpointType, "")}, hlsStreams...)
+	}
+
 	endpoints = append(endpoints, mp4Streams...)
 	endpoints = append(endpoints, webmStreams...)
 	endpoints = append(endpoints, hlsStreams...)
@@ -248,3 +260,64 @@ func HasTranscode(scene *models.Scene, fileNamingAlgo models.HashAlgorithm) bool
 	ret, _ := fsutil.FileExists(transcodePath)
 	return ret
 }
+
+// HLSVariant is one size in the adaptive HLS stream.
+type HLSVariant struct {
+	Resolution models.StreamingResolutionEnum
+	Width      int
+	Height     int
+	Bandwidth  int
+}
+
+// AdaptiveVariants lists the sizes for the adaptive HLS stream of a video,
+// smallest first: every standard size up to the video's own and the
+// largest the server is set to convert to.
+func AdaptiveVariants(vf *models.VideoFile, maxTranscode models.StreamingResolutionEnum) []HLSVariant {
+	if vf == nil || vf.Height == 0 || vf.Width == 0 {
+		return nil
+	}
+	short := min(vf.Width, vf.Height)
+	sizes := []struct {
+		res       models.StreamingResolutionEnum
+		height    int
+		bandwidth int
+	}{
+		{models.StreamingResolutionEnumLow, 240, 700_000},
+		{models.StreamingResolutionEnumStandard, 480, 1_600_000},
+		{models.StreamingResolutionEnumStandardHd, 720, 3_200_000},
+		{models.StreamingResolutionEnumFullHd, 1080, 6_000_000},
+		{models.StreamingResolutionEnumFourK, 2160, 18_000_000},
+	}
+	limit := models.ResolutionEnum(maxTranscode).GetMinResolution()
+	if maxTranscode == models.StreamingResolutionEnumOriginal || maxTranscode == "" {
+		limit = 1 << 30
+	}
+	scale := func(h int) (int, int) {
+		// the short side gets the size; keep the shape, even numbers
+		if vf.Width >= vf.Height {
+			w := int(float64(h)*float64(vf.Width)/float64(vf.Height)/2) * 2
+			return w, h
+		}
+		w := int(float64(h)*float64(vf.Height)/float64(vf.Width)/2) * 2
+		return h, w
+	}
+	var ret []HLSVariant
+	for _, s := range sizes {
+		if s.height > short+short/10 || s.height > limit {
+			continue
+		}
+		w, h := scale(s.height)
+		ret = append(ret, HLSVariant{Resolution: s.res, Width: w, Height: h, Bandwidth: s.bandwidth})
+	}
+	// a video between the standard sizes also gets its own size on top
+	if len(ret) > 0 && short > scaleShort(ret[len(ret)-1])*11/10 && short <= limit {
+		bw := int(vf.BitRate)
+		if bw <= 0 {
+			bw = ret[len(ret)-1].Bandwidth * 2
+		}
+		ret = append(ret, HLSVariant{Resolution: models.StreamingResolutionEnumOriginal, Width: vf.Width, Height: vf.Height, Bandwidth: bw})
+	}
+	return ret
+}
+
+func scaleShort(v HLSVariant) int { return min(v.Width, v.Height) }
