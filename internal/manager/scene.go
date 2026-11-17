@@ -288,7 +288,8 @@ func AdaptiveVariants(vf *models.VideoFile, maxTranscode models.StreamingResolut
 		{models.StreamingResolutionEnumFullHd, 1080, 6_000_000},
 		{models.StreamingResolutionEnumFourK, 2160, 18_000_000},
 	}
-	limit := models.ResolutionEnum(maxTranscode).GetMinResolution()
+	maxRes := models.ResolutionEnum(maxTranscode)
+	limit := maxRes.GetMinResolution()
 	if maxTranscode == models.StreamingResolutionEnumOriginal || maxTranscode == "" {
 		limit = 1 << 30
 	}
