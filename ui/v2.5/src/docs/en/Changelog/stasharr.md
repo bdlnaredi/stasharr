@@ -3,7 +3,7 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 `android-v…` releases. Everything that is not listed here works as in
 [Stash](https://github.com/stashapp/stash).
 
-## v2.10 (2026-11-17)
+## v3.5 (2026-11-17)
 
 ### Smoother streaming
 - A new **Auto** stream for every scene lists all its sizes (240p up to the
@@ -67,6 +67,8 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   Android app; people only see the scenes their tier allows.
 - **Staff picks** is a new home row for the site (on by default): one rail
   per playlist you put on the site, each with its own page.
+
+## v3.4 (2026-11-12)
 
 ### Reels picked by AI
 - With the Stasharr Tagger running, it picks each reel's moments: it looks
@@ -149,6 +151,8 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   - Statistics: plays, who is watching, most watched scenes, performers and
     tags, and storage, for 7, 30 or 90 days or a year.
 
+## v3.3 (2026-11-09)
+
 ### Backups to Google Drive
 - **Settings → Maintenance → Google Drive:** connect your own Google Drive
   and every daily backup is uploaded after it is made, into a folder called
@@ -187,11 +191,22 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   from the download, as with the first install.
 - Each Android release now says what's new.
 
+## v3.2 (2026-11-09)
+
 ### Reels on or off
 - **Settings → Auto-import → Reels** has a switch for the whole server. Off
   hides reels everywhere (the menu, scene pages, the site's Reels page and
   home row, the Android app's Reels tab) and stops making new ones. Reels
   already made are kept, so switching back on brings them back.
+
+## v3.1 (2026-11-09)
+
+### Settings list scrolls
+- Settings: the list of sections on the left scrolls on its own when it is
+  taller than the window, so everything down to Troubleshooting mode can
+  be reached.
+
+## v3.0 (2026-11-09)
 
 ### Menus fit on one line
 - Admin menu bar: Audio, Playlists, Reels and Describe are under **More**
@@ -200,9 +215,6 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   pointing at one.
 - Site header: a tighter menu on laptops, and the ☰ menu below 1340 pixels,
   so it stays on one line in every language.
-- Settings: the list of sections on the left scrolls on its own when it is
-  taller than the window, so everything down to Troubleshooting mode can
-  be reached.
 
 ## v2.9 (2026-11-09)
 
