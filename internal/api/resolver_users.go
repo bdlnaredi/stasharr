@@ -58,6 +58,7 @@ func (r *queryResolver) Me(ctx context.Context) (*CurrentUser, error) {
 		CanDownload:      p.CanDownload(),
 		CanViewReels:     p.CanViewReels(),
 		MultiUserEnabled: cfg.HasCredentials(),
+		TwoStepEnabled:   manager.TwoStepEnabled(ctx, p.UserID),
 	}
 	if p.TierName != "" {
 		t := p.TierName

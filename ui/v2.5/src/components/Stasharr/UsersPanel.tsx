@@ -1,3 +1,4 @@
+import { InvitesSection, TierRequestsSection } from "./UserInvites";
 import React, { useState } from "react";
 import { Badge, Button, Form, Table } from "react-bootstrap";
 import {
@@ -430,6 +431,7 @@ export const UsersPanel: React.FC = () => {
   const config = GQL.useConfigurationQuery();
   const [destroyUser] = GQL.useUserDestroyMutation();
   const [destroyTier] = GQL.useUserTierDestroyMutation();
+  const [resetTwoStep] = GQL.useUserResetTwoStepMutation();
 
   const [editUser, setEditUser] = useState<IUserForm>();
   const [editTier, setEditTier] = useState<ITierForm>();
@@ -519,6 +521,8 @@ export const UsersPanel: React.FC = () => {
         />
       )}
 
+      <TierRequestsSection onChange={() => users.refetch()} />
+
       <div className="setting-section">
         <h1>Users</h1>
         <div className="sub-heading">
@@ -541,6 +545,11 @@ export const UsersPanel: React.FC = () => {
                 <td>
                   {u.username}{" "}
                   {u.disabled && <Badge variant="secondary">disabled</Badge>}
+                  {u.two_step_enabled && (
+                    <Badge variant="info" title="Two-step sign in is on">
+                      2-step
+                    </Badge>
+                  )}
                 </td>
                 <td>{roleLabels[u.role]}</td>
                 <td>
@@ -575,6 +584,27 @@ export const UsersPanel: React.FC = () => {
                   >
                     <Icon icon={faPencilAlt} />
                   </Button>{" "}
+                  {u.two_step_enabled && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        title="Turn off two-step sign in, for someone who lost their phone"
+                        onClick={async () => {
+                          if (!window.confirm(`Turn off two-step sign in for ${u.username}?`)) return;
+                          try {
+                            await resetTwoStep({ variables: { id: u.id } });
+                            await users.refetch();
+                            Toast.success("Two-step sign in turned off");
+                          } catch (e) {
+                            Toast.error(e);
+                          }
+                        }}
+                      >
+                        Reset 2-step
+                      </Button>{" "}
+                    </>
+                  )}
                   <Button
                     size="sm"
                     variant="danger"
@@ -599,6 +629,8 @@ export const UsersPanel: React.FC = () => {
           <Icon icon={faPlus} /> Add user
         </Button>
       </div>
+
+      <InvitesSection tiers={tierList} />
 
       <div className="setting-section">
         <h1>Tiers</h1>

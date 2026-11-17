@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"net"
 	"net/http"
 	"strings"
 
@@ -123,8 +124,18 @@ func handleLogin() http.HandlerFunc {
 
 func handleLoginPost() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Stasharr: too many wrong passwords or codes from this address
+		addr := clientAddress(r)
+		username := r.FormValue("username")
+		if wait := manager.Guard.Blocked(addr, username); wait > 0 {
+			mins := int(wait.Minutes()) + 1
+			w.Header().Set("Retry-After", fmt.Sprint(int(wait.Seconds())+1))
+			http.Error(w, fmt.Sprintf("Too many wrong attempts. Try again in %d minute(s).", mins), http.StatusTooManyRequests)
+			return
+		}
+
 		err := manager.GetInstance().SessionStore.Login(w, r)
-		if err != nil {
+		if err != nil && !errors.Is(err, session.ErrTwoStepNeeded) {
 			// always log the error
 			logger.Errorf("Error logging in: %v from IP: %s", err, r.RemoteAddr)
 		}
@@ -132,8 +143,23 @@ func handleLoginPost() http.HandlerFunc {
 		var invalidCredentialsError *session.InvalidCredentialsError
 
 		if errors.As(err, &invalidCredentialsError) {
+			manager.Guard.Failed(addr, username)
 			http.Error(w, "Username or password is invalid", http.StatusUnauthorized)
 			return
+		}
+		if errors.Is(err, session.ErrTwoStepNeeded) {
+			w.Header().Set("X-Stasharr-Two-Step", "needed")
+			http.Error(w, "Enter the code from your authenticator app", http.StatusUnauthorized)
+			return
+		}
+		if errors.Is(err, session.ErrTwoStepWrong) {
+			manager.Guard.Failed(addr, username)
+			w.Header().Set("X-Stasharr-Two-Step", "wrong")
+			http.Error(w, "That code is not right", http.StatusUnauthorized)
+			return
+		}
+		if err == nil {
+			manager.Guard.Succeeded(addr, username)
 		}
 
 		if err != nil {
@@ -144,6 +170,15 @@ func handleLoginPost() http.HandlerFunc {
 
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+// clientAddress is the address a request came from, without the port.
+func clientAddress(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
 }
 
 func handleLogout() http.HandlerFunc {

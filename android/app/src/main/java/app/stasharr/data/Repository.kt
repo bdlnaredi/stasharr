@@ -37,7 +37,7 @@ fragment SceneFull on Scene {
 """
 
 private const val PERFORMER = "id name image_path scene_count favorite disambiguation country birthdate details"
-private const val PLAYLIST = "id name description watch_later smart scene_count cover { paths { screenshot } }"
+private const val PLAYLIST = "id name description watch_later smart scene_count sharing owner mine cover { paths { screenshot } }"
 
 /** A filter applied to scene lists. */
 sealed class SceneScope {
@@ -254,6 +254,20 @@ class Repository(private val api: Api) {
     suspend fun playlists(): List<Playlist> {
         val data = api.gql("query { findPlaylists { $PLAYLIST } }")
         return data["findPlaylists"].decode(emptyList())
+    }
+
+    /** Playlists other accounts share, and the admins' Staff picks. */
+    suspend fun sharedPlaylists(): List<Playlist> {
+        val data = api.gql("query { sharedPlaylists { $PLAYLIST } }")
+        return data["sharedPlaylists"].decode(emptyList())
+    }
+
+    /** "" only me, "users" everyone with an account, "site" a Staff pick (admins). */
+    suspend fun setPlaylistSharing(id: String, sharing: String) {
+        api.gql(
+            "mutation(\$input: PlaylistUpdateInput!) { playlistUpdate(input: \$input) { id } }",
+            vars { put("input", buildJsonObject { put("id", id); put("sharing", sharing) }) }
+        )
     }
 
     suspend fun playlist(id: String): Pair<Playlist, List<Scene>>? {

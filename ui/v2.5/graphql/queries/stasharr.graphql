@@ -407,3 +407,47 @@ query GoogleDriveFiles {
     created_at
   }
 }
+
+query MyTwoStep {
+  myTwoStep {
+    enabled
+    recovery_left
+    trusted_devices
+  }
+}
+
+query TierChoices {
+  tierChoices {
+    id
+    name
+    description
+    current
+  }
+  myTierRequests {
+    ...TierRequestData
+  }
+}
+
+query UserInvites {
+  userInvites {
+    ...UserInviteData
+  }
+}
+
+query TierRequests {
+  tierRequests {
+    ...TierRequestData
+  }
+}
+
+query SharedPlaylists {
+  sharedPlaylists {
+    ...PlaylistData
+  }
+}
+
+query StaffPicks {
+  staffPicks {
+    ...PlaylistData
+  }
+}

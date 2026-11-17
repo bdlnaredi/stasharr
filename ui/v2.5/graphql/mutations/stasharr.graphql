@@ -217,3 +217,57 @@ mutation UploadBackupToGoogleDrive($id: ID!) {
 mutation DownloadGoogleDriveBackup($id: ID!) {
   downloadGoogleDriveBackup(id: $id)
 }
+
+mutation TwoStepStart {
+  twoStepStart {
+    secret
+    url
+    qr_svg
+  }
+}
+
+mutation TwoStepConfirm($code: String!) {
+  twoStepConfirm(code: $code)
+}
+
+mutation TwoStepDisable($password: String!) {
+  twoStepDisable(password: $password)
+}
+
+mutation TwoStepRecoveryCodes {
+  twoStepRecoveryCodes
+}
+
+mutation TwoStepForgetDevices {
+  twoStepForgetDevices
+}
+
+mutation UserResetTwoStep($id: ID!) {
+  userResetTwoStep(id: $id)
+}
+
+mutation UserInviteCreate($input: UserInviteInput!) {
+  userInviteCreate(input: $input) {
+    ...UserInviteData
+  }
+}
+
+mutation UserInviteDelete($id: ID!) {
+  userInviteDelete(id: $id)
+}
+
+mutation TierRequestCreate($tier_id: ID!, $message: String) {
+  tierRequestCreate(tier_id: $tier_id, message: $message) {
+    ...TierRequestData
+  }
+}
+
+mutation TierRequestCancel {
+  tierRequestCancel
+}
+
+mutation TierRequestDecide($id: ID!, $approve: Boolean!) {
+  tierRequestDecide(id: $id, approve: $approve) {
+    ...TierRequestData
+  }
+}

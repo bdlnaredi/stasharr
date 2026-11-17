@@ -7,6 +7,37 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Invites and tier upgrades
+- **Settings → Users → Invites:** make a link that lets someone create their
+  own account, in the tier and role (viewer or editor) you choose, for a
+  number of accounts and days. The link opens a sign-up form on the login
+  page, and the new account is signed in straight away. You get a
+  notification for each new account (new event: New accounts and upgrade
+  requests).
+- **Upgrade requests:** people pick another tier on their Account page
+  (site and admin interface) with an optional note; you approve or decline
+  under Settings → Users, and approving moves them to that tier.
+
+### Safer sign in
+- **Wrong passwords are limited:** after 5 wrong passwords or codes for an
+  account from one address (or 20 from one address) in 15 minutes, sign in
+  from there is refused for 15 minutes.
+- **Two-step sign in:** on the Account page, scan a QR code with an
+  authenticator app (Google Authenticator, Microsoft Authenticator, Aegis…)
+  and sign in with its 6-digit code after the password. You get 8 one-time
+  recovery codes. A device signed in with a code is remembered for 90 days;
+  "Forget devices" signs them out of that. Admins can turn it off for
+  someone who lost their phone (Settings → Users → Reset 2-step). Works on
+  the login page and in the Android app.
+
+### Shared playlists and Staff picks
+- Every playlist can be **Only me**, **Everyone with an account**, or (for
+  admins) a **Staff pick on the site**. Shared playlists show under
+  "Shared by others" in Playlists, on the site's My list page and in the
+  Android app; people only see the scenes their tier allows.
+- **Staff picks** is a new home row for the site (on by default): one rail
+  per playlist you put on the site, each with its own page.
+
 ### Reels picked by AI
 - With the Stasharr Tagger running, it picks each reel's moments: it looks
   at a frame every few seconds and scores how much is happening (your AI

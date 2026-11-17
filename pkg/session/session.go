@@ -45,6 +45,29 @@ func (e InvalidCredentialsError) Error() string {
 
 var ErrUnauthorized = errors.New("unauthorized")
 
+// Stasharr: two-step sign in. ErrTwoStepNeeded means the password was right
+// and the account needs the code from its authenticator app;
+// ErrTwoStepWrong means the code was not right.
+var (
+	ErrTwoStepNeeded = errors.New("two-step code needed")
+	ErrTwoStepWrong  = errors.New("two-step code is not right")
+)
+
+// TwoStepChecker checks the second step after a right password. It returns
+// a new device token to remember when a code was used.
+type TwoStepChecker interface {
+	SecondStep(ctx context.Context, username, code, device, deviceName string) (string, error)
+}
+
+const (
+	codeFormKey   = "code"
+	deviceFormKey = "device"
+	// DeviceCookie keeps the trusted device token in browsers
+	DeviceCookie = "stasharr_device"
+	// DeviceHeader sends a new trusted device token to apps
+	DeviceHeader = "X-Stasharr-Device"
+)
+
 type Store struct {
 	sessionStore *sessions.CookieStore
 	config       SessionConfig
@@ -82,6 +105,31 @@ func (s *Store) Login(w http.ResponseWriter, r *http.Request) error {
 		if s.users == nil || !s.users.ValidateUser(r.Context(), username, password) {
 			logger.Warnf("Failed login attempt from %s", r.RemoteAddr)
 			return &InvalidCredentialsError{Username: username}
+		}
+	}
+
+	// the second step, when the account has one
+	if ts, ok := s.users.(TwoStepChecker); ok && s.users != nil {
+		device := r.FormValue(deviceFormKey)
+		if device == "" {
+			if c, err := r.Cookie(DeviceCookie); err == nil {
+				device = c.Value
+			}
+		}
+		newDevice, err := ts.SecondStep(r.Context(), username, r.FormValue(codeFormKey), device, r.UserAgent())
+		if err != nil {
+			return err
+		}
+		if newDevice != "" {
+			http.SetCookie(w, &http.Cookie{
+				Name:     DeviceCookie,
+				Value:    newDevice,
+				Path:     "/",
+				MaxAge:   90 * 24 * 3600,
+				HttpOnly: true,
+				SameSite: http.SameSiteLaxMode,
+			})
+			w.Header().Set(DeviceHeader, newDevice)
 		}
 	}
 

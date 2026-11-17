@@ -411,3 +411,16 @@ button, input {
         animation: none !important;
     }
 }
+
+/* Stasharr: making an account with an invite */
+.signup-intro {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 16px;
+}
+
+.signup-intro a {
+    color: inherit;
+    text-decoration: underline;
+}

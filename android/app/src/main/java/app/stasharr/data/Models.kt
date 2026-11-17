@@ -173,6 +173,10 @@ data class Playlist(
     val smart: Boolean = false,
     @SerialName("scene_count") val sceneCount: Int = 0,
     val cover: PlaylistCover? = null,
+    /** "" only me, "users" everyone with an account, "site" a Staff pick */
+    val sharing: String = "",
+    val owner: String = "",
+    val mine: Boolean = true,
 )
 
 @Serializable

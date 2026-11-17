@@ -18,6 +18,7 @@ import {
   ModelPage,
   ModelsPage,
   MyListPage,
+  PlaylistPage,
   ScenePage,
   ScenesPage,
   SearchPage,
@@ -281,6 +282,7 @@ const Site: React.FC = () => {
             <Route path="/site/my-list" component={MyListPage} />
             <Route path="/site/reels" component={ReelsPage} />
             <Route path="/site/account" component={AccountPage} />
+            <Route path="/site/playlist/:id" component={PlaylistPage} />
             <Route component={SiteHome} />
           </Switch>
         </main>

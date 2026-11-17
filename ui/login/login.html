@@ -25,9 +25,33 @@
 </head>
 
 <script>
+    // Stasharr: after a right password an account with two-step sign in
+    // shows a box for the code from the authenticator app.
+    var needCode = false;
+
+    function shake(message) {
+        var signupOn = document.getElementById("signup-form").style.display !== "none";
+        var error = document.querySelector((signupOn ? "#signup-form" : "#login-form") + " .login-error");
+        error.innerHTML = "";
+        error.textContent = message;
+        var card = document.querySelector(".login-card");
+        card.classList.remove("shake");
+        void card.offsetWidth;
+        card.classList.add("shake");
+    }
+
+    function showCode() {
+        needCode = true;
+        document.getElementById("code-group").style.display = "";
+        var c = document.getElementById("code");
+        c.value = "";
+        c.focus();
+    }
+
     function login() {
         var username = document.getElementById("username").value;
         var password = document.getElementById("password").value;
+        var code = document.getElementById("code").value;
         var returnURL = document.getElementById("returnURL").value;
         var button = document.getElementById("login-button");
         var error = document.getElementsByClassName("login-error")[0];
@@ -40,16 +64,22 @@
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4) {
+                button.disabled = false;
+                var step = xhr.getResponseHeader("X-Stasharr-Two-Step");
                 if (xhr.status == 200) {
+                    button.disabled = true;
                     document.body.classList.add("leaving");
                     window.location.replace(returnURL);
+                } else if (step === "needed") {
+                    showCode();
+                    error.textContent = "Enter the 6-digit code from your authenticator app, or a recovery code.";
+                } else if (step === "wrong") {
+                    shake("That code is not right. Try the newest code.");
+                    document.getElementById("code").select();
+                } else if (xhr.status == 429) {
+                    shake(xhr.responseText || "Too many wrong attempts. Try again later.");
                 } else {
-                    button.disabled = false;
-                    error.innerHTML = localeStrings.invalid_credentials;
-                    var card = document.querySelector(".login-card");
-                    card.classList.remove("shake");
-                    void card.offsetWidth;
-                    card.classList.add("shake");
+                    shake(localeStrings.invalid_credentials);
                 }
             }
         };
@@ -58,7 +88,66 @@
             error.innerHTML = localeStrings.internal_error;
         };
         var body = "username=" + encodeURIComponent(username) + "&password=" + encodeURIComponent(password) + "&returnURL=" + encodeURIComponent(returnURL);
+        if (needCode) body += "&code=" + encodeURIComponent(code);
         xhr.send(body);
+    }
+
+    // making an account with an invite link (?invite=CODE)
+    function signup() {
+        var params = new URLSearchParams(window.location.search);
+        var invite = params.get("invite") || "";
+        var username = document.getElementById("su-username").value.trim();
+        var password = document.getElementById("su-password").value;
+        var repeat = document.getElementById("su-repeat").value;
+        var button = document.getElementById("signup-button");
+        if (password !== repeat) {
+            shake("The passwords do not match.");
+            return;
+        }
+        button.disabled = true;
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "login/signup", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == 4) {
+                if (xhr.status == 200) {
+                    document.body.classList.add("leaving");
+                    window.location.replace("./");
+                } else {
+                    button.disabled = false;
+                    shake((xhr.responseText || "Something went wrong.").trim());
+                }
+            }
+        };
+        xhr.send("invite=" + encodeURIComponent(invite) + "&username=" + encodeURIComponent(username) + "&password=" + encodeURIComponent(password));
+    }
+
+    function setupSignup() {
+        var params = new URLSearchParams(window.location.search);
+        var invite = params.get("invite");
+        if (!invite) return;
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "login/invite?code=" + encodeURIComponent(invite), true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState != 4) return;
+            var info = {};
+            try { info = JSON.parse(xhr.responseText); } catch (e) {}
+            document.getElementById("login-form").style.display = "none";
+            var form = document.getElementById("signup-form");
+            form.style.display = "";
+            var title = document.getElementById("login-title");
+            if (info.ok) {
+                title.innerText = "Make your account";
+                document.getElementById("signup-intro").textContent =
+                    "You were invited to " + (info.site || "Stasharr") + (info.tier ? " (" + info.tier + ")" : "") + ". Choose a username and a password.";
+                document.getElementById("su-username").focus();
+            } else {
+                title.innerText = "Invite";
+                document.getElementById("signup-fields").style.display = "none";
+                document.getElementById("signup-intro").textContent = info.reason || "This invite link is not valid.";
+            }
+        };
+        xhr.send();
     }
 </script>
 
@@ -73,7 +162,7 @@
 
     <div class="login-panel">
         <div class="login-card">
-            <form action="login" method="POST" onsubmit="event.preventDefault(); login();">
+            <form id="login-form" action="login" method="POST" onsubmit="event.preventDefault(); login();">
                 <h1 class="login-title" id="login-title">Login</h1>
                 <div class="form-group">
                     <label for="username"><h6 id="username-heading">Username</h6></label>
@@ -86,6 +175,10 @@
                         <button type="button" class="show-password" id="show-password" aria-label="Show password" tabindex="-1">&#128065;</button>
                     </div>
                 </div>
+                <div class="form-group" id="code-group" style="display: none">
+                    <label for="code"><h6>Two-step code</h6></label>
+                    <input class="text-input form-control" id="code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" />
+                </div>
                 <div class="login-error">
                     {{.Error}}
                 </div>
@@ -95,6 +188,28 @@
                 <div>
                     <input id="login-button" class="btn btn-primary" type="submit" value="Login">
                 </div>
+            </form>
+            <form id="signup-form" style="display: none" onsubmit="event.preventDefault(); signup();">
+                <p class="signup-intro" id="signup-intro"></p>
+                <div id="signup-fields">
+                    <div class="form-group">
+                        <label for="su-username"><h6>Username</h6></label>
+                        <input class="text-input form-control" id="su-username" type="text" autocomplete="username" />
+                    </div>
+                    <div class="form-group">
+                        <label for="su-password"><h6>Password (at least 6 characters)</h6></label>
+                        <input class="text-input form-control" id="su-password" type="password" autocomplete="new-password" />
+                    </div>
+                    <div class="form-group">
+                        <label for="su-repeat"><h6>Repeat password</h6></label>
+                        <input class="text-input form-control" id="su-repeat" type="password" autocomplete="new-password" />
+                    </div>
+                    <div class="login-error"></div>
+                    <div>
+                        <input id="signup-button" class="btn btn-primary" type="submit" value="Make account">
+                    </div>
+                </div>
+                <p class="signup-intro"><a href="login">I already have an account</a></p>
             </form>
         </div>
     </div>
@@ -108,6 +223,8 @@
     document.getElementById("password").placeholder = localeStrings.password;
     document.getElementById("login-button").value = localeStrings.login;
     document.getElementById("login-title").innerText = localeStrings.login;
+
+    setupSignup();
 
     document.getElementById("show-password").addEventListener("click", function() {
         var p = document.getElementById("password");

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/stashapp/stash/internal/manager/config"
+	"github.com/stashapp/stash/pkg/access"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/sliceutil/stringslice"
 	"github.com/stashapp/stash/pkg/sqlite"
@@ -166,12 +168,76 @@ func (r *queryResolver) FindPlaylist(ctx context.Context, id string) (*models.Pl
 		var err error
 		ret, err = r.ownPlaylist(ctx, id)
 		if errors.Is(err, errPlaylistNotFound) {
+			// someone else's, when it is shared
 			ret = nil
+			pid, convErr := strconv.Atoi(id)
+			if convErr != nil {
+				return nil
+			}
+			p, err := r.repository.Playlist.Find(ctx, pid)
+			if err != nil {
+				return err
+			}
+			if p != nil && !p.WatchLater && (p.Sharing == "site" || (p.Sharing == "users" && access.FromContext(ctx) != nil)) {
+				ret = p
+			}
 			return nil
 		}
 		return err
 	})
 	return ret, err
+}
+
+func (r *queryResolver) SharedPlaylists(ctx context.Context) ([]*models.Playlist, error) {
+	ret := []*models.Playlist{}
+	if access.FromContext(ctx) == nil && config.GetInstance().HasCredentials() {
+		return ret, nil
+	}
+	uid := sqlite.PlaylistUserID(ctx)
+	err := r.withReadTxn(ctx, func(ctx context.Context) error {
+		list, err := r.repository.Playlist.SharedPlaylists(ctx, []string{"users", "site"}, &uid)
+		if err != nil {
+			return err
+		}
+		ret = append(ret, list...)
+		return nil
+	})
+	return ret, err
+}
+
+func (r *queryResolver) StaffPicks(ctx context.Context) ([]*models.Playlist, error) {
+	ret := []*models.Playlist{}
+	err := r.withReadTxn(ctx, func(ctx context.Context) error {
+		list, err := r.repository.Playlist.SharedPlaylists(ctx, []string{"site"}, nil)
+		if err != nil {
+			return err
+		}
+		ret = append(ret, list...)
+		return nil
+	})
+	return ret, err
+}
+
+func (r *playlistResolver) Mine(ctx context.Context, obj *models.Playlist) (bool, error) {
+	return obj.UserID == sqlite.PlaylistUserID(ctx), nil
+}
+
+func (r *playlistResolver) Owner(ctx context.Context, obj *models.Playlist) (string, error) {
+	if obj.UserID == 0 {
+		if n := config.GetInstance().GetUsername(); n != "" {
+			return n, nil
+		}
+		return "Admin", nil
+	}
+	name := ""
+	err := r.withReadTxn(ctx, func(ctx context.Context) error {
+		u, err := r.repository.User.Find(ctx, obj.UserID)
+		if err == nil && u != nil {
+			name = u.Username
+		}
+		return err
+	})
+	return name, err
 }
 
 func (r *queryResolver) ContinueWatching(ctx context.Context, limit *int) ([]*models.Scene, error) {
@@ -274,6 +340,21 @@ func (r *mutationResolver) PlaylistUpdate(ctx context.Context, input PlaylistUpd
 		}
 		if input.Description != nil {
 			p.Description = strings.TrimSpace(*input.Description)
+		}
+		if input.Sharing != nil {
+			switch *input.Sharing {
+			case "", "users":
+			case "site":
+				if err := access.RequireRole(ctx, access.RoleAdmin); err != nil {
+					return errors.New("only admins can put playlists on the site")
+				}
+			default:
+				return fmt.Errorf("sharing must be empty, users or site")
+			}
+			if p.WatchLater && *input.Sharing != "" {
+				return errors.New("the Watch later playlist cannot be shared")
+			}
+			p.Sharing = *input.Sharing
 		}
 		if input.SmartRule != nil {
 			if !p.IsSmart() {

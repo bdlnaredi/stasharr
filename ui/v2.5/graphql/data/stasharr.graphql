@@ -22,6 +22,7 @@ fragment UserData on User {
   role
   disabled
   has_api_key
+  two_step_enabled
   last_login_at
   created_at
   tier {
@@ -38,6 +39,7 @@ fragment CurrentUserData on CurrentUser {
   can_download
   can_view_reels
   multi_user_enabled
+  two_step_enabled
 }
 
 fragment ReelData on Reel {
@@ -154,6 +156,9 @@ fragment PlaylistData on Playlist {
   watch_later
   smart
   scene_count
+  sharing
+  owner
+  mine
   updated_at
   cover {
     id
@@ -218,5 +223,34 @@ fragment AIMarkerConfigData on AIMarkerConfig {
     marker
     when
     min_confidence
+  }
+}
+
+fragment UserInviteData on UserInvite {
+  id
+  code
+  role
+  max_uses
+  uses
+  note
+  expires_at
+  created_at
+  usable
+  tier {
+    id
+    name
+  }
+}
+
+fragment TierRequestData on TierRequest {
+  id
+  username
+  message
+  status
+  created_at
+  decided_at
+  tier {
+    id
+    name
   }
 }

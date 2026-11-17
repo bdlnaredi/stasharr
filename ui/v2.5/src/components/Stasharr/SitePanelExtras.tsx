@@ -32,6 +32,7 @@ const rowHelp: Record<string, string> = {
   categories: "Most used categories",
   channels: "Studios with the most scenes",
   tag: "Newest scenes with a tag",
+  staff_picks: "Playlists you put on the site (a playlist's sharing: Staff pick)",
 };
 
 export const HomeRowsEditor: React.FC<{
