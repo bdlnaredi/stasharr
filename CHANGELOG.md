@@ -5,6 +5,15 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 `android-v…` releases. Everything that is not listed here works as in
 [Stash](https://github.com/stashapp/stash).
 
+## Next release (not tagged yet)
+
+### Fixed
+- Signing in failed after updating to v3.5 until the database was migrated,
+  and the login page said the password was wrong. Sign in now works before
+  the migration, so you can sign in and press Migrate.
+- The login page shows the real problem when the server has one, instead of
+  "wrong username or password".
+
 ## v3.5 (2026-11-17)
 
 ### Smoother streaming
