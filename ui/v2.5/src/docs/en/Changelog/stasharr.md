@@ -3,8 +3,178 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 `android-v…` releases. Everything that is not listed here works as in
 [Stash](https://github.com/stashapp/stash).
 
-## Next release (not tagged yet)
+## v2.9 (2026-11-17)
 
+### Smoother streaming
+- A new **Auto** stream for every scene lists all its sizes (240p up to the
+  original), with segments that line up, so the player moves to a smaller
+  size when the connection slows down and back up when it recovers,
+  instead of stalling.
+- **Android app:** Player → Playback → "Start scenes with": Original, **Auto
+  on mobile data** (the new default: the original file on Wi-Fi, Auto on
+  mobile data) or Always auto. Auto is also in the quality list. Auto needs
+  the server to convert, which takes some processor.
+
+### Recommendations by taste
+- "Recommended for you" now also learns what each person likes to look at,
+  not just which performers, tags and studios: scenes that look like the
+  ones they played, rated or liked rank higher. It uses the search index
+  made by the Stasharr Tagger (Settings → AI markers → Search by
+  description), so it gets better as more scenes are indexed.
+
+### Health page
+- **Settings → Health:** free space on every disk Stasharr uses (library,
+  generated files, database, backups), the last backup and Google Drive
+  copy, auto-import, the tagger, notifications and tasks that failed, with
+  a list of problems at the top.
+- A notification (new event: Low disk space and other problems) when a disk
+  has less free space than you set (20 GB by default) or under 5%, at most
+  every 12 hours.
+
+### Cleanup suggestions
+- **Settings → Cleanup suggestions:** scenes not watched for 3, 6, 12 or 24
+  months, never watched, or rated two stars or less, biggest first, with the
+  total space they take. Pick scenes and remove them; with the trash bin on
+  they go there first and can be restored.
+
+### Invites and tier upgrades
+- **Settings → Users → Invites:** make a link that lets someone create their
+  own account, in the tier and role (viewer or editor) you choose, for a
+  number of accounts and days. The link opens a sign-up form on the login
+  page, and the new account is signed in straight away. You get a
+  notification for each new account (new event: New accounts and upgrade
+  requests).
+- **Upgrade requests:** people pick another tier on their Account page
+  (site and admin interface) with an optional note; you approve or decline
+  under Settings → Users, and approving moves them to that tier.
+
+### Safer sign in
+- **Wrong passwords are limited:** after 5 wrong passwords or codes for an
+  account from one address (or 20 from one address) in 15 minutes, sign in
+  from there is refused for 15 minutes.
+- **Two-step sign in:** on the Account page, scan a QR code with an
+  authenticator app (Google Authenticator, Microsoft Authenticator, Aegis…)
+  and sign in with its 6-digit code after the password. You get 8 one-time
+  recovery codes. A device signed in with a code is remembered for 90 days;
+  "Forget devices" signs them out of that. Admins can turn it off for
+  someone who lost their phone (Settings → Users → Reset 2-step). Works on
+  the login page and in the Android app.
+
+### Shared playlists and Staff picks
+- Every playlist can be **Only me**, **Everyone with an account**, or (for
+  admins) a **Staff pick on the site**. Shared playlists show under
+  "Shared by others" in Playlists, on the site's My list page and in the
+  Android app; people only see the scenes their tier allows.
+- **Staff picks** is a new home row for the site (on by default): one rail
+  per playlist you put on the site, each with its own page.
+
+### Reels picked by AI
+- With the Stasharr Tagger running, it picks each reel's moments: it looks
+  at a frame every few seconds and scores how much is happening (your AI
+  marker labels) and how good the picture is. Talking, title cards, dark or
+  blurry shots and empty rooms score low, and each reel of a scene shows a
+  different act where the scene has them. Loudness, motion and markers
+  still help to choose between equally good moments.
+- When AI markers look at a scene, its reels are remade with these moments,
+  so reels improve as the tagger works through the library. **Remake all**
+  under Auto-import → Reels redoes every reel now.
+- Switch: **Let the AI tagger pick the moments** (Auto-import → Reels, and
+  under Settings → AI markers → Generated features). Reels picked this way
+  say "picked by AI".
+
+### "New" means new
+- The **New** badge on the site and in the app is only on scenes released
+  in the last week (or, without a release date, added in the last week).
+  Older videos that were just imported no longer show as new.
+- The red Trans, Lesbian and Bi labels also show under scene titles on
+  cards, on the site and in the app.
+
+### More accurate AI markers
+- **It learns from your reviews.** Every suggestion you keep or throw away
+  is remembered for its label, and frames that look like ones you threw
+  away score lower next time (higher for ones you kept). Throwing away
+  wrong cumshots makes them rarer. The label list shows how many it learned
+  from, and **Forget what it learned** starts over. Suggestions made before
+  this update also teach it when the scene is in the search index.
+- **Several descriptions per label**, split by `|`, are averaged, which
+  describes a label far better than one sentence.
+- **When** limits a label to the start or the end of a scene, and **Sure**
+  asks for more confidence for one label.
+- **Cumshot** now uses four descriptions, is only looked for in the last
+  30% of a scene and needs 50% confidence. New helper labels (face and body
+  close-ups, which were mistaken for cumshots most) soak up those frames.
+  Saved label lists get the new wording unless the wording was changed.
+- **Look at every scene again** re-checks the whole library with the new
+  labels; suggestions waiting for review are replaced, markers already
+  kept stay.
+- Needs the updated tagger image (`ghcr.io/bdlnaredi/stasharr-tagger`);
+  an older one still works without learning.
+
+### Switches for generated features
+- **Settings → AI markers → Generated features:** turn Reels, AI markers,
+  Tag clips, Search by description and the scene ribbons on or off for the
+  whole server. Off stops making new ones and hides them on the site, in
+  the admin interface and in the Android app; what was made is kept.
+
+### Trans, lesbian and bisexual ribbons
+- Scene pictures get a deep red ribbon with gold edges and white lettering
+  across the corner:
+  **Trans** when a performer is trans or the scene has a tag like Trans,
+  Transsexual, TS or Shemale; **Lesbian** for a Lesbian tag, or two or more
+  women and no men (unless a tag says a man is there, such as Blowjob or
+  FFM); **Bi** for a Bisexual tag. On the site, in the admin interface and
+  in the Android app, with a matching label next to the title on scene
+  pages.
+
+### Android app: TV, auto-download, widgets and admin tools
+- **Android TV:** the same app installs on Android TV and shows in the TV's
+  app row. The sections are down the left side, whatever the remote is on
+  gets a pink outline, and in the player OK pauses, left and right skip 10
+  seconds (fast-forward and rewind buttons too), and up or down shows the
+  controls; Back hides them.
+- **Auto-download:** Downloads → "Download new scenes from favourites".
+  New scenes with pornstars you follow download by themselves (checked
+  about every 30 minutes), optionally only on Wi-Fi, in 480p, 720p, 1080p or
+  the original file. Keep the newest 3, 5, 10 or 20; older automatic
+  downloads are deleted. Downloads you start yourself are never touched.
+- **Home screen widgets:** "Continue watching" and "New from favourites",
+  with pictures; tap a scene to open it. They refresh after you watch
+  something and with each check for new scenes.
+- **Admin tools** (You → Admin tools, admins only):
+  - AI markers: review the tagger's suggestions with a picture of each
+    moment, play it, keep or throw away one or a whole scene.
+  - Auto-import: whether it is running, the last check, Check now and
+    Identify again, and the scenes that still have no studio or performers.
+  - Tasks: what the server is doing, with progress, and Stop.
+  - Statistics: plays, who is watching, most watched scenes, performers and
+    tags, and storage, for 7, 30 or 90 days or a year.
+
+### Backups to Google Drive
+- **Settings → Maintenance → Google Drive:** connect your own Google Drive
+  and every daily backup is uploaded after it is made, into a folder called
+  "Stasharr backups". Choose how many to keep there (older ones are
+  deleted), upload the newest backup by hand, and copy a backup from Drive
+  back to the server to restore it.
+- Uses your own Google Cloud OAuth client ("TVs and Limited Input
+  devices"); the settings page walks through making one. You sign in with
+  a code on google.com/device, and Stasharr can only see the files it put
+  on your Drive.
+
+### Cast from the site
+- The site's video player has a **Chromecast** button (in Chrome and Edge).
+  Casting needs the site to be opened over HTTPS, for example through a
+  reverse proxy; on plain http the browser hides the button. The admin
+  interface keeps its own switch under Settings → Interface.
+
+### Android app: categories and channels
+- **Tag clips play in the app:** category tiles on the home screen, the
+  Categories page and Browse → Tags now play their clips side by side
+  (up to four at once) while they are on screen, instead of one at a time.
+  Previews off under You shows the still picture only.
+- **View all** on the Categories and Channels home rows opens a page with
+  every category or channel, a search box and sort options: most scenes,
+  name, recently added, most performers or latest scene, rating, and
+  random.
 ### Android app tells you about updates
 - The app checks GitHub for a newer version when it opens (at most every 12
   hours) and shows what's new; **Download** opens the new version in your

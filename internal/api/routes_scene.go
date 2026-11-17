@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -64,6 +66,7 @@ func (rs sceneRoutes) Routes() chi.Router {
 		r.Get("/stream.mp3", rs.StreamMp3)
 		r.Get("/stream.webm", rs.StreamWebM)
 		r.Get("/stream.mkv", rs.StreamMKV)
+		r.Get("/stream.auto.m3u8", rs.StreamHLSAuto)
 		r.Get("/stream.m3u8", rs.StreamHLS)
 		r.Get("/stream.m3u8/{segment}.ts", rs.StreamHLSSegment)
 		r.Get("/stream.mpd", rs.StreamDASH)
@@ -183,6 +186,47 @@ func (rs sceneRoutes) streamTranscode(w http.ResponseWriter, r *http.Request, st
 
 func (rs sceneRoutes) StreamHLS(w http.ResponseWriter, r *http.Request) {
 	rs.streamManifest(w, r, ffmpeg.StreamTypeHLS, "HLS")
+}
+
+// StreamHLSAuto is a master playlist listing the HLS stream at every size,
+// so players move to a smaller one when the connection slows down and back
+// up when it recovers. Segments of every size start at the same times, so
+// switching is seamless.
+func (rs sceneRoutes) StreamHLSAuto(w http.ResponseWriter, r *http.Request) {
+	scene := r.Context().Value(sceneKey).(*models.Scene)
+	mgr := manager.GetInstance()
+	if mgr.StreamManager == nil {
+		http.Error(w, "Live transcoding disabled", http.StatusServiceUnavailable)
+		return
+	}
+	vf := scene.Files.Primary()
+	variants := manager.AdaptiveVariants(vf, mgr.Config.GetMaxStreamingTranscodeSize())
+	if len(variants) == 0 {
+		http.Error(w, "no sizes to stream", http.StatusNotFound)
+		return
+	}
+	// the sign in travels with every size, as for the segments
+	auth := url.Values{}
+	q := r.URL.Query()
+	for _, k := range []string{"apikey", "cid", "expires", "sig"} {
+		if v := q.Get(k); v != "" {
+			auth.Set(k, v)
+		}
+	}
+	var b strings.Builder
+	b.WriteString("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-INDEPENDENT-SEGMENTS\n")
+	for _, v := range variants {
+		p := url.Values{}
+		for k, vals := range auth {
+			p[k] = vals
+		}
+		p.Set("resolution", v.Resolution.String())
+		fmt.Fprintf(&b, "#EXT-X-STREAM-INF:BANDWIDTH=%d,RESOLUTION=%dx%d,CODECS=\"avc1.640028,mp4a.40.2\"\n", v.Bandwidth, v.Width, v.Height)
+		fmt.Fprintf(&b, "stream.m3u8?%s\n", p.Encode())
+	}
+	w.Header().Set("Content-Type", ffmpeg.MimeHLS)
+	w.Header().Set("Cache-Control", "no-store")
+	_, _ = w.Write([]byte(b.String()))
 }
 
 func (rs sceneRoutes) StreamDASH(w http.ResponseWriter, r *http.Request) {

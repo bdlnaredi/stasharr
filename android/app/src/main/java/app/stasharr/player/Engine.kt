@@ -40,6 +40,17 @@ class PlayerPrefs(context: Context) {
     var aspect: Aspect
         get() = runCatching { Aspect.valueOf(prefs.getString("aspect", null) ?: "") }.getOrDefault(Aspect.Fit)
         set(v) = prefs.edit().putString("aspect", v.name).apply()
+
+    var streaming: Streaming
+        get() = runCatching { Streaming.valueOf(prefs.getString("streaming", null) ?: "") }.getOrDefault(Streaming.AutoOnMobile)
+        set(v) = prefs.edit().putString("streaming", v.name).apply()
+}
+
+/** Which version of a scene starts playing. */
+enum class Streaming(val label: String, val description: String) {
+    Original("Original", "The file as it is; the best picture, needs a good connection"),
+    AutoOnMobile("Auto on mobile data", "Original on Wi-Fi; on mobile data the size follows the connection"),
+    Auto("Always auto", "The size follows the connection, also on Wi-Fi (the server converts)"),
 }
 
 /** An ExoPlayer that uses the app's login for every request. */
