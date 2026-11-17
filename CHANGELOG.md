@@ -5,7 +5,7 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 `android-v…` releases. Everything that is not listed here works as in
 [Stash](https://github.com/stashapp/stash).
 
-## Next release (not tagged yet)
+## v2.9 (2026-11-17)
 
 ### Smoother streaming
 - A new **Auto** stream for every scene lists all its sizes (240p up to the
