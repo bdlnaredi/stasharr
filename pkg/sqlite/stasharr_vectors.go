@@ -25,10 +25,13 @@ func SaveFrameVectors(ctx context.Context, sceneID int, model string, list []Fra
 			return err
 		}
 	}
-	_, err := dbWrapper.Exec(ctx,
+	if _, err := dbWrapper.Exec(ctx,
 		"INSERT INTO scene_vector_runs (scene_id, model, frames, ran_at) VALUES (?, ?, ?, ?) ON CONFLICT(scene_id) DO UPDATE SET model = excluded.model, frames = excluded.frames, ran_at = excluded.ran_at",
-		sceneID, model, len(list), Timestamp{time.Now()})
-	return err
+		sceneID, model, len(list), Timestamp{time.Now()}); err != nil {
+		return err
+	}
+	// what the scene looks like on average, for recommendations by taste
+	return saveSceneMean(ctx, sceneID, model, list)
 }
 
 // SceneIDsToIndex lists scenes not indexed with this model yet, newest first.

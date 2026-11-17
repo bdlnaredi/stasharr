@@ -7,6 +7,28 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Recommendations by taste
+- "Recommended for you" now also learns what each person likes to look at,
+  not just which performers, tags and studios: scenes that look like the
+  ones they played, rated or liked rank higher. It uses the search index
+  made by the Stasharr Tagger (Settings → AI markers → Search by
+  description), so it gets better as more scenes are indexed.
+
+### Health page
+- **Settings → Health:** free space on every disk Stasharr uses (library,
+  generated files, database, backups), the last backup and Google Drive
+  copy, auto-import, the tagger, notifications and tasks that failed, with
+  a list of problems at the top.
+- A notification (new event: Low disk space and other problems) when a disk
+  has less free space than you set (20 GB by default) or under 5%, at most
+  every 12 hours.
+
+### Cleanup suggestions
+- **Settings → Cleanup suggestions:** scenes not watched for 3, 6, 12 or 24
+  months, never watched, or rated two stars or less, biggest first, with the
+  total space they take. Pick scenes and remove them; with the trash bin on
+  they go there first and can be restored.
+
 ### Invites and tier upgrades
 - **Settings → Users → Invites:** make a link that lets someone create their
   own account, in the tier and role (viewer or editor) you choose, for a
