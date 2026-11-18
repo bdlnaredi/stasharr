@@ -2332,7 +2332,7 @@ func (i *Config) GetSiteStyle() string {
 }
 
 // SiteLayouts are the page layouts the site can have.
-var SiteLayouts = []string{"classic", "bento", "mosaic", "spotlight", "showcase", "immersive"}
+var SiteLayouts = []string{"classic", "bento", "mosaic", "spotlight", "showcase", "immersive", "editorial", "brutal", "swipe"}
 
 func (i *Config) GetSiteLayout() string {
 	v := i.getString(SiteLayout)

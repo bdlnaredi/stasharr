@@ -20,7 +20,17 @@ import {
 import { ISiteStyle } from "./siteStyles";
 import { useSite } from "./SiteContext";
 import { ReelsRow } from "./SiteReels";
-import { BentoGrid, IHeroParts, ImmersiveHero, MosaicHome, ShowcaseHero, SpotlightHome } from "./SiteLayoutHomes";
+import {
+  BentoGrid,
+  BrutalHome,
+  EditorialHome,
+  IHeroParts,
+  ImmersiveHero,
+  MosaicHome,
+  ShowcaseHero,
+  SpotlightHome,
+  SwipeDeck,
+} from "./SiteLayoutHomes";
 import { LikeButton } from "./SiteWidgets";
 import { t } from "./i18n";
 
@@ -515,6 +525,30 @@ export const SiteHome: React.FC = () => {
         <div className="site-home">
           <ShowcaseHero scenes={heroScenes} parts={heroParts} />
           <Ticker />
+          {promo}
+          {rowList}
+        </div>
+      );
+    case "editorial":
+      return (
+        <div className="site-home">
+          <EditorialHome scenes={heroScenes} parts={heroParts} />
+          {promo}
+          {rowList}
+        </div>
+      );
+    case "brutal":
+      return (
+        <div className="site-home">
+          <BrutalHome scenes={heroScenes} parts={heroParts} />
+          {promo}
+          {rowList}
+        </div>
+      );
+    case "swipe":
+      return (
+        <div className="site-home">
+          <SwipeDeck />
           {promo}
           {rowList}
         </div>

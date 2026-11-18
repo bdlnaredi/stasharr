@@ -1,10 +1,10 @@
-// The home pages of the Bento, Mosaic, Spotlight, Showcase and Immersive
-// layouts. Classic is in SiteHome.
+// The home pages of the Bento, Mosaic, Spotlight, Showcase, Immersive,
+// Editorial, Brutal and Swipe layouts. Classic is in SiteHome.
 
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
-import { MosaicCard, SiteScene, formatTime, mosaicShapes, sceneTitle } from "./SiteCards";
+import { MosaicCard, SiteScene, formatTime, isNew, mosaicShapes, qualityBadge, sceneTitle } from "./SiteCards";
 import { useSite } from "./SiteContext";
 import { count, t, views } from "./i18n";
 
@@ -454,6 +454,376 @@ export const ShowcaseHero: React.FC<{ scenes: SiteScene[]; parts: IHeroParts }> 
           ))}
         </div>
       )}
+    </section>
+  );
+};
+
+// ---------------------------------------------------------------- Editorial
+// A magazine: a cover story, "In this issue" and features.
+
+function issueLine(): string {
+  const d = new Date();
+  return d.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+}
+
+export const EditorialHome: React.FC<{ scenes: SiteScene[]; parts: IHeroParts }> = ({ scenes, parts }) => {
+  const history = useHistory();
+  const latest = GQL.useSiteScenesQuery({
+    variables: { filter: { sort: "created_at", direction: GQL.SortDirectionEnum.Desc, per_page: 9 } },
+    fetchPolicy: "cache-and-network",
+  });
+  const cover = scenes[0];
+  const shown = new Set(scenes.slice(0, 3).map((s) => s.id));
+  const issue = (latest.data?.findScenes.scenes ?? []).filter((s) => !shown.has(s.id)).slice(0, 6);
+  const features = scenes.slice(1, 4);
+  if (!cover) return null;
+  return (
+    <div className="site-ed">
+      <div className="site-ed-issue">
+        <span>{t("The issue")}</span>
+        <span>{issueLine()}</span>
+      </div>
+      <section className="site-ed-cover">
+        <Link to={`/site/scene/${cover.id}`} className="site-ed-cover-pic">
+          <parts.Slide scene={cover} active />
+        </Link>
+        <div className="site-ed-cover-text">
+          <span className="site-ed-kicker">{t("Cover story")}</span>
+          <h1>
+            <Link to={`/site/scene/${cover.id}`}>{sceneTitle(cover)}</Link>
+          </h1>
+          {starring(cover, 3) && (
+            <p className="site-ed-byline">
+              {t("Starring")} {starring(cover, 3)}
+            </p>
+          )}
+          {cover.details && <p className="site-ed-dek">{cover.details}</p>}
+          <button
+            type="button"
+            className="site-btn site-btn-primary"
+            onClick={() => history.push(`/site/scene/${cover.id}`)}
+          >
+            {t("▶ Watch now")}
+          </button>
+        </div>
+      </section>
+      {issue.length > 0 && (
+        <section className="site-ed-index">
+          <h2>{t("In this issue")}</h2>
+          <ol>
+            {issue.map((s, i) => (
+              <li key={s.id}>
+                <Link to={`/site/scene/${s.id}`}>
+                  <span className="site-ed-num">{String(i + 1).padStart(2, "0")}</span>
+                  <span>
+                    <b>{sceneTitle(s)}</b>
+                    <small>
+                      {[starring(s), formatTime(s.files[0]?.duration)].filter(Boolean).join(" · ")}
+                    </small>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+      {features.length > 0 && (
+        <section className="site-ed-features">
+          {features.map((s, i) => (
+            <Link key={s.id} to={`/site/scene/${s.id}`} className={`site-ed-feature ${i === 0 ? "lead" : ""}`}>
+              <span className="site-ed-feature-pic">
+                {s.paths.screenshot && <img src={s.paths.screenshot} alt="" loading="lazy" />}
+              </span>
+              <span className="site-ed-kicker">{s.studio?.name ?? t("Feature")}</span>
+              <b>{sceneTitle(s)}</b>
+              {starring(s) && <small>{starring(s)}</small>}
+            </Link>
+          ))}
+        </section>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------- Brutal
+// Bold blocks, thick borders and hard shadows.
+
+export const BrutalHome: React.FC<{ scenes: SiteScene[]; parts: IHeroParts }> = ({ scenes, parts }) => {
+  const history = useHistory();
+  const { index, setIndex, setPaused } = useRotation(scenes.length);
+  const latest = GQL.useSiteScenesQuery({
+    variables: { filter: { sort: "created_at", direction: GQL.SortDirectionEnum.Desc, per_page: 12 } },
+    fetchPolicy: "cache-and-network",
+  });
+  if (scenes.length === 0) return null;
+  const s = scenes[index];
+  const badge = qualityBadge(s);
+  const marquee = latest.data?.findScenes.scenes ?? [];
+  return (
+    <>
+      <section className="site-brutal-hero" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+        <div className="site-brutal-block">
+          <span className="site-brutal-sticker">{isNew(s) ? t("New") : t("Featured")}</span>
+          <h1>{sceneTitle(s)}</h1>
+          {starring(s, 3) && <p>{starring(s, 3)}</p>}
+          <div className="site-brutal-actions">
+            <button type="button" className="site-btn site-btn-primary" onClick={() => history.push(`/site/scene/${s.id}`)}>
+              {t("▶ Watch now")}
+            </button>
+            {scenes.length > 1 && (
+              <button type="button" className="site-btn site-btn-ghost" onClick={() => setIndex((index + 1) % scenes.length)}>
+                {t("Next")} →
+              </button>
+            )}
+          </div>
+        </div>
+        <Link to={`/site/scene/${s.id}`} className="site-brutal-pic">
+          {scenes.map((x, i) => (
+            <parts.Slide key={x.id} scene={x} active={i === index} />
+          ))}
+          {badge && <span className="site-brutal-sticker site-brutal-sticker-2">{badge}</span>}
+          {s.files[0]?.duration ? <span className="site-brutal-sticker site-brutal-sticker-3">{formatTime(s.files[0].duration)}</span> : null}
+        </Link>
+      </section>
+      {marquee.length > 0 && (
+        <div className="site-brutal-marquee" aria-hidden="true">
+          <div>
+            {[...marquee, ...marquee].map((x, i) => (
+              <Link key={`${x.id}-${i}`} to={`/site/scene/${x.id}`}>
+                {sceneTitle(x)} <span>✦</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+// ---------------------------------------------------------------- Swipe
+// A deck of scenes: drag right (or ♥) to like, left (or ✕) to skip.
+
+const SWIPED_KEY = "stasharr-swiped";
+
+function swipedBefore(): Set<string> {
+  try {
+    return new Set(JSON.parse(sessionStorage.getItem(SWIPED_KEY) ?? "[]") as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function rememberSwiped(ids: Set<string>) {
+  try {
+    sessionStorage.setItem(SWIPED_KEY, JSON.stringify([...ids].slice(-300)));
+  } catch {
+    // private window: forgotten on reload
+  }
+}
+
+export const SwipeDeck: React.FC = () => {
+  const history = useHistory();
+  const extras = GQL.useSiteHomeExtrasQuery({ fetchPolicy: "cache-and-network" });
+  const trending = GQL.useSiteSceneListQuery({ variables: { kind: GQL.SiteSceneKind.Trending, per_page: 30 } });
+  const latest = GQL.useSiteScenesQuery({
+    variables: { filter: { sort: "random", direction: GQL.SortDirectionEnum.Desc, per_page: 30 } },
+  });
+  const [like] = GQL.useSiteToggleLikeMutation({ refetchQueries: ["SiteLiked"] });
+  const [later] = GQL.useWatchLaterToggleMutation();
+  const [gone, setGone] = useState<Set<string>>(swipedBefore);
+  const [liked, setLiked] = useState<SiteScene[]>([]);
+  const [drag, setDrag] = useState<{ x: number; y: number } | null>(null);
+  const [leaving, setLeaving] = useState<"left" | "right" | null>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const [saved, setSaved] = useState<string | null>(null);
+
+  // the deck: picks for you, then trending, then a random mix
+  const pool: SiteScene[] = [];
+  const seen = new Set<string>();
+  for (const s of [
+    ...(extras.data?.recommendedScenes ?? []),
+    ...(trending.data?.siteScenes.scenes ?? []),
+    ...(latest.data?.findScenes.scenes ?? []),
+  ]) {
+    if (!seen.has(s.id) && !gone.has(s.id) && s.paths.screenshot) {
+      seen.add(s.id);
+      pool.push(s);
+    }
+  }
+  const top = pool[0];
+  const loading = extras.loading || trending.loading || latest.loading;
+
+  const finish = (dir: "left" | "right") => {
+    if (!top || leaving) return;
+    setLeaving(dir);
+    if (dir === "right") {
+      setLiked((l) => [top, ...l].slice(0, 8));
+      like({ variables: { scene_id: top.id } }).catch(() => undefined);
+    }
+    window.setTimeout(() => {
+      setGone((g) => {
+        const next = new Set<string>(g);
+        next.add(top.id);
+        rememberSwiped(next);
+        return next;
+      });
+      setLeaving(null);
+      setDrag(null);
+    }, 260);
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.closest("input, textarea, select")) return;
+      if (e.key === "ArrowLeft") finish("left");
+      if (e.key === "ArrowRight") finish("right");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  const dx = drag?.x ?? 0;
+  const transform = leaving
+    ? `translateX(${leaving === "right" ? 140 : -140}%) rotate(${leaving === "right" ? 24 : -24}deg)`
+    : `translate(${dx}px, ${(drag?.y ?? 0) * 0.3}px) rotate(${dx / 18}deg)`;
+
+  return (
+    <section className="site-swipe">
+      <div className="site-swipe-side">
+        <h2>{t("Swipe to discover")}</h2>
+        <p>{t("Drag right or tap ♥ to like a scene, left or ✕ to skip. Arrow keys work too.")}</p>
+      </div>
+      <div className="site-swipe-deck">
+        {!top && (
+          <div className="site-swipe-empty">
+            {loading ? (
+              t("Loading…")
+            ) : (
+              <>
+                <b>{t("You've seen them all")}</b>
+                <button
+                  type="button"
+                  className="site-btn site-btn-ghost"
+                  onClick={() => {
+                    const none = new Set<string>();
+                    rememberSwiped(none);
+                    setGone(none);
+                  }}
+                >
+                  {t("Start again")}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+        {pool
+          .slice(0, 3)
+          .reverse()
+          .map((s) => {
+            const depth = pool.indexOf(s);
+            const isTop = depth === 0;
+            return (
+              <div
+                key={s.id}
+                className={`site-swipe-card ${isTop ? "top" : ""} ${drag && isTop ? "dragging" : ""}`}
+                style={
+                  isTop
+                    ? { transform }
+                    : { transform: `translateY(${depth * 14}px) scale(${1 - depth * 0.05})` }
+                }
+                onPointerDown={
+                  isTop
+                    ? (e) => {
+                        start.current = { x: e.clientX, y: e.clientY };
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                      }
+                    : undefined
+                }
+                onPointerMove={
+                  isTop
+                    ? (e) => {
+                        if (!start.current) return;
+                        setDrag({ x: e.clientX - start.current.x, y: e.clientY - start.current.y });
+                      }
+                    : undefined
+                }
+                onPointerUp={
+                  isTop
+                    ? () => {
+                        const moved = drag?.x ?? 0;
+                        start.current = null;
+                        if (moved > 110) finish("right");
+                        else if (moved < -110) finish("left");
+                        else if (Math.abs(moved) < 6 && Math.abs(drag?.y ?? 0) < 6) history.push(`/site/scene/${s.id}`);
+                        else setDrag(null);
+                      }
+                    : undefined
+                }
+              >
+                <img src={s.paths.screenshot ?? ""} alt="" draggable={false} />
+                {isTop && s.paths.preview && <video src={s.paths.preview} autoPlay muted loop playsInline />}
+                {isTop && (
+                  <>
+                    <span className="site-swipe-stamp like" style={{ opacity: Math.max(0, Math.min(1, dx / 110)) }}>
+                      {t("Like")}
+                    </span>
+                    <span className="site-swipe-stamp nope" style={{ opacity: Math.max(0, Math.min(1, -dx / 110)) }}>
+                      {t("Skip")}
+                    </span>
+                  </>
+                )}
+                <div className="site-swipe-info">
+                  <b>{sceneTitle(s)}</b>
+                  <small>
+                    {[starring(s, 3), formatTime(s.files[0]?.duration), qualityBadge(s)].filter(Boolean).join(" · ")}
+                  </small>
+                </div>
+              </div>
+            );
+          })}
+        {top && (
+          <div className="site-swipe-buttons">
+            <button type="button" className="nope" onClick={() => finish("left")} aria-label={t("Skip")}>
+              ✕
+            </button>
+            <button
+              type="button"
+              className="list"
+              aria-label={t("My list")}
+              onClick={async () => {
+                try {
+                  await later({ variables: { scene_id: top.id } });
+                  setSaved(top.id);
+                  window.setTimeout(() => setSaved(null), 1500);
+                } catch {
+                  // not saved
+                }
+              }}
+            >
+              {saved === top.id ? "✓" : "+"}
+            </button>
+            <button type="button" className="play" onClick={() => history.push(`/site/scene/${top.id}`)} aria-label={t("Watch")}>
+              ▶
+            </button>
+            <button type="button" className="like" onClick={() => finish("right")} aria-label={t("Like")}>
+              ♥
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="site-swipe-side site-swipe-liked">
+        <h3>{t("Liked just now")}</h3>
+        {liked.length === 0 ? (
+          <p>{t("Scenes you like show up here.")}</p>
+        ) : (
+          liked.map((s) => (
+            <Link key={s.id} to={`/site/scene/${s.id}`}>
+              {s.paths.screenshot && <img src={s.paths.screenshot} alt="" />}
+              <span>{sceneTitle(s)}</span>
+            </Link>
+          ))
+        )}
+      </div>
     </section>
   );
 };

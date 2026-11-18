@@ -23,7 +23,7 @@ type SiteConfig {
   audience: String!
   "The look: velvet, neon, crimson, blush or onyx"
   style: String!
-  "Where things sit: classic, bento, mosaic, spotlight, showcase or immersive"
+  "Where things sit: classic, bento, mosaic, spotlight, showcase, immersive, editorial, brutal or swipe"
   layout: String!
   name: String!
   tagline: String!
