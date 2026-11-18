@@ -15,7 +15,7 @@ import (
 	"github.com/stashapp/stash/pkg/sqlite"
 )
 
-func signedIn(ctx context.Context) (*access.Principal, error) {
+func profileSignedIn(ctx context.Context) (*access.Principal, error) {
 	p := access.FromContext(ctx)
 	if p == nil {
 		return nil, errors.New("profiles need sign in to be turned on in Settings > Security")
@@ -51,7 +51,7 @@ func (r *queryResolver) SiteProfiles(ctx context.Context) ([]*SiteProfile, error
 }
 
 func (r *mutationResolver) SiteProfileCreate(ctx context.Context, name string, color *string) (*SiteProfile, error) {
-	p, err := signedIn(ctx)
+	p, err := profileSignedIn(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (r *mutationResolver) SiteProfileCreate(ctx context.Context, name string, c
 }
 
 func (r *mutationResolver) SiteProfileUpdate(ctx context.Context, id string, name string, color *string) (bool, error) {
-	p, err := signedIn(ctx)
+	p, err := profileSignedIn(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -86,7 +86,7 @@ func (r *mutationResolver) SiteProfileUpdate(ctx context.Context, id string, nam
 }
 
 func (r *mutationResolver) SiteProfileDelete(ctx context.Context, id string) (bool, error) {
-	p, err := signedIn(ctx)
+	p, err := profileSignedIn(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -101,7 +101,7 @@ func (r *mutationResolver) SiteProfileDelete(ctx context.Context, id string) (bo
 }
 
 func (r *mutationResolver) SiteProfilePin(ctx context.Context, id string, pin string) (bool, error) {
-	p, err := signedIn(ctx)
+	p, err := profileSignedIn(ctx)
 	if err != nil {
 		return false, err
 	}
