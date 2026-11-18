@@ -58,3 +58,145 @@ export const siteStyles: ISiteStyle[] = [
 export function findSiteStyle(id: string | undefined): ISiteStyle {
   return siteStyles.find((s) => s.id === id) ?? siteStyles[0];
 }
+
+// Where things sit on the pages. Any layout works with any style.
+export type SiteNavPlace = "top" | "dock";
+
+export interface ISiteLayout {
+  id: string;
+  name: string;
+  description: string;
+  nav: SiteNavPlace;
+  // a rough sketch for the picker: boxes as [left, top, width, height] in %
+  sketch: [number, number, number, number][];
+}
+
+export const siteLayouts: ISiteLayout[] = [
+  {
+    id: "classic",
+    name: "Classic",
+    description: "Menu across the top, a big banner, then rows of scenes. The original.",
+    nav: "top",
+    sketch: [
+      [0, 0, 100, 8],
+      [0, 8, 100, 40],
+      [4, 54, 28, 18],
+      [36, 54, 28, 18],
+      [68, 54, 28, 18],
+      [4, 78, 28, 18],
+      [36, 78, 28, 18],
+      [68, 78, 28, 18],
+    ],
+  },
+  {
+    id: "mosaic",
+    name: "Mosaic",
+    description:
+      "A wide search bar, a sticky row of category chips and a masonry wall of mixed-shape scene and model cards that play when pointed at.",
+    nav: "top",
+    sketch: [
+      [0, 0, 100, 8],
+      [4, 12, 60, 6],
+      [4, 22, 22, 38],
+      [28, 22, 22, 24],
+      [52, 22, 22, 44],
+      [76, 22, 20, 30],
+      [4, 63, 22, 34],
+      [28, 49, 22, 48],
+      [52, 69, 22, 28],
+      [76, 55, 20, 42],
+    ],
+  },
+  {
+    id: "bento",
+    name: "Bento",
+    description:
+      "A floating glass menu bar and a home page of mixed-size tiles: the featured scene, trending picks, the star of the week, categories and new arrivals.",
+    nav: "top",
+    sketch: [
+      [20, 2, 60, 8],
+      [4, 14, 46, 52],
+      [52, 14, 21, 34],
+      [75, 14, 21, 34],
+      [52, 50, 21, 34],
+      [75, 50, 21, 34],
+      [4, 68, 46, 16],
+      [4, 88, 92, 10],
+    ],
+  },
+  {
+    id: "showcase",
+    name: "Showcase",
+    description:
+      "A 3D cover-flow of the featured scenes over a soft glow of the picture, with its details centred below, then the rows.",
+    nav: "top",
+    sketch: [
+      [0, 0, 100, 8],
+      [4, 18, 14, 30],
+      [82, 18, 14, 30],
+      [14, 14, 16, 38],
+      [70, 14, 16, 38],
+      [24, 12, 52, 42],
+      [30, 58, 40, 8],
+      [4, 74, 28, 20],
+      [36, 74, 28, 20],
+      [68, 74, 28, 20],
+    ],
+  },
+  {
+    id: "spotlight",
+    name: "Spotlight",
+    description:
+      "A split screen: the chosen scene plays big on the left while a numbered top-10 list scrolls on the right.",
+    nav: "top",
+    sketch: [
+      [0, 0, 100, 7],
+      [0, 7, 56, 93],
+      [60, 12, 36, 8],
+      [60, 24, 36, 14],
+      [60, 42, 36, 14],
+      [60, 60, 36, 14],
+      [60, 78, 36, 14],
+    ],
+  },
+  {
+    id: "immersive",
+    name: "Immersive",
+    description:
+      "The featured scene fills the whole screen, the rows sit on a frosted sheet over it, and the menu is a floating dock at the bottom.",
+    nav: "dock",
+    sketch: [
+      [0, 0, 100, 62],
+      [0, 50, 100, 50],
+      [4, 58, 28, 16],
+      [36, 58, 28, 16],
+      [68, 58, 28, 16],
+      [30, 86, 40, 9],
+    ],
+  },
+];
+
+export function findSiteLayout(id: string | null | undefined): ISiteLayout {
+  return siteLayouts.find((l) => l.id === id) ?? siteLayouts[0];
+}
+
+// A viewer's own choice of layout, kept in this browser only.
+const LAYOUT_KEY = "stasharr-site-layout";
+
+export function viewerLayout(): string | null {
+  try {
+    const v = localStorage.getItem(LAYOUT_KEY);
+    return v && siteLayouts.some((l) => l.id === v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setViewerLayout(id: string | null) {
+  try {
+    if (id) localStorage.setItem(LAYOUT_KEY, id);
+    else localStorage.removeItem(LAYOUT_KEY);
+  } catch {
+    // private window: not remembered
+  }
+}

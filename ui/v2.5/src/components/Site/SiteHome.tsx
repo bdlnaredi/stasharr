@@ -20,6 +20,7 @@ import {
 import { ISiteStyle } from "./siteStyles";
 import { useSite } from "./SiteContext";
 import { ReelsRow } from "./SiteReels";
+import { BentoGrid, IHeroParts, ImmersiveHero, MosaicHome, ShowcaseHero, SpotlightHome } from "./SiteLayoutHomes";
 import { LikeButton } from "./SiteWidgets";
 import { t } from "./i18n";
 
@@ -460,8 +461,10 @@ const Promo: React.FC<{ promo: GQL.SiteConfigDataFragment["promo"] }> = ({ promo
 
 // ---------------------------------------------------------------- home
 
+const heroParts: IHeroParts = { Slide: HeroSlide, Text: HeroText };
+
 export const SiteHome: React.FC = () => {
-  const { config, style } = useSite();
+  const { config, style, layout } = useSite();
   const featured = GQL.useSiteSceneListQuery({
     variables: { kind: GQL.SiteSceneKind.Featured, per_page: 7 },
     fetchPolicy: "cache-and-network",
@@ -474,19 +477,68 @@ export const SiteHome: React.FC = () => {
   if (featured.loading && !featured.data) return <Loading />;
 
   const rows = config.home_rows.filter((r) => r.enabled);
-
-  return (
-    <div className="site-home">
-      <Hero scenes={heroScenes} style={style} />
-      <Ticker />
-      <Promo promo={config.promo} />
-      <div className="site-page">
-        {rows.map((r, i) => (
-          <HomeRow key={`${r.type}-${r.tag?.id ?? ""}-${i}`} row={r} />
-        ))}
-      </div>
+  const rowList = (
+    <div className="site-page">
+      {rows.map((r, i) => (
+        <HomeRow key={`${r.type}-${r.tag?.id ?? ""}-${i}`} row={r} />
+      ))}
     </div>
   );
+  const promo = <Promo promo={config.promo} />;
+
+  switch (layout.id) {
+    case "bento":
+      return (
+        <div className="site-home">
+          <BentoGrid scenes={heroScenes} parts={heroParts} />
+          {promo}
+          {rowList}
+        </div>
+      );
+    case "mosaic":
+      // the wall is the whole page; the admin's rows are not shown here
+      return (
+        <div className="site-home">
+          <MosaicHome promo={promo} />
+        </div>
+      );
+    case "spotlight":
+      return (
+        <div className="site-home">
+          <SpotlightHome fallback={heroScenes} parts={heroParts} />
+          {promo}
+          {rowList}
+        </div>
+      );
+    case "showcase":
+      return (
+        <div className="site-home">
+          <ShowcaseHero scenes={heroScenes} parts={heroParts} />
+          <Ticker />
+          {promo}
+          {rowList}
+        </div>
+      );
+    case "immersive":
+      return (
+        <div className="site-home">
+          <ImmersiveHero scenes={heroScenes} parts={heroParts} />
+          <div className="site-immersive-sheet">
+            {promo}
+            {rowList}
+          </div>
+        </div>
+      );
+    default:
+      return (
+        <div className="site-home">
+          <Hero scenes={heroScenes} style={style} />
+          <Ticker />
+          {promo}
+          {rowList}
+        </div>
+      );
+  }
 };
 
 export default SiteHome;

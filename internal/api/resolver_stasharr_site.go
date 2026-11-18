@@ -45,6 +45,7 @@ func (r *Resolver) siteConfig(ctx context.Context) (*SiteConfig, error) {
 		Enabled:       cfg.GetSiteEnabled(),
 		Audience:      cfg.GetSiteAudience(),
 		Style:         cfg.GetSiteStyle(),
+		Layout:        cfg.GetSiteLayout(),
 		Name:          cfg.GetSiteName(),
 		Tagline:       cfg.GetSiteTagline(),
 		Featured:      cfg.GetSiteFeatured(),
@@ -114,6 +115,12 @@ func (r *mutationResolver) ConfigureSite(ctx context.Context, input SiteConfigIn
 			return nil, errors.New("unknown style")
 		}
 		cfg.SetString(config.SiteStyle, *input.Style)
+	}
+	if input.Layout != nil {
+		if !slices.Contains(config.SiteLayouts, *input.Layout) {
+			return nil, errors.New("unknown layout")
+		}
+		cfg.SetString(config.SiteLayout, *input.Layout)
 	}
 	if input.Name != nil {
 		cfg.SetString(config.SiteName, strings.TrimSpace(*input.Name))

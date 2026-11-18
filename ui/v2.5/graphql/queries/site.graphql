@@ -47,6 +47,7 @@ fragment SiteConfigData on SiteConfig {
   enabled
   audience
   style
+  layout
   name
   tagline
   featured

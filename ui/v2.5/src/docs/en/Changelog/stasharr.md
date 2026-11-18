@@ -5,6 +5,26 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Site layouts
+- The site can now look completely different, not just in colour. Pick a
+  layout in **Settings → Site → Layout**; every layout works with every style.
+  - **Classic**: the original. Menu across the top, big banner, rows.
+  - **Bento**: a floating glass menu bar and a home page of mixed-size tiles
+    (featured scene, trending #1, top rated, star of the week, categories,
+    just added).
+  - **Mosaic**: a wide search bar, sticky category chips and a masonry wall
+    of scene and model cards that play when you point at them.
+  - **Spotlight**: a split screen. The chosen scene plays big on the left
+    while a numbered top-10 list (Trending, New, Top rated, Most viewed,
+    Picked for you) scrolls on the right.
+  - **Showcase**: a 3D cover-flow of the featured scenes over a soft glow of
+    the picture; swipe or use the arrows.
+  - **Immersive**: the featured scene fills the screen, the rows sit on a
+    frosted sheet over it, and the menu is a floating dock at the bottom.
+- **Preview** opens the site in a layout without changing it for anyone.
+- Viewers can pick their own layout from their account menu on the site;
+  **Site default** goes back to yours.
+
 ### Fixed
 - Signing in failed after updating to v3.5 until the database was migrated,
   and the login page said the password was wrong. Sign in now works before
