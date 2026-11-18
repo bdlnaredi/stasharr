@@ -39,6 +39,17 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   - **Immersive**: frosted glass everywhere, a play button on the card you
     point at, wide cinematic category cards, and the scene's picture blurred
     behind the whole scene page.
+- Three more layouts:
+  - **Editorial**: a glossy magazine. A masthead with the menu under it, a
+    cover story, "In this issue", features, serif headlines, categories as an
+    index of names, articles with a drop capital, and black-and-white
+    portraits that turn colour when pointed at.
+  - **Brutal**: bold and loud. Thick borders, hard shadows, giant capitals,
+    stickers and a scrolling marquee; cards jump when pointed at and press in
+    when clicked.
+  - **Swipe**: a deck of scenes on the home page. Drag right (or ♥) to like,
+    left (or ✕) to skip, or use the arrow keys. Soft rounded cards everywhere
+    and a floating Like / My list bar on every scene.
 - **Preview** opens the site in a layout without changing it for anyone.
 - Viewers can pick their own layout from their account menu on the site;
   **Site default** goes back to yours.

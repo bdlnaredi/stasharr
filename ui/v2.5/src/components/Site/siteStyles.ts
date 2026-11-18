@@ -174,6 +174,58 @@ export const siteLayouts: ISiteLayout[] = [
       [30, 86, 40, 9],
     ],
   },
+  {
+    id: "editorial",
+    name: "Editorial",
+    description:
+      "A glossy magazine: a masthead, a cover story, an \u201cIn this issue\u201d list and features, serif headlines and black-and-white portraits that turn colour when pointed at.",
+    nav: "top",
+    sketch: [
+      [30, 2, 40, 7],
+      [4, 11, 92, 4],
+      [4, 20, 56, 44],
+      [64, 24, 32, 6],
+      [64, 34, 28, 3],
+      [64, 40, 30, 3],
+      [4, 70, 28, 3],
+      [36, 70, 28, 3],
+      [68, 70, 28, 3],
+      [4, 80, 50, 17],
+      [58, 80, 38, 17],
+    ],
+  },
+  {
+    id: "brutal",
+    name: "Brutal",
+    description:
+      "Bold and loud: thick borders, hard shadows, giant capitals, stickers and a scrolling marquee. Cards jump when pointed at and press in when clicked.",
+    nav: "top",
+    sketch: [
+      [0, 0, 100, 9],
+      [4, 14, 46, 46],
+      [54, 16, 42, 42],
+      [0, 64, 100, 8],
+      [4, 78, 28, 18],
+      [36, 78, 28, 18],
+      [68, 78, 28, 18],
+    ],
+  },
+  {
+    id: "swipe",
+    name: "Swipe",
+    description:
+      "Discover by swiping: a deck of scenes you drag right to like or left to skip, with soft rounded cards and a floating action bar on every scene.",
+    nav: "top",
+    sketch: [
+      [0, 0, 100, 8],
+      [4, 18, 22, 20],
+      [36, 16, 28, 54],
+      [33, 20, 34, 50],
+      [74, 18, 22, 40],
+      [38, 74, 24, 8],
+      [4, 86, 92, 12],
+    ],
+  },
 ];
 
 export function findSiteLayout(id: string | null | undefined): ISiteLayout {

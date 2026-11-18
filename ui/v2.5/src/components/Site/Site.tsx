@@ -178,30 +178,32 @@ const SiteHeader: React.FC<{
             <NavLinks female={female} />
           </nav>
         )}
-        <SiteSearch />
-        <LangPicker lang={lang} onChange={onLang} />
-        <SiteAlerts />
-        <div className="site-account">
-          <button type="button" className="site-avatar" onClick={() => setMenu(!menu)}>
-            {(me?.username ?? "Me").slice(0, 1).toUpperCase()}
-          </button>
-          {menu && (
-            <div className="site-account-menu">
-              <div className="site-account-name">{me?.username ?? "Owner"}</div>
-              <Link to="/site/my-list">{t("My list")}</Link>
-              <Link to="/site/account">{t("Account")}</Link>
-              {isAdmin && <Link to="/">{t("Admin interface")}</Link>}
-              <a href={`${baseURL}logout`}>{t("Log out")}</a>
-              <LayoutMenu
-                layout={layout}
-                own={ownLayout}
-                onPick={(id) => {
-                  onLayout(id);
-                  setMenu(false);
-                }}
-              />
-            </div>
-          )}
+        <div className="site-header-tools">
+          <SiteSearch />
+          <LangPicker lang={lang} onChange={onLang} />
+          <SiteAlerts />
+          <div className="site-account">
+            <button type="button" className="site-avatar" onClick={() => setMenu(!menu)}>
+              {(me?.username ?? "Me").slice(0, 1).toUpperCase()}
+            </button>
+            {menu && (
+              <div className="site-account-menu">
+                <div className="site-account-name">{me?.username ?? "Owner"}</div>
+                <Link to="/site/my-list">{t("My list")}</Link>
+                <Link to="/site/account">{t("Account")}</Link>
+                {isAdmin && <Link to="/">{t("Admin interface")}</Link>}
+                <a href={`${baseURL}logout`}>{t("Log out")}</a>
+                <LayoutMenu
+                  layout={layout}
+                  own={ownLayout}
+                  onPick={(id) => {
+                    onLayout(id);
+                    setMenu(false);
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

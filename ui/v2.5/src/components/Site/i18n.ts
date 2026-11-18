@@ -321,6 +321,27 @@ const dict: Record<string, Tr> = {
   "🔥 Trending #1": { hi: "🔥 ट्रेंडिंग #1", fr: "🔥 Tendance n°1", ru: "🔥 В тренде №1", es: "🔥 Tendencia n.º 1" },
   Previous: { hi: "पिछला", fr: "Précédent", ru: "Назад", es: "Anterior" },
   Next: { hi: "अगला", fr: "Suivant", ru: "Далее", es: "Siguiente" },
+  "The issue": { hi: "यह अंक", fr: "Le numéro", ru: "Выпуск", es: "El número" },
+  "Cover story": { hi: "कवर स्टोरी", fr: "À la une", ru: "Главная история", es: "Portada" },
+  "In this issue": { hi: "इस अंक में", fr: "Dans ce numéro", ru: "В этом выпуске", es: "En este número" },
+  Feature: { hi: "फ़ीचर", fr: "Reportage", ru: "Статья", es: "Reportaje" },
+  "Swipe to discover": { hi: "स्वाइप करके खोजें", fr: "Balayez pour découvrir", ru: "Листайте и открывайте", es: "Desliza para descubrir" },
+  "Drag right or tap ♥ to like a scene, left or ✕ to skip. Arrow keys work too.": {
+    hi: "पसंद करने के लिए दाएँ खींचें या ♥ दबाएँ, छोड़ने के लिए बाएँ या ✕। तीर वाली कुंजियाँ भी चलती हैं।",
+    fr: "Glissez à droite ou touchez ♥ pour aimer, à gauche ou ✕ pour passer. Les flèches du clavier marchent aussi.",
+    ru: "Вправо или ♥ — нравится, влево или ✕ — пропустить. Стрелки на клавиатуре тоже работают.",
+    es: "Desliza a la derecha o toca ♥ para dar me gusta, a la izquierda o ✕ para saltar. Las flechas también funcionan.",
+  },
+  "You've seen them all": { hi: "आपने सब देख लिए", fr: "Vous avez tout vu", ru: "Вы всё просмотрели", es: "Ya los has visto todos" },
+  "Start again": { hi: "फिर से शुरू करें", fr: "Recommencer", ru: "Начать заново", es: "Empezar de nuevo" },
+  Skip: { hi: "छोड़ें", fr: "Passer", ru: "Пропустить", es: "Saltar" },
+  "Liked just now": { hi: "अभी पसंद किए", fr: "Aimés à l'instant", ru: "Только что понравилось", es: "Te gustaron ahora" },
+  "Scenes you like show up here.": {
+    hi: "आपकी पसंद के सीन यहाँ दिखेंगे।",
+    fr: "Les scènes que vous aimez apparaissent ici.",
+    ru: "Понравившиеся сцены появятся здесь.",
+    es: "Las escenas que te gusten aparecen aquí.",
+  },
 };
 
 /** The current language's version of an English phrase, with {name} filled in. */
