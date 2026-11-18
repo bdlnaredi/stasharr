@@ -305,6 +305,22 @@ const dict: Record<string, Tr> = {
   Close: { hi: "बंद करें", fr: "Fermer", ru: "Закрыть", es: "Cerrar" },
   "just now": { hi: "अभी", fr: "à l'instant", ru: "только что", es: "ahora mismo" },
   "See all results": { hi: "सभी परिणाम देखें", fr: "Voir tous les résultats", ru: "Все результаты", es: "Ver todos los resultados" },
+  // layouts
+  Layout: { hi: "लेआउट", fr: "Mise en page", ru: "Макет", es: "Diseño" },
+  "Site default": { hi: "साइट का डिफ़ॉल्ट", fr: "Par défaut du site", ru: "Как на сайте", es: "Predeterminado del sitio" },
+  "Previewing the {name} layout.": {
+    hi: "{name} लेआउट का पूर्वावलोकन।",
+    fr: "Aperçu de la mise en page {name}.",
+    ru: "Предпросмотр макета {name}.",
+    es: "Vista previa del diseño {name}.",
+  },
+  Discover: { hi: "खोजें", fr: "Découvrir", ru: "Обзор", es: "Descubrir" },
+  Browse: { hi: "ब्राउज़ करें", fr: "Parcourir", ru: "Обзор", es: "Explorar" },
+  "Load more": { hi: "और दिखाएँ", fr: "Afficher plus", ru: "Показать ещё", es: "Cargar más" },
+  "Star of the week": { hi: "इस हफ़्ते की स्टार", fr: "Star de la semaine", ru: "Звезда недели", es: "Estrella de la semana" },
+  "🔥 Trending #1": { hi: "🔥 ट्रेंडिंग #1", fr: "🔥 Tendance n°1", ru: "🔥 В тренде №1", es: "🔥 Tendencia n.º 1" },
+  Previous: { hi: "पिछला", fr: "Précédent", ru: "Назад", es: "Anterior" },
+  Next: { hi: "अगला", fr: "Suivant", ru: "Далее", es: "Siguiente" },
 };
 
 /** The current language's version of an English phrase, with {name} filled in. */

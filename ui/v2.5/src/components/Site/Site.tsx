@@ -23,10 +23,20 @@ import {
   ScenesPage,
   SearchPage,
 } from "./SitePages";
-import { findSiteStyle, siteStyles } from "./siteStyles";
+import {
+  ISiteLayout,
+  findSiteLayout,
+  findSiteStyle,
+  setViewerLayout,
+  siteLayouts,
+  siteStyles,
+  viewerLayout,
+} from "./siteStyles";
+import { SiteIcon } from "./SiteIcons";
 import { Lang, getLang, languages, setLang, t } from "./i18n";
 import { SiteAlerts } from "./SiteAlerts";
 import "./site.scss";
+import "./siteLayouts.scss";
 
 const LangPicker: React.FC<{ lang: Lang; onChange: (l: Lang) => void }> = ({ lang, onChange }) => (
   <label className="site-lang" title={t("Language")}>
@@ -42,15 +52,100 @@ const LangPicker: React.FC<{ lang: Lang; onChange: (l: Lang) => void }> = ({ lan
   </label>
 );
 
+// The menu, shared by the top bar, the side menu and the dock.
+const NavLinks: React.FC<{ female: boolean }> = ({ female }) => {
+  const { canViewReels } = useCurrentUser();
+  return (
+    <>
+      <NavLink exact to="/site">
+        <SiteIcon name="home" />
+        <span>{t("Home")}</span>
+      </NavLink>
+      <NavLink to="/site/scenes">
+        <SiteIcon name="scenes" />
+        <span>{t("Scenes")}</span>
+      </NavLink>
+      <NavLink to="/site/models">
+        <SiteIcon name="models" />
+        <span>{t(female ? "Pornstars" : "Models")}</span>
+      </NavLink>
+      <NavLink to="/site/categories">
+        <SiteIcon name="categories" />
+        <span>{t("Categories")}</span>
+      </NavLink>
+      <NavLink to="/site/channels">
+        <SiteIcon name="channels" />
+        <span>{t("Channels")}</span>
+      </NavLink>
+      {canViewReels && (
+        <NavLink to="/site/reels">
+          <SiteIcon name="reels" />
+          <span>{t("Reels")}</span>
+        </NavLink>
+      )}
+      <NavLink to="/site/my-list">
+        <SiteIcon name="list" />
+        <span>{t("My list")}</span>
+      </NavLink>
+    </>
+  );
+};
+
+const Logo: React.FC<{ name: string; logo?: string | null }> = ({ name, logo }) => {
+  const words = name.trim().split(/\s+/);
+  const first = words.length > 1 ? words.slice(0, -1).join(" ") : name;
+  const last = words.length > 1 ? words[words.length - 1] : "";
+  return (
+    <Link to="/site" className={`site-logo ${logo ? "site-logo-image" : ""}`}>
+      {logo ? (
+        <img src={logo} alt={name} />
+      ) : (
+        <>
+          {first}
+          {last && <span>{last}</span>}
+        </>
+      )}
+    </Link>
+  );
+};
+
+// Immersive: the menu as a floating dock at the bottom
+const Dock: React.FC<{ female: boolean }> = ({ female }) => (
+  <nav className="site-dock">
+    <NavLinks female={female} />
+  </nav>
+);
+
+const LayoutMenu: React.FC<{ layout: ISiteLayout; own: boolean; onPick: (id: string | null) => void }> = ({
+  layout,
+  own,
+  onPick,
+}) => (
+  <div className="site-layout-menu">
+    <small>{t("Layout")}</small>
+    <button type="button" className={!own ? "on" : ""} onClick={() => onPick(null)}>
+      {t("Site default")}
+    </button>
+    {siteLayouts.map((l) => (
+      <button type="button" key={l.id} className={own && l.id === layout.id ? "on" : ""} onClick={() => onPick(l.id)}>
+        {t(l.name)}
+      </button>
+    ))}
+  </div>
+);
+
 const SiteHeader: React.FC<{
   name: string;
   female: boolean;
   logo?: string | null;
   lang: Lang;
   onLang: (l: Lang) => void;
-}> = ({ name, female, logo, lang, onLang }) => {
+  layout: ISiteLayout;
+  ownLayout: boolean;
+  onLayout: (id: string | null) => void;
+}> = ({ name, female, logo, lang, onLang, layout, ownLayout, onLayout }) => {
   const location = useLocation();
-  const { isAdmin, me, canViewReels } = useCurrentUser();
+  const { isAdmin, me } = useCurrentUser();
   const [menu, setMenu] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -67,37 +162,22 @@ const SiteHeader: React.FC<{
     setMobile(false);
   }, [location.pathname]);
 
-  const words = name.trim().split(/\s+/);
-  const first = words.length > 1 ? words.slice(0, -1).join(" ") : name;
-  const last = words.length > 1 ? words[words.length - 1] : "";
+  const topMenu = layout.nav === "top";
 
   return (
     <header className={`site-header ${scrolled ? "scrolled" : ""}`}>
       <div className="site-header-inner">
-        <button type="button" className="site-burger" onClick={() => setMobile(!mobile)} aria-label={t("Menu")}>
-          ☰
-        </button>
-        <Link to="/site" className={`site-logo ${logo ? "site-logo-image" : ""}`}>
-          {logo ? (
-            <img src={logo} alt={name} />
-          ) : (
-            <>
-              {first}
-              {last && <span>{last}</span>}
-            </>
-          )}
-        </Link>
-        <nav className={`site-nav ${mobile ? "open" : ""}`}>
-          <NavLink exact to="/site">
-            {t("Home")}
-          </NavLink>
-          <NavLink to="/site/scenes">{t("Scenes")}</NavLink>
-          <NavLink to="/site/models">{t(female ? "Pornstars" : "Models")}</NavLink>
-          <NavLink to="/site/categories">{t("Categories")}</NavLink>
-          <NavLink to="/site/channels">{t("Channels")}</NavLink>
-          {canViewReels && <NavLink to="/site/reels">{t("Reels")}</NavLink>}
-          <NavLink to="/site/my-list">{t("My list")}</NavLink>
-        </nav>
+        {topMenu && (
+          <button type="button" className="site-burger" onClick={() => setMobile(!mobile)} aria-label={t("Menu")}>
+            ☰
+          </button>
+        )}
+        <Logo name={name} logo={logo} />
+        {topMenu && (
+          <nav className={`site-nav ${mobile ? "open" : ""}`}>
+            <NavLinks female={female} />
+          </nav>
+        )}
         <SiteSearch />
         <LangPicker lang={lang} onChange={onLang} />
         <SiteAlerts />
@@ -112,6 +192,14 @@ const SiteHeader: React.FC<{
               <Link to="/site/account">{t("Account")}</Link>
               {isAdmin && <Link to="/">{t("Admin interface")}</Link>}
               <a href={`${baseURL}logout`}>{t("Log out")}</a>
+              <LayoutMenu
+                layout={layout}
+                own={ownLayout}
+                onPick={(id) => {
+                  onLayout(id);
+                  setMenu(false);
+                }}
+              />
             </div>
           )}
         </div>
@@ -213,6 +301,24 @@ const Site: React.FC = () => {
   }, [preview]);
 
   const style = findSiteStyle(previewStyle ?? config?.style);
+
+  // admins can preview a layout with ?layout=bento; each viewer can also
+  // pick their own from the account menu
+  const previewLayoutParam = useMemo(() => {
+    const l = new URLSearchParams(location.search).get("layout");
+    return l && siteLayouts.some((x) => x.id === l) ? l : null;
+  }, [location.search]);
+  const [previewLayout, setPreviewLayout] = useState<string | null>(null);
+  useEffect(() => {
+    if (previewLayoutParam) setPreviewLayout(previewLayoutParam);
+  }, [previewLayoutParam]);
+  const [ownLayout, setOwnLayout] = useState<string | null>(viewerLayout);
+  const pickLayout = (id: string | null) => {
+    setViewerLayout(id);
+    setOwnLayout(id);
+    setPreviewLayout(null);
+  };
+  const layout = findSiteLayout(previewLayout ?? ownLayout ?? config?.layout);
   const [adult, setAdult] = useState(ageConfirmed);
   const [lang, setLangState] = useState<Lang>(getLang);
   const changeLang = (l: Lang) => {
@@ -221,9 +327,10 @@ const Site: React.FC = () => {
   };
 
   useEffect(() => {
-    document.body.classList.add("site-mode", `site-body-${style.id}`);
-    return () => document.body.classList.remove("site-mode", `site-body-${style.id}`);
-  }, [style.id]);
+    document.body.classList.add("site-mode", `site-body-${style.id}`, `site-body-layout-${layout.id}`);
+    return () =>
+      document.body.classList.remove("site-mode", `site-body-${style.id}`, `site-body-layout-${layout.id}`);
+  }, [style.id, layout.id]);
 
   useEffect(() => {
     window.scrollTo({ top: 0 });
@@ -231,7 +338,7 @@ const Site: React.FC = () => {
 
   if (loading && !config) {
     return (
-      <div className={`site-root site-style-${style.id}`}>
+      <div className={`site-root site-style-${style.id} site-layout-${layout.id}`}>
         <Loading />
       </div>
     );
@@ -248,8 +355,8 @@ const Site: React.FC = () => {
     : undefined;
 
   return (
-    <SiteContext.Provider value={{ config, style }}>
-      <div className={`site-root site-style-${style.id}`} style={accentVars}>
+    <SiteContext.Provider value={{ config, style, layout }}>
+      <div className={`site-root site-style-${style.id} site-layout-${layout.id}`} style={accentVars}>
         {config.age_gate && !adult && (
           <AgeGate name={config.name} logo={config.logo_url} onEnter={() => setAdult(true)} />
         )}
@@ -265,7 +372,24 @@ const Site: React.FC = () => {
             </button>
           </div>
         )}
-        <SiteHeader name={config.name} female={female} logo={config.logo_url} lang={lang} onLang={changeLang} />
+        {previewLayout && previewLayout !== config.layout && (
+          <div className="site-preview-bar">
+            {t("Previewing the {name} layout.", { name: t(layout.name) })}{" "}
+            <button type="button" onClick={() => setPreviewLayout(null)}>
+              {t("Stop preview")}
+            </button>
+          </div>
+        )}
+        <SiteHeader
+          name={config.name}
+          female={female}
+          logo={config.logo_url}
+          lang={lang}
+          onLang={changeLang}
+          layout={layout}
+          ownLayout={!!ownLayout}
+          onLayout={pickLayout}
+        />
         {/* keyed on the language so every page redraws in the new one */}
         <main className="site-main" key={lang}>
           <Switch>
@@ -287,6 +411,7 @@ const Site: React.FC = () => {
           </Switch>
         </main>
         <SiteFooter key={`f-${lang}`} name={config.name} tagline={config.tagline} />
+        {layout.nav === "dock" && <Dock female={female} />}
       </div>
     </SiteContext.Provider>
   );

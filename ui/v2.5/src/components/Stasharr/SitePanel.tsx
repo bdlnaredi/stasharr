@@ -4,7 +4,7 @@ import * as GQL from "src/core/generated-graphql";
 import { LoadingIndicator } from "src/components/Shared/LoadingIndicator";
 import { useToast } from "src/hooks/Toast";
 import { baseURL } from "src/core/createClient";
-import { siteStyles } from "src/components/Site/siteStyles";
+import { siteLayouts, siteStyles } from "src/components/Site/siteStyles";
 import { SettingRow } from "./util";
 import { BrandingEditor, HomeRowsEditor, LoginPageEditor, PromoEditor } from "./SitePanelExtras";
 
@@ -195,6 +195,48 @@ export const SitePanel: React.FC = () => {
       <BrandingEditor cfg={cfg} save={save} />
       <LoginPageEditor cfg={cfg} tags={tags.data?.findTags.tags ?? []} save={save} />
 
+      <div className="setting-section">
+        <h1>Layout</h1>
+        <p className="text-muted">
+          Where things sit on the site: the menu, the banner and the rows. Every layout works with every style below.
+          Viewers can also pick their own layout from their account menu on the site.
+        </p>
+        <div className="stasharr-site-styles">
+          {siteLayouts.map((l) => (
+            <div key={l.id} className={`stasharr-site-style ${l.id === cfg.layout ? "selected" : ""}`}>
+              <div className="stasharr-layout-sketch" aria-hidden="true">
+                {l.sketch.map(([x, y, w, h], i) => (
+                  <span key={i} style={{ left: `${x}%`, top: `${y}%`, width: `${w}%`, height: `${h}%` }} />
+                ))}
+              </div>
+              <div className="stasharr-site-style-body">
+                <h5>
+                  {l.name}
+                  {l.id === cfg.layout && <small> · in use</small>}
+                </h5>
+                <p>{l.description}</p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  href={`${baseURL}site?layout=${l.id}`}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Preview
+                </Button>{" "}
+                <Button
+                  size="sm"
+                  variant="primary"
+                  disabled={saving || l.id === cfg.layout}
+                  onClick={() => save({ layout: l.id }, `The site now uses the ${l.name} layout`)}
+                >
+                  Use this layout
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
       <div className="setting-section">
         <h1>Style</h1>
         <div className="stasharr-site-styles">

@@ -1,10 +1,11 @@
 import React, { useContext } from "react";
 import * as GQL from "src/core/generated-graphql";
-import { ISiteStyle, findSiteStyle } from "./siteStyles";
+import { ISiteLayout, ISiteStyle, findSiteLayout, findSiteStyle } from "./siteStyles";
 
 export interface ISiteContext {
   config: GQL.SiteConfigDataFragment;
   style: ISiteStyle;
+  layout: ISiteLayout;
 }
 
 const defaultConfig: GQL.SiteConfigDataFragment = {
@@ -12,6 +13,7 @@ const defaultConfig: GQL.SiteConfigDataFragment = {
   enabled: false,
   audience: "viewers",
   style: "velvet",
+  layout: "classic",
   name: "Stasharr",
   tagline: "",
   featured: "top_rated",
@@ -31,6 +33,7 @@ const defaultConfig: GQL.SiteConfigDataFragment = {
 export const SiteContext = React.createContext<ISiteContext>({
   config: defaultConfig,
   style: findSiteStyle("velvet"),
+  layout: findSiteLayout("classic"),
 });
 
 export function useSite(): ISiteContext {

@@ -521,6 +521,24 @@ body.stasharr-no-download {
   }
 }
 
+.stasharr-layout-sketch {
+  background: #10141a;
+  height: 150px;
+  position: relative;
+
+  span {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 4px;
+    position: absolute;
+  }
+}
+
+.stasharr-site-style.selected .stasharr-layout-sketch span {
+  background: rgba(232, 74, 127, 0.3);
+  border-color: rgba(232, 74, 127, 0.8);
+}
+
 .stasharr-site-swatch {
   display: flex;
   flex-direction: column;

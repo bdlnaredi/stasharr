@@ -2285,6 +2285,7 @@ const (
 	SiteEnabled      = "stasharr.site.enabled"
 	SiteAudience     = "stasharr.site.audience"
 	SiteStyle        = "stasharr.site.style"
+	SiteLayout       = "stasharr.site.layout"
 	SiteName         = "stasharr.site.name"
 	SiteTagline      = "stasharr.site.tagline"
 	SiteFeatured     = "stasharr.site.featured"
@@ -2328,6 +2329,19 @@ func (i *Config) GetSiteStyle() string {
 		}
 	}
 	return "velvet"
+}
+
+// SiteLayouts are the page layouts the site can have.
+var SiteLayouts = []string{"classic", "bento", "mosaic", "spotlight", "showcase", "immersive"}
+
+func (i *Config) GetSiteLayout() string {
+	v := i.getString(SiteLayout)
+	for _, s := range SiteLayouts {
+		if s == v {
+			return v
+		}
+	}
+	return "classic"
 }
 
 func (i *Config) GetSiteName() string {

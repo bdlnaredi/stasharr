@@ -23,6 +23,8 @@ type SiteConfig {
   audience: String!
   "The look: velvet, neon, crimson, blush or onyx"
   style: String!
+  "Where things sit: classic, bento, mosaic, spotlight, showcase or immersive"
+  layout: String!
   name: String!
   tagline: String!
   "top_rated, popular, recent, random or tag"
@@ -139,6 +141,7 @@ input SiteConfigInput {
   enabled: Boolean
   audience: String
   style: String
+  layout: String
   name: String
   tagline: String
   featured: String
