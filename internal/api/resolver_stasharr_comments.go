@@ -70,6 +70,9 @@ func (r *mutationResolver) ReelAddView(ctx context.Context, id string) (int, err
 // commentAuthor is the name shown with the current user's comments.
 func commentAuthor(ctx context.Context) string {
 	if p := access.FromContext(ctx); p != nil && p.Username != "" {
+		if p.Profile && p.ProfileName != "" {
+			return p.ProfileName
+		}
 		return p.Username
 	}
 	if u := config.GetInstance().GetUsername(); u != "" {

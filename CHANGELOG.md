@@ -7,6 +7,26 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Profiles, mini-player, discreet mode and monthly recap
+- **Profiles**: up to 5 Netflix-style profiles under one account, each with
+  its own history, likes, My list and recap. "Who's watching?" shows once per
+  browser session; switch any time from the account menu. Profiles can have
+  a PIN, and so can the main profile (do set one, or anyone on a profile can
+  switch to it). Only the main profile adds, renames or deletes profiles.
+  Profiles get the main account's tier and are never more than viewers.
+- **Mini-player**: leave a scene while it plays and it keeps going in a small
+  window you can drag to any corner; ⤢ goes back to the scene at the same
+  moment. It can be turned off on the Account page.
+- **Discreet mode** (Account page, this browser only): press Esc twice (or `)
+  to jump to a harmless page you choose, with the site's tab left out of the
+  back button; a plain tab title and icon; pictures blurred until pointed
+  at; and a PIN to get back in after hiding or being away.
+- **Monthly recap** (account menu): time watched, plays, days and streaks,
+  your top pornstars, categories and channels, the most replayed scene, and
+  when you watch. Watch time is counted from this update on.
+- Viewers can now turn on two-step sign in and ask for another tier
+  themselves; before, the site refused them.
+
 ### Site layouts
 - The site can now look completely different, not just in colour. Pick a
   layout in **Settings → Site → Layout**; every layout works with every style.

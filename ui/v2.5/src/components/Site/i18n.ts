@@ -342,6 +342,22 @@ const dict: Record<string, Tr> = {
     ru: "Понравившиеся сцены появятся здесь.",
     es: "Las escenas que te gusten aparecen aquí.",
   },
+  // profiles, recap, discreet mode, mini-player
+  "Who's watching?": { hi: "कौन देख रहा है?", fr: "Qui regarde ?", ru: "Кто смотрит?", es: "¿Quién está viendo?" },
+  "Manage profiles": { hi: "प्रोफ़ाइल प्रबंधित करें", fr: "Gérer les profils", ru: "Управление профилями", es: "Administrar perfiles" },
+  "Add profile": { hi: "प्रोफ़ाइल जोड़ें", fr: "Ajouter un profil", ru: "Добавить профиль", es: "Añadir perfil" },
+  "Main profile": { hi: "मुख्य प्रोफ़ाइल", fr: "Profil principal", ru: "Основной профиль", es: "Perfil principal" },
+  Profiles: { hi: "प्रोफ़ाइल", fr: "Profils", ru: "Профили", es: "Perfiles" },
+  "Monthly recap": { hi: "मासिक सारांश", fr: "Bilan du mois", ru: "Итоги месяца", es: "Resumen del mes" },
+  "Your monthly recap": { hi: "आपका मासिक सारांश", fr: "Votre bilan du mois", ru: "Ваши итоги месяца", es: "Tu resumen del mes" },
+  "Time watched": { hi: "देखने का समय", fr: "Temps de visionnage", ru: "Время просмотра", es: "Tiempo visto" },
+  "Your top star": { hi: "आपकी टॉप स्टार", fr: "Votre star n°1", ru: "Ваша главная звезда", es: "Tu estrella n.º 1" },
+  "Discreet mode": { hi: "गुप्त मोड", fr: "Mode discret", ru: "Скрытный режим", es: "Modo discreto" },
+  "Hide now": { hi: "अभी छिपाएँ", fr: "Masquer", ru: "Скрыть сейчас", es: "Ocultar ahora" },
+  "Enter your PIN": { hi: "अपना PIN डालें", fr: "Saisissez votre code", ru: "Введите PIN-код", es: "Introduce tu PIN" },
+  "Wrong PIN.": { hi: "गलत PIN।", fr: "Code incorrect.", ru: "Неверный PIN-код.", es: "PIN incorrecto." },
+  "Mini-player": { hi: "मिनी प्लेयर", fr: "Mini-lecteur", ru: "Мини-плеер", es: "Minirreproductor" },
+  "Back to the scene": { hi: "सीन पर वापस", fr: "Retour à la scène", ru: "Вернуться к сцене", es: "Volver a la escena" },
 };
 
 /** The current language's version of an English phrase, with {name} filled in. */

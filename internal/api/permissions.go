@@ -43,9 +43,30 @@ var viewerMutations = map[string]bool{
 	// site likes and favourite models
 	"siteToggleLike":          true,
 	"siteToggleFavoriteModel": true,
+	// the account's own sign-in settings and tier requests
+	"twoStepStart":         true,
+	"twoStepConfirm":       true,
+	"twoStepDisable":       true,
+	"twoStepRecoveryCodes": true,
+	"twoStepForgetDevices": true,
+	"tierRequestCreate":    true,
+	"tierRequestCancel":    true,
+	// profiles; the main profile only, checked in the resolvers
+	"siteProfileCreate": true,
+	"siteProfileUpdate": true,
+	"siteProfileDelete": true,
+	"siteProfilePin":    true,
 	// accepted but ignored for non-admins, see ConfigureUI
 	"configureUI":        true,
 	"configureUISetting": true,
+}
+
+// Mutations a profile may not run: they belong to the main account.
+var profileBlockedMutations = map[string]bool{
+	"changeMyPassword": true,
+	"twoStepStart":     true, "twoStepConfirm": true, "twoStepDisable": true,
+	"twoStepRecoveryCodes": true, "twoStepForgetDevices": true,
+	"tierRequestCreate": true, "tierRequestCancel": true,
 }
 
 // Mutations only an admin may run. Everything else is open to editors.
@@ -142,6 +163,11 @@ func permissionFieldMiddleware(ctx context.Context, next graphql.Resolver) (inte
 
 	if !p.Role.AtLeast(requiredRole(op, field)) {
 		return nil, fmt.Errorf("%w (%s)", access.ErrForbidden, field)
+	}
+
+	// a profile shares its main account's sign in, so it cannot change it
+	if p.Profile && op == "Mutation" && profileBlockedMutations[field] {
+		return nil, fmt.Errorf("%w: switch to the main profile to change this", access.ErrForbidden)
 	}
 
 	if op == "Mutation" {

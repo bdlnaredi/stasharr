@@ -17,6 +17,7 @@ import (
 	"github.com/stashapp/stash/pkg/scene"
 	"github.com/stashapp/stash/pkg/sliceutil"
 	"github.com/stashapp/stash/pkg/sliceutil/stringslice"
+	"github.com/stashapp/stash/pkg/sqlite"
 	"github.com/stashapp/stash/pkg/utils"
 )
 
@@ -1087,7 +1088,14 @@ func (r *mutationResolver) SceneSaveActivity(ctx context.Context, id string, res
 		qb := r.repository.Scene
 
 		ret, err = qb.SaveActivity(ctx, sceneID, resumeTime, playDuration)
-		return err
+		if err != nil {
+			return err
+		}
+		// Stasharr: watch time per day, for the monthly recap
+		if playDuration != nil && !manager.GetInstance().Database.NeedsMigration() {
+			return sqlite.AddWatchTime(ctx, sqlite.PlaylistUserID(ctx), *playDuration)
+		}
+		return nil
 	}); err != nil {
 		return false, err
 	}

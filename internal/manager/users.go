@@ -16,6 +16,7 @@ import (
 	"github.com/stashapp/stash/pkg/access"
 	"github.com/stashapp/stash/pkg/logger"
 	"github.com/stashapp/stash/pkg/models"
+	"github.com/stashapp/stash/pkg/sqlite"
 )
 
 // UserService resolves logins, API keys and request principals for the
@@ -169,8 +170,30 @@ func (s *UserService) Principal(ctx context.Context, username string) (*access.P
 			TierID:   u.TierID,
 			Policy:   access.Policy{CanDownload: true, CanViewReels: true},
 		}
-		if u.TierID != nil {
-			t, err := s.Repository.User.FindTier(ctx, *u.TierID)
+		// a profile has its main account's access, and never more than a viewer
+		tierID := u.TierID
+		prof, err := profileOf(ctx, u.ID)
+		if err != nil {
+			return err
+		}
+		if prof != nil {
+			p.Profile, p.MainID, p.ProfileName = true, prof.ParentID, prof.Name
+			p.Role = access.RoleViewer
+			tierID = nil
+			if prof.ParentID != 0 {
+				parent, err := s.Repository.User.Find(ctx, prof.ParentID)
+				if err != nil {
+					return err
+				}
+				if parent == nil || parent.Disabled {
+					return ErrUserNotFound
+				}
+				tierID = parent.TierID
+			}
+			p.TierID = tierID
+		}
+		if tierID != nil {
+			t, err := s.Repository.User.FindTier(ctx, *tierID)
 			if err != nil {
 				return err
 			}
@@ -189,6 +212,15 @@ func (s *UserService) Principal(ctx context.Context, username string) (*access.P
 	s.cache[key] = cachedPrincipal{p: p, expires: time.Now().Add(principalCacheTTL)}
 	s.mu.Unlock()
 	return p, nil
+}
+
+// profileOf returns the profile row of an account, or nil. Before the
+// database is upgraded there are no profiles, so sign in still works.
+func profileOf(ctx context.Context, userID int) (*sqlite.Profile, error) {
+	if db := GetInstance().Database; db == nil || db.Ready() != nil || db.NeedsMigration() {
+		return nil, nil
+	}
+	return sqlite.FindProfile(ctx, userID)
 }
 
 // ValidateUsername checks a new username.

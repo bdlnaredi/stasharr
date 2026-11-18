@@ -1,0 +1,75 @@
+"A profile of the signed-in account; the main account is one too"
+type SiteProfile {
+  "The account; 0 is the owner"
+  id: ID!
+  name: String!
+  "A colour like #e84a7f, or empty for the default"
+  color: String!
+  has_pin: Boolean!
+  is_main: Boolean!
+  is_current: Boolean!
+}
+
+type RecapPerformer {
+  performer: Performer!
+  plays: Int!
+}
+
+type RecapTag {
+  tag: Tag!
+  plays: Int!
+}
+
+type RecapStudio {
+  studio: Studio!
+  plays: Int!
+}
+
+"A profile's month in numbers"
+type MonthRecap {
+  "YYYY-MM"
+  month: String!
+  plays: Int!
+  "Different scenes played"
+  scenes: Int!
+  "Seconds watched; counted from the update that added the recap on"
+  seconds: Float!
+  active_days: Int!
+  "Most days in a row with a play"
+  longest_run: Int!
+  likes: Int!
+  models: [RecapPerformer!]!
+  categories: [RecapTag!]!
+  studios: [RecapStudio!]!
+  top_scene: Scene
+  top_scene_plays: Int!
+  "Plays per hour of the day, 0 to 23"
+  hours: [Int!]!
+  "Plays per weekday, Sunday first"
+  weekdays: [Int!]!
+}
+
+extend type CurrentUser {
+  "The profile name when on a profile, otherwise the username"
+  display_name: String!
+  is_profile: Boolean!
+}
+
+extend type Query {
+  "The signed-in account's profiles, the main profile first"
+  siteProfiles: [SiteProfile!]!
+  "Months with plays, newest first (YYYY-MM)"
+  recapMonths: [String!]!
+  "The signed-in profile's recap; month is YYYY-MM, the latest by default"
+  monthRecap(month: String): MonthRecap
+}
+
+extend type Mutation {
+  "Main profile only; up to 5 profiles"
+  siteProfileCreate(name: String!, color: String): SiteProfile!
+  siteProfileUpdate(id: ID!, name: String!, color: String): Boolean!
+  "Removes the profile with its history, likes and lists"
+  siteProfileDelete(id: ID!): Boolean!
+  "Sets the PIN (4 to 8 digits) of a profile or the main profile; empty removes it"
+  siteProfilePin(id: ID!, pin: String!): Boolean!
+}
