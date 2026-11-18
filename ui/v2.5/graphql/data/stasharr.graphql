@@ -40,6 +40,8 @@ fragment CurrentUserData on CurrentUser {
   can_view_reels
   multi_user_enabled
   two_step_enabled
+  display_name
+  is_profile
 }
 
 fragment ReelData on Reel {

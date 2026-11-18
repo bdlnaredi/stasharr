@@ -1,0 +1,17 @@
+mutation SiteProfileCreate($name: String!, $color: String) {
+  siteProfileCreate(name: $name, color: $color) {
+    ...SiteProfileData
+  }
+}
+
+mutation SiteProfileUpdate($id: ID!, $name: String!, $color: String) {
+  siteProfileUpdate(id: $id, name: $name, color: $color)
+}
+
+mutation SiteProfileDelete($id: ID!) {
+  siteProfileDelete(id: $id)
+}
+
+mutation SiteProfilePin($id: ID!, $pin: String!) {
+  siteProfilePin(id: $id, pin: $pin)
+}

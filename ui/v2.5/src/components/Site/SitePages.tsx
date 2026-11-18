@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useHistory, useLocation, useParams } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
 import { ScenePlayer } from "src/components/ScenePlayer/ScenePlayer";
+import { useHandOffToMini } from "./SiteMiniPlayer";
 import {
   CategoryTile,
   Empty,
@@ -342,6 +343,9 @@ export const ScenePage: React.FC = () => {
   });
 
   useEffect(() => window.scrollTo({ top: 0 }), [id]);
+
+  // leaving while it plays hands the scene to the mini-player
+  useHandOffToMini(scene ?? undefined);
 
   // ?t= starts at a time, for example from a reel
   const startAt = useMemo(() => {

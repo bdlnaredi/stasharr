@@ -13,6 +13,7 @@ import (
 	"github.com/stashapp/stash/pkg/access"
 	"github.com/stashapp/stash/pkg/models"
 	"github.com/stashapp/stash/pkg/sliceutil/stringslice"
+	"github.com/stashapp/stash/pkg/sqlite"
 )
 
 func (r *Resolver) User() UserResolver         { return &userResolver{r} }
@@ -41,6 +42,7 @@ func (r *queryResolver) Me(ctx context.Context) (*CurrentUser, error) {
 			// no login configured: single-user mode with full access
 			return &CurrentUser{
 				Username:         "",
+				DisplayName:      "",
 				Role:             access.RoleAdmin,
 				IsOwner:          true,
 				CanDownload:      true,
@@ -59,6 +61,11 @@ func (r *queryResolver) Me(ctx context.Context) (*CurrentUser, error) {
 		CanViewReels:     p.CanViewReels(),
 		MultiUserEnabled: cfg.HasCredentials(),
 		TwoStepEnabled:   manager.TwoStepEnabled(ctx, p.UserID),
+		DisplayName:      p.Username,
+		IsProfile:        p.Profile,
+	}
+	if p.Profile && p.ProfileName != "" {
+		ret.DisplayName = p.ProfileName
 	}
 	if p.TierName != "" {
 		t := p.TierName
@@ -72,8 +79,22 @@ func (r *queryResolver) Users(ctx context.Context) (ret []*models.User, err erro
 		return nil, err
 	}
 	err = r.withReadTxn(ctx, func(ctx context.Context) error {
-		ret, err = r.repository.User.All(ctx)
-		return err
+		all, err := r.repository.User.All(ctx)
+		if err != nil {
+			return err
+		}
+		// profiles live under their main account, not in the list
+		profiles, err := sqlite.ProfileUserIDs(ctx)
+		if err != nil {
+			return err
+		}
+		ret = make([]*models.User, 0, len(all))
+		for _, u := range all {
+			if !profiles[u.ID] {
+				ret = append(ret, u)
+			}
+		}
+		return nil
 	})
 	return ret, err
 }
@@ -311,6 +332,10 @@ func (r *mutationResolver) UserDestroy(ctx context.Context, id string) (bool, er
 		return false, errors.New("you cannot delete your own account")
 	}
 	if err := r.withTxn(ctx, func(ctx context.Context) error {
+		// the account's profiles go with it
+		if err := manager.DeleteProfilesOf(ctx, uid); err != nil {
+			return err
+		}
 		return r.repository.User.Destroy(ctx, uid)
 	}); err != nil {
 		return false, err

@@ -241,3 +241,12 @@ func (s *Store) Authenticate(w http.ResponseWriter, r *http.Request) (userID str
 
 	return
 }
+
+// SwitchUser moves the current browser session to another account, for
+// Stasharr profiles. The caller checks that the switch is allowed.
+func (s *Store) SwitchUser(w http.ResponseWriter, r *http.Request, username string) error {
+	session, _ := s.sessionStore.Get(r, cookieName)
+	session.Values[userIDKey] = username
+	logger.Infof("Session moved to profile %q", username)
+	return session.Save(r, w)
+}

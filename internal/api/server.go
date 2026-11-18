@@ -237,6 +237,8 @@ func Initialize() (*Server, error) {
 	r.Get(loginEndpoint+"/invite", handleInviteInfo(server.manager.Repository))
 	r.Post(loginEndpoint+"/signup", handleSignup(server.manager.Repository))
 	r.Get(logoutEndpoint, handleLogout())
+	// Stasharr: profiles
+	r.Post("/profiles/switch", handleProfileSwitch())
 	r.Get(loginLocaleEndpoint, handleLoginLocale(cfg))
 	r.Mount(loginEndpoint+"/backdrop", (&loginBackdrop{repository: server.manager.Repository}).Routes())
 	r.HandleFunc(loginEndpoint+"/*", func(w http.ResponseWriter, r *http.Request) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, Route, Switch, useLocation } from "react-router-dom";
+import { Link, NavLink, Route, Switch, useHistory, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import * as GQL from "src/core/generated-graphql";
 import { baseURL } from "src/core/createClient";
@@ -35,8 +35,13 @@ import {
 import { SiteIcon } from "./SiteIcons";
 import { Lang, getLang, languages, setLang, t } from "./i18n";
 import { SiteAlerts } from "./SiteAlerts";
+import { Discreet, DiscreetSettings, hideNow, loadDiscreet } from "./SiteDiscreet";
+import { MiniPlayer, MiniPlayerProvider, miniPlayerOn, setMiniPlayerOn } from "./SiteMiniPlayer";
+import { ProfileAvatar, ProfilesPage, profileWasPicked, useProfileSwitch } from "./SiteProfiles";
+import { RecapPage } from "./SiteRecap";
 import "./site.scss";
 import "./siteLayouts.scss";
+import "./siteExtras.scss";
 
 const LangPicker: React.FC<{ lang: Lang; onChange: (l: Lang) => void }> = ({ lang, onChange }) => (
   <label className="site-lang" title={t("Language")}>
@@ -163,6 +168,12 @@ const SiteHeader: React.FC<{
   }, [location.pathname]);
 
   const topMenu = layout.nav === "top";
+  const profiles = GQL.useSiteProfilesQuery({ skip: !me?.multi_user_enabled, fetchPolicy: "cache-and-network" });
+  const family = profiles.data?.siteProfiles ?? [];
+  const current = family.find((p) => p.is_current);
+  const others = family.filter((p) => !p.is_current);
+  const { go, dialog } = useProfileSwitch();
+  const discreetOn = loadDiscreet().on;
 
   return (
     <header className={`site-header ${scrolled ? "scrolled" : ""}`}>
@@ -183,14 +194,38 @@ const SiteHeader: React.FC<{
           <LangPicker lang={lang} onChange={onLang} />
           <SiteAlerts />
           <div className="site-account">
-            <button type="button" className="site-avatar" onClick={() => setMenu(!menu)}>
-              {(me?.username ?? "Me").slice(0, 1).toUpperCase()}
+            <button
+              type="button"
+              className="site-avatar"
+              style={current ? { background: profileBg(current) } : undefined}
+              onClick={() => setMenu(!menu)}
+              aria-label={t("Account")}
+            >
+              {(me?.display_name || me?.username || "Me").slice(0, 1).toUpperCase()}
             </button>
             {menu && (
               <div className="site-account-menu">
-                <div className="site-account-name">{me?.username ?? "Owner"}</div>
+                <div className="site-account-name">{me?.display_name || me?.username || "Owner"}</div>
+                {others.length > 0 && (
+                  <div className="site-account-profiles">
+                    {others.map((p) => (
+                      <button type="button" key={p.id} onClick={() => go(p)}>
+                        <ProfileAvatar profile={p} size={26} />
+                        <span>{p.name}</span>
+                        {p.has_pin && <small>🔒</small>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {me?.multi_user_enabled && <Link to="/site/profiles">{t("Manage profiles")}</Link>}
                 <Link to="/site/my-list">{t("My list")}</Link>
+                <Link to="/site/recap">{t("Monthly recap")}</Link>
                 <Link to="/site/account">{t("Account")}</Link>
+                {discreetOn && (
+                  <button type="button" className="site-account-hide" onClick={() => hideNow()}>
+                    {t("Hide now")}
+                  </button>
+                )}
                 {isAdmin && <Link to="/">{t("Admin interface")}</Link>}
                 <a href={`${baseURL}logout`}>{t("Log out")}</a>
                 <LayoutMenu
@@ -206,9 +241,14 @@ const SiteHeader: React.FC<{
           </div>
         </div>
       </div>
+      {dialog}
     </header>
   );
 };
+
+function profileBg(p: { id: string; color: string }) {
+  return p.color || undefined;
+}
 
 const SiteFooter: React.FC<{ name: string; tagline: string }> = ({ name, tagline }) => (
   <footer className="site-footer">
@@ -226,14 +266,40 @@ const SiteFooter: React.FC<{ name: string; tagline: string }> = ({ name, tagline
   </footer>
 );
 
-const AccountPage: React.FC = () => (
-  <div className="site-page site-account-page">
-    <h1 className="site-page-title">{t("Account")}</h1>
-    <div className="site-account-panel">
-      <AccountPanel />
+const AccountPage: React.FC = () => {
+  const { me } = useCurrentUser();
+  const [mini, setMini] = useState(miniPlayerOn);
+  return (
+    <div className="site-page site-account-page">
+      <h1 className="site-page-title">{t("Account")}</h1>
+      {me?.is_profile ? (
+        <p className="site-muted">
+          {t("This is a profile. Switch to the main profile to change the password or sign-in settings.")}{" "}
+          <Link to="/site/profiles">{t("Profiles")}</Link>
+        </p>
+      ) : (
+        <div className="site-account-panel">
+          <AccountPanel />
+        </div>
+      )}
+      <section className="site-discreet-settings">
+        <h2>{t("Mini-player")}</h2>
+        <label className="site-switch">
+          <input
+            type="checkbox"
+            checked={mini}
+            onChange={(e) => {
+              setMiniPlayerOn(e.target.checked);
+              setMini(e.target.checked);
+            }}
+          />
+          <span>{t("Keep playing in a small window when I leave a scene")}</span>
+        </label>
+      </section>
+      <DiscreetSettings />
     </div>
-  </div>
-);
+  );
+};
 
 const AGE_KEY = "stasharr-site-adult-ok";
 
@@ -286,6 +352,21 @@ function textOn(hex: string): string {
   const b = n & 255;
   return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? "#111111" : "#ffffff";
 }
+
+// Asks "Who's watching?" once per browser session when there are profiles.
+const WhoIsWatching: React.FC = () => {
+  const history = useHistory();
+  const location = useLocation();
+  const { me } = useCurrentUser();
+  const { data } = GQL.useSiteProfilesQuery({ skip: !me?.multi_user_enabled });
+  const count = data?.siteProfiles.length ?? 0;
+  useEffect(() => {
+    if (count > 1 && !profileWasPicked() && location.pathname !== "/site/profiles") {
+      history.replace("/site/profiles");
+    }
+  }, [count, history, location.pathname]);
+  return null;
+};
 
 const Site: React.FC = () => {
   const location = useLocation();
@@ -358,7 +439,9 @@ const Site: React.FC = () => {
 
   return (
     <SiteContext.Provider value={{ config, style, layout }}>
+      <MiniPlayerProvider>
       <div className={`site-root site-style-${style.id} site-layout-${layout.id}`} style={accentVars}>
+        <WhoIsWatching />
         {config.age_gate && !adult && (
           <AgeGate name={config.name} logo={config.logo_url} onEnter={() => setAdult(true)} />
         )}
@@ -408,13 +491,18 @@ const Site: React.FC = () => {
             <Route path="/site/my-list" component={MyListPage} />
             <Route path="/site/reels" component={ReelsPage} />
             <Route path="/site/account" component={AccountPage} />
+            <Route path="/site/profiles" component={ProfilesPage} />
+            <Route path="/site/recap" component={RecapPage} />
             <Route path="/site/playlist/:id" component={PlaylistPage} />
             <Route component={SiteHome} />
           </Switch>
         </main>
         <SiteFooter key={`f-${lang}`} name={config.name} tagline={config.tagline} />
         {layout.nav === "dock" && <Dock female={female} />}
+        <MiniPlayer />
+        <Discreet />
       </div>
+      </MiniPlayerProvider>
     </SiteContext.Provider>
   );
 };

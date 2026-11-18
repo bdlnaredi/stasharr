@@ -95,6 +95,23 @@ type Principal struct {
 	TierID   *int
 	TierName string
 	Policy   Policy
+	// Profile is set when this account is a profile of another account;
+	// MainID is that account (0 = the owner) and ProfileName its name.
+	Profile     bool
+	MainID      int
+	ProfileName string
+}
+
+// FamilyID is the main account of p: itself, or the account it is a
+// profile of. 0 is the owner.
+func (p *Principal) FamilyID() int {
+	if p == nil {
+		return 0
+	}
+	if p.Profile {
+		return p.MainID
+	}
+	return p.UserID
 }
 
 // IsOwner reports whether this is the built-in owner account.

@@ -1,0 +1,59 @@
+fragment SiteProfileData on SiteProfile {
+  id
+  name
+  color
+  has_pin
+  is_main
+  is_current
+}
+
+query SiteProfiles {
+  siteProfiles {
+    ...SiteProfileData
+  }
+}
+
+query RecapMonths {
+  recapMonths
+}
+
+query MonthRecap($month: String) {
+  monthRecap(month: $month) {
+    month
+    plays
+    scenes
+    seconds
+    active_days
+    longest_run
+    likes
+    models {
+      plays
+      performer {
+        id
+        name
+        image_path
+      }
+    }
+    categories {
+      plays
+      tag {
+        id
+        name
+      }
+    }
+    studios {
+      plays
+      studio {
+        id
+        name
+        image_path
+      }
+    }
+    top_scene {
+      ...SiteSceneCard
+    }
+    top_scene_plays
+    hours
+    weekdays
+  }
+}
