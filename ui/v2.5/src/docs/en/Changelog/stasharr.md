@@ -21,6 +21,22 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
     the picture; swipe or use the arrows.
   - **Immersive**: the featured scene fills the screen, the rows sit on a
     frosted sheet over it, and the menu is a floating dock at the bottom.
+- The layouts change every page, not only the home page:
+  - **Bento**: rounded cards with the words inside, model names on the
+    photo, a wide tile in every row of categories, and the scene page's
+    details, cast and tags in tiles.
+  - **Mosaic**: scenes, models, categories and channels all become masonry
+    walls that play when pointed at; the sort buttons stick to the top as chips.
+  - **Spotlight**: scenes become a numbered list whose pictures play when
+    pointed at; models and categories become ranked lists; the scene page
+    keeps "You may also like" in a list beside it, and a model's photo stays
+    on the left while her scenes scroll.
+  - **Showcase**: cards lean towards the pointer with a shine, models get
+    round photos with a glowing ring, and the scene page glows with the
+    scene's colours like ambient light.
+  - **Immersive**: frosted glass everywhere, a play button on the card you
+    point at, wide cinematic category cards, and the scene's picture blurred
+    behind the whole scene page.
 - **Preview** opens the site in a layout without changing it for anyone.
 - Viewers can pick their own layout from their account menu on the site;
   **Site default** goes back to yours.

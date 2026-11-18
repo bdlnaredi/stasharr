@@ -4,7 +4,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
-import { SiteScene, formatTime, isNew, qualityBadge, sceneTitle } from "./SiteCards";
+import { MosaicCard, SiteScene, formatTime, mosaicShapes, sceneTitle } from "./SiteCards";
 import { useSite } from "./SiteContext";
 import { count, t, views } from "./i18n";
 
@@ -272,40 +272,6 @@ export const ImmersiveHero: React.FC<{ scenes: SiteScene[]; parts: IHeroParts }>
 
 // ---------------------------------------------------------------- Mosaic
 
-const MosaicCard: React.FC<{ scene: SiteScene; shape: number }> = ({ scene, shape }) => {
-  const [hover, setHover] = useState(false);
-  const [videoOk, setVideoOk] = useState(true);
-  const badge = qualityBadge(scene);
-  return (
-    <Link
-      to={`/site/scene/${scene.id}`}
-      className={`site-mosaic-card ar-${shape}`}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-    >
-      {scene.paths.screenshot ? <img src={scene.paths.screenshot} alt="" loading="lazy" /> : <img alt="" />}
-      {hover && scene.paths.preview && videoOk && (
-        <video src={scene.paths.preview} autoPlay muted loop playsInline onError={() => setVideoOk(false)} />
-      )}
-      <div className="site-thumb-badges">
-        {isNew(scene) && <span className="site-badge site-badge-new">{t("New")}</span>}
-        {badge && <span className="site-badge">{badge}</span>}
-      </div>
-      <div className="site-mosaic-info">
-        <b>{sceneTitle(scene)}</b>
-        <small>
-          {[starring(scene), formatTime(scene.files[0]?.duration), scene.site_views > 0 ? views(scene.site_views) : ""]
-            .filter(Boolean)
-            .join(" · ")}
-        </small>
-      </div>
-    </Link>
-  );
-};
-
-// the card shapes repeat in this order, so the wall looks hand-laid
-const shapes = [0, 1, 2, 3, 1, 0, 2];
-
 export const MosaicHome: React.FC<{ promo: React.ReactNode }> = ({ promo }) => {
   const { config } = useSite();
   const female = femaleOnly(config);
@@ -356,7 +322,7 @@ export const MosaicHome: React.FC<{ promo: React.ReactNode }> = ({ promo }) => {
         </Link>
       );
     }
-    cards.push(<MosaicCard key={s.id} scene={s} shape={shapes[i % shapes.length]} />);
+    cards.push(<MosaicCard key={s.id} scene={s} shape={mosaicShapes[i % mosaicShapes.length]} />);
   });
 
   return (
