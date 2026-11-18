@@ -13,6 +13,7 @@ import {
   SceneGrid,
   SceneTile,
   Section,
+  SpotRow,
   StudioTile,
   ageFrom,
   formatDate,
@@ -215,7 +216,7 @@ const SceneBrowser: React.FC<{
       ) : scenes.length === 0 ? (
         <Empty text={t("No scenes match.")} />
       ) : (
-        <SceneGrid scenes={scenes} />
+        <SceneGrid scenes={scenes} offset={(page - 1) * PER_PAGE} />
       )}
       <Pager page={page} total={total} perPage={PER_PAGE} onPage={(p) => set({ page: String(p) })} />
     </>
@@ -315,6 +316,7 @@ function saveTheatre(on: boolean) {
 
 export const ScenePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { layout } = useSite();
   const location = useLocation();
   const { data, loading } = GQL.useFindSceneQuery({ variables: { id } });
   const similar = GQL.useSiteSimilarQuery({ variables: { scene_id: id } });
@@ -380,6 +382,10 @@ export const ScenePage: React.FC = () => {
 
   return (
     <div className={`site-scene-page ${theatre ? "theatre" : ""}`}>
+      {/* Showcase and Immersive light the page with the scene's picture */}
+      {scene.paths.screenshot && (
+        <div className="site-scene-ambient" style={{ backgroundImage: `url("${scene.paths.screenshot}")` }} />
+      )}
       <div className="site-player">
         <ScenePlayer
           key={scene.id}
@@ -422,7 +428,9 @@ export const ScenePage: React.FC = () => {
         </div>
       )}
 
-      <div className="site-page">
+      <div className="site-page site-scene-layout">
+        <div className="site-scene-main">
+        <div className="site-scene-body">
         <div className="site-scene-header">
           <div className="site-scene-header-main">
             {scene.studio && (
@@ -495,6 +503,7 @@ export const ScenePage: React.FC = () => {
             ))}
           </div>
         )}
+        </div>
 
         <SiteComments key={scene.id} sceneID={scene.id} />
 
@@ -504,14 +513,28 @@ export const ScenePage: React.FC = () => {
           </Section>
         )}
 
-        {similarScenes.length > 0 && (
+        {similarScenes.length > 0 && layout.id !== "spotlight" && (
           <Section title={t("You may also like")}>
-            <Rail>
-              {similarScenes.map((s) => (
-                <SceneTile key={s.id} scene={s} />
-              ))}
-            </Rail>
+            {layout.id === "mosaic" ? (
+              <SceneGrid scenes={similarScenes} />
+            ) : (
+              <Rail>
+                {similarScenes.map((s) => (
+                  <SceneTile key={s.id} scene={s} />
+                ))}
+              </Rail>
+            )}
           </Section>
+        )}
+        </div>
+        {/* Spotlight: a numbered list of what to watch next beside the page */}
+        {layout.id === "spotlight" && similarScenes.length > 0 && (
+          <aside className="site-scene-aside">
+            <h3>{t("You may also like")}</h3>
+            {similarScenes.slice(0, 12).map((s, i) => (
+              <SpotRow key={s.id} scene={s} n={i + 1} />
+            ))}
+          </aside>
         )}
       </div>
     </div>

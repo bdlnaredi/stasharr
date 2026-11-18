@@ -1364,3 +1364,1165 @@
 .site-layout-immersive .site-reel {
   height: calc(100vh - 76px - 90px);
 }
+
+// ================================================================ inner pages
+// Each layout also restyles the list pages, the scene page and the model
+// page, so the whole site changes, not only the home page.
+
+.site-thumb-play,
+.site-scene-ambient {
+  display: none;
+}
+
+.site-scene-aside h3 {
+  font-family: var(--site-heading-font);
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+
+// the numbered list used by Spotlight on every page
+.site-spot-rows {
+  display: grid;
+  gap: 0 28px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.site-spot-link {
+  color: var(--site-text) !important;
+}
+
+.site-spot-thumb {
+  aspect-ratio: 16 / 9;
+  background: var(--site-surface-2);
+  border-radius: var(--site-card-radius);
+  display: block;
+  overflow: hidden;
+  position: relative;
+
+  img,
+  video {
+    height: 100%;
+    inset: 0;
+    object-fit: cover;
+    position: absolute;
+    width: 100%;
+  }
+
+  .site-duration {
+    bottom: 5px;
+    font-size: 11px;
+    right: 5px;
+  }
+}
+
+.site-spot-row small .site-badge {
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+
+// ---------------------------------------------------------------- Bento pages
+
+.site-layout-bento {
+  .site-page-title {
+    background:
+      radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--site-accent) 35%, transparent), transparent 55%),
+      var(--site-surface);
+    border: 1px solid var(--site-border);
+    border-radius: 28px;
+    margin: 22px 0 16px;
+    padding: 30px 30px 28px;
+  }
+
+  .site-tabs {
+    background: var(--site-surface);
+    border: 1px solid var(--site-border);
+    border-radius: 999px;
+    gap: 2px;
+    padding: 4px;
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      background: none;
+
+      &.active {
+        background: var(--site-accent);
+      }
+    }
+  }
+
+  .site-filters {
+    background: var(--site-surface);
+    border: 1px solid var(--site-border);
+    border-radius: 22px;
+    padding: 14px 16px;
+  }
+
+  // scene cards: picture and words together on one rounded card
+  .site-scene-tile {
+    background: var(--site-surface);
+    border: 1px solid var(--site-border);
+    border-radius: 22px;
+    padding: 8px 8px 12px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+    &:hover {
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.3);
+      transform: translateY(-4px);
+    }
+
+    .site-thumb {
+      border-radius: 15px;
+    }
+
+    .site-scene-info {
+      padding: 10px 6px 0;
+    }
+  }
+
+  .site-scene-grid {
+    gap: 16px;
+  }
+
+  // model cards: the name sits on the photo
+  .site-model-tile {
+    position: relative;
+    text-align: left;
+
+    .site-model-photo::after {
+      background: linear-gradient(0deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0) 50%);
+      content: "";
+      inset: 0;
+      position: absolute;
+    }
+
+    .site-model-name {
+      bottom: 30px;
+      color: #fff;
+      left: 14px;
+      margin: 0;
+      position: absolute;
+      right: 14px;
+      z-index: 2;
+    }
+
+    .site-model-meta {
+      bottom: 12px;
+      color: rgba(255, 255, 255, 0.75);
+      left: 14px;
+      position: absolute;
+      z-index: 2;
+    }
+
+    .site-model-rank {
+      background: none;
+      bottom: auto;
+      padding: 10px 12px;
+      top: 0;
+      z-index: 2;
+    }
+  }
+
+  // categories: every seventh tile is a wide one
+  .site-category-grid {
+    grid-auto-flow: dense;
+  }
+
+  .site-category-tile:nth-child(7n + 1) {
+    aspect-ratio: auto;
+    grid-column: span 2;
+  }
+
+  .site-player {
+    border-radius: 26px;
+    margin: 16px auto 0;
+    max-width: 1320px;
+    overflow: hidden;
+  }
+
+  .site-scene-body {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    margin: 16px 0 24px;
+
+    > * {
+      background: var(--site-surface);
+      border: 1px solid var(--site-border);
+      border-radius: 24px;
+      margin: 0;
+      max-width: none;
+      padding: 20px 22px;
+    }
+
+    .site-scene-header {
+      grid-column: 1 / -1;
+    }
+
+    .site-tag-list {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .site-model-hero-inner {
+    align-items: stretch;
+  }
+
+  .site-model-hero-photo {
+    border-radius: 28px;
+  }
+
+  .site-model-hero-text {
+    backdrop-filter: blur(16px);
+    background: color-mix(in srgb, var(--site-surface) 80%, transparent);
+    border: 1px solid var(--site-border);
+    border-radius: 28px;
+    flex: 1;
+    padding: 28px 30px;
+  }
+
+  .site-pager button {
+    border-radius: 999px;
+  }
+}
+
+// ---------------------------------------------------------------- Mosaic pages
+
+.site-layout-mosaic {
+  .site-page-title {
+    font-size: clamp(38px, 4.4vw, 68px);
+    letter-spacing: -0.02em;
+    margin: 28px 0 10px;
+  }
+
+  .site-toolbar {
+    background: color-mix(in srgb, var(--site-bg) 92%, transparent);
+    backdrop-filter: blur(12px);
+    margin: 0 calc(-1 * clamp(16px, 3vw, 48px)) 12px;
+    padding: 10px clamp(16px, 3vw, 48px);
+    position: sticky;
+    top: 68px;
+    z-index: 6;
+  }
+
+  .site-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    button {
+      background: var(--site-surface);
+      border-radius: 999px;
+      color: var(--site-text);
+      flex-shrink: 0;
+      font-size: 14px;
+      letter-spacing: 0;
+      padding: 8px 16px;
+
+      &.active {
+        background: var(--site-text);
+        border-color: var(--site-text);
+        box-shadow: none;
+        color: var(--site-bg);
+      }
+    }
+  }
+
+  .site-filter select {
+    border-radius: 999px;
+  }
+
+  // models, categories and channels also become walls
+  .site-model-grid,
+  .site-category-grid,
+  .site-studio-grid {
+    column-count: 6;
+    column-gap: 14px;
+    display: block;
+  }
+
+  .site-model-tile,
+  .site-category-tile,
+  .site-studio-tile {
+    break-inside: avoid;
+    display: block;
+    margin-bottom: 14px;
+  }
+
+  .site-model-tile {
+    position: relative;
+    text-align: left;
+
+    .site-model-photo {
+      border-radius: 18px;
+
+      &::after {
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0) 45%);
+        content: "";
+        inset: 0;
+        position: absolute;
+      }
+    }
+
+    &:nth-child(3n + 1) .site-model-photo {
+      aspect-ratio: 3 / 4;
+    }
+
+    &:nth-child(3n) .site-model-photo {
+      aspect-ratio: 4 / 5;
+    }
+
+    .site-model-name {
+      bottom: 30px;
+      color: #fff;
+      font-size: 17px;
+      left: 14px;
+      position: absolute;
+      z-index: 2;
+    }
+
+    .site-model-meta {
+      bottom: 12px;
+      color: rgba(255, 255, 255, 0.75);
+      left: 14px;
+      position: absolute;
+      z-index: 2;
+    }
+  }
+
+  .site-category-tile {
+    border-radius: 18px;
+
+    &:nth-child(4n + 1) {
+      aspect-ratio: 3 / 4;
+    }
+
+    &:nth-child(4n + 2) {
+      aspect-ratio: 1;
+    }
+
+    &:nth-child(4n + 3) {
+      aspect-ratio: 4 / 5;
+    }
+  }
+
+  .site-studio-logo {
+    border-radius: 18px;
+  }
+
+  .site-scene-header h1 {
+    font-size: clamp(28px, 3.4vw, 50px);
+    letter-spacing: -0.02em;
+  }
+
+  .site-cast-item {
+    background: var(--site-surface);
+    border: 1px solid var(--site-border);
+    border-radius: 999px;
+    padding: 4px 16px 4px 4px;
+  }
+
+  .site-cast-photo {
+    border: 0;
+    height: 40px;
+    width: 40px;
+  }
+
+  .site-chip {
+    border-radius: 999px;
+    font-size: 14px;
+    padding: 7px 14px;
+  }
+
+  .site-pager button {
+    border-radius: 999px;
+  }
+}
+
+// ---------------------------------------------------------------- Spotlight pages
+
+.site-layout-spotlight {
+  .site-page-title {
+    -webkit-text-stroke: 1.5px var(--site-text);
+    color: transparent;
+    font-size: clamp(46px, 6.4vw, 104px);
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    margin: 30px 0 18px;
+  }
+
+  .site-toolbar {
+    border-bottom: 1px solid var(--site-border);
+    margin-bottom: 8px;
+  }
+
+  .site-tabs {
+    gap: 22px;
+
+    button {
+      background: none;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none !important;
+      color: var(--site-muted);
+      font-size: 14px;
+      padding: 12px 0;
+      position: relative;
+
+      &.active {
+        background: none;
+        color: var(--site-text);
+
+        &::after {
+          background: var(--site-accent);
+          bottom: -1px;
+          content: "";
+          height: 2px;
+          left: 0;
+          position: absolute;
+          right: 0;
+        }
+      }
+    }
+  }
+
+  .site-filters {
+    border-bottom: 1px solid var(--site-border);
+    padding-bottom: 14px;
+  }
+
+  // models: a ranked index of names with round photos
+  .site-model-grid {
+    counter-reset: spot;
+    gap: 0 28px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+
+  .site-model-grid .site-model-tile {
+    align-items: center;
+    border-bottom: 1px solid var(--site-border);
+    column-gap: 16px;
+    counter-increment: spot;
+    display: grid;
+    grid-template-columns: 54px 64px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    padding: 12px 6px;
+    text-align: left;
+    transition: background 0.2s;
+
+    &::before {
+      -webkit-text-stroke: 1.5px var(--site-muted);
+      color: transparent;
+      content: counter(spot, decimal-leading-zero);
+      font-family: var(--site-heading-font);
+      font-size: 34px;
+      font-weight: 800;
+      grid-row: 1 / 3;
+    }
+
+    &:hover {
+      background: var(--site-surface);
+
+      &::before {
+        -webkit-text-stroke: 0;
+        color: var(--site-accent);
+      }
+    }
+
+    .site-model-photo {
+      aspect-ratio: 1;
+      border: 0;
+      border-radius: 50%;
+      grid-row: 1 / 3;
+      width: 64px;
+    }
+
+    .site-model-rank {
+      display: none;
+    }
+
+    .site-model-name {
+      align-self: end;
+      font-size: 16px;
+      margin: 0;
+    }
+
+    .site-model-meta {
+      align-self: start;
+    }
+  }
+
+  // categories: rows with a picture on the left
+  .site-category-grid {
+    gap: 0 28px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+
+  .site-category-tile {
+    align-items: center;
+    aspect-ratio: auto;
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--site-border);
+    border-radius: 0;
+    display: flex;
+    gap: 16px;
+    height: 92px;
+    padding: 10px 6px;
+
+    img,
+    video {
+      border-radius: var(--site-card-radius);
+      flex-shrink: 0;
+      height: 72px;
+      opacity: 1;
+      position: relative;
+      width: 128px;
+    }
+
+    .site-category-label {
+      background: none;
+      inset: auto;
+      padding: 0;
+      position: relative;
+    }
+
+    &:hover {
+      background: var(--site-surface);
+    }
+  }
+
+  // the scene page: what to watch next in a list beside it
+  .site-scene-layout {
+    display: grid;
+    gap: 36px;
+    grid-template-columns: minmax(0, 1fr) 420px;
+  }
+
+  .site-scene-aside {
+    align-self: start;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    padding-top: 24px;
+    position: sticky;
+    scrollbar-width: thin;
+    top: 70px;
+
+    .site-spot-row {
+      gap: 12px;
+      grid-template-columns: 34px 130px minmax(0, 1fr);
+      padding: 10px 4px;
+    }
+
+    .site-spot-num {
+      font-size: 24px;
+    }
+  }
+
+  .site-scene-header h1 {
+    font-size: clamp(28px, 3vw, 46px);
+  }
+
+  // the model page: the photo stays on the left while the scenes scroll
+  .site-model-page {
+    display: grid;
+    grid-template-columns: minmax(320px, 34%) minmax(0, 1fr);
+  }
+
+  .site-model-hero {
+    align-self: start;
+    border-right: 1px solid var(--site-border);
+    height: calc(100vh - 60px);
+    position: sticky;
+    top: 60px;
+  }
+
+  .site-model-hero-inner {
+    flex-direction: column;
+    gap: 22px;
+    height: 100%;
+    overflow-y: auto;
+    padding: 28px;
+  }
+
+  .site-model-hero-photo {
+    width: min(260px, 70%);
+  }
+
+  .site-model-page > .site-page {
+    max-width: none;
+    padding-top: 20px;
+    width: 100%;
+  }
+}
+
+// ---------------------------------------------------------------- Showcase pages
+
+.site-layout-showcase {
+  .site-page-title {
+    font-size: clamp(36px, 4.4vw, 64px);
+    margin: 30px 0 14px;
+    text-align: center;
+    text-shadow: 0 0 40px color-mix(in srgb, var(--site-accent) 55%, transparent);
+  }
+
+  .site-toolbar {
+    flex-direction: column;
+  }
+
+  .site-tabs {
+    justify-content: center;
+
+    button {
+      border-radius: 999px;
+    }
+  }
+
+  .site-filters {
+    justify-content: center;
+  }
+
+  // cards lean towards the pointer, with a soft shine
+  .site-scene-tile,
+  .site-model-tile {
+    transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+    transition: transform 0.18s ease-out;
+    will-change: transform;
+  }
+
+  .site-thumb {
+    border-radius: 18px;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.4);
+
+    &::after {
+      background: radial-gradient(
+        circle at var(--glare-x, 50%) var(--glare-y, 0%),
+        rgba(255, 255, 255, 0.22),
+        rgba(255, 255, 255, 0) 55%
+      );
+      content: "";
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      position: absolute;
+      transition: opacity 0.3s;
+    }
+  }
+
+  .site-scene-tile:hover .site-thumb::after {
+    opacity: 1;
+  }
+
+  .site-scene-info {
+    text-align: center;
+  }
+
+  .site-scene-meta {
+    justify-content: center;
+  }
+
+  // models: round photos with a glowing ring
+  .site-model-photo {
+    aspect-ratio: 1;
+    background: conic-gradient(var(--site-accent), var(--site-accent-2), var(--site-accent));
+    border: 0;
+    border-radius: 50%;
+    padding: 4px;
+
+    img {
+      border: 4px solid var(--site-bg);
+      border-radius: 50%;
+    }
+  }
+
+  .site-model-tile:hover .site-model-photo {
+    box-shadow: 0 0 34px color-mix(in srgb, var(--site-accent) 60%, transparent);
+  }
+
+  .site-model-rank {
+    background: var(--site-accent);
+    border-radius: 50%;
+    bottom: 4px;
+    color: var(--site-on-accent);
+    font-size: 16px;
+    height: 34px;
+    left: 4px;
+    line-height: 34px;
+    padding: 0;
+    text-align: center;
+    width: 34px;
+  }
+
+  .site-category-tile,
+  .site-studio-logo {
+    border-radius: 18px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+      transform: perspective(800px) rotateX(7deg) translateY(-4px);
+    }
+  }
+
+  // the scene page glows with the scene's picture, like ambient light
+  .site-scene-page {
+    position: relative;
+  }
+
+  .site-scene-ambient {
+    background-position: center;
+    background-size: cover;
+    display: block;
+    filter: blur(90px) saturate(1.6);
+    height: 110vh;
+    left: 0;
+    opacity: 0.45;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 0;
+
+    &::after {
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0), var(--site-bg) 85%);
+      content: "";
+      inset: 0;
+      position: absolute;
+    }
+  }
+
+  .site-player,
+  .site-chapters,
+  .site-scene-layout {
+    position: relative;
+    z-index: 1;
+  }
+
+  .site-player {
+    background: transparent;
+    margin: 16px auto 0;
+    max-width: 1280px;
+
+    .VideoPlayer {
+      border-radius: 22px;
+      box-shadow: 0 40px 90px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+  }
+
+  .site-scene-header {
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+
+    .site-hero-meta,
+    .site-rating {
+      justify-content: center;
+    }
+  }
+
+  .site-scene-actions {
+    justify-content: center;
+  }
+
+  .site-cast,
+  .site-tag-list {
+    justify-content: center;
+  }
+
+  .site-scene-details {
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  // the model page: a round portrait in the middle
+  .site-model-hero-inner {
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .site-model-hero-photo {
+    aspect-ratio: 1;
+    background: conic-gradient(var(--site-accent), var(--site-accent-2), var(--site-accent));
+    border-radius: 50%;
+    box-shadow: 0 0 60px color-mix(in srgb, var(--site-accent) 45%, transparent);
+    padding: 6px;
+    width: min(240px, 60vw);
+
+    img {
+      border: 5px solid var(--site-bg);
+      border-radius: 50%;
+    }
+  }
+
+  .site-facts {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+  }
+
+  .site-pager button {
+    border-radius: 999px;
+  }
+}
+
+// ---------------------------------------------------------------- Immersive pages
+
+.site-layout-immersive {
+  // soft coloured light behind every page
+  .site-main {
+    isolation: isolate;
+    position: relative;
+
+    &::before {
+      background:
+        radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--site-accent) 22%, transparent), transparent 42%),
+        radial-gradient(circle at 88% 30%, color-mix(in srgb, var(--site-accent-2) 16%, transparent), transparent 46%);
+      content: "";
+      inset: 0;
+      pointer-events: none;
+      position: fixed;
+      z-index: -1;
+    }
+  }
+
+  .site-page-title {
+    -webkit-background-clip: text;
+    background: linear-gradient(180deg, var(--site-text) 30%, var(--site-muted));
+    background-clip: text;
+    color: transparent;
+    font-size: clamp(46px, 6.6vw, 110px);
+    letter-spacing: -0.03em;
+    line-height: 0.95;
+    margin: 30px 0 22px;
+  }
+
+  .site-tabs button,
+  .site-filter select,
+  .site-pager button,
+  .site-chip {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+  }
+
+  .site-tabs button.active,
+  .site-pager button.active {
+    background: var(--site-accent);
+  }
+
+  .site-filters {
+    backdrop-filter: blur(18px);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 22px;
+    padding: 14px 16px;
+  }
+
+  // a round play button appears on the card being pointed at
+  .site-thumb-play {
+    align-items: center;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    font-size: 18px;
+    height: 54px;
+    justify-content: center;
+    left: 50%;
+    opacity: 0;
+    padding-left: 4px;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    transition: opacity 0.25s, transform 0.25s;
+    width: 54px;
+    z-index: 3;
+  }
+
+  .site-scene-tile:hover .site-thumb-play {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  // models: tall portraits with a frosted name plate
+  .site-model-tile {
+    position: relative;
+
+    .site-model-photo {
+      border-radius: 22px;
+    }
+
+    .site-model-name,
+    .site-model-meta {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      z-index: 2;
+    }
+
+    .site-model-name {
+      backdrop-filter: blur(14px);
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px 14px 0 0;
+      border-bottom: 0;
+      bottom: 30px;
+      color: #fff;
+      margin: 0;
+      padding: 8px 10px 2px;
+    }
+
+    .site-model-meta {
+      backdrop-filter: blur(14px);
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 0 0 14px 14px;
+      border-top: 0;
+      bottom: 10px;
+      color: rgba(255, 255, 255, 0.75);
+      padding: 0 10px 6px;
+    }
+
+    .site-model-rank {
+      background: none;
+      bottom: auto;
+      top: 0;
+    }
+  }
+
+  // categories: wide cinematic cards
+  .site-category-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+
+  .site-category-tile {
+    aspect-ratio: 21 / 9;
+    border-radius: 22px;
+
+    .site-category-label {
+      backdrop-filter: blur(12px);
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 14px;
+      bottom: 12px;
+      left: 12px;
+      padding: 6px 12px;
+      right: auto;
+      top: auto;
+    }
+  }
+
+  .site-studio-logo {
+    backdrop-filter: blur(14px);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+  }
+
+  // the scene page: the picture fills the page behind frosted panels
+  .site-scene-ambient {
+    background-position: center;
+    background-size: cover;
+    display: block;
+    filter: blur(60px) saturate(1.4);
+    inset: 0;
+    opacity: 0.35;
+    pointer-events: none;
+    position: fixed;
+    z-index: -1;
+  }
+
+  .site-player {
+    background: transparent;
+    margin: 0 auto;
+    max-width: 1400px;
+    padding: 0 clamp(12px, 2vw, 28px);
+
+    .VideoPlayer {
+      border-radius: 24px;
+      box-shadow: 0 40px 90px rgba(0, 0, 0, 0.6);
+      overflow: hidden;
+    }
+  }
+
+  .site-scene-body {
+    backdrop-filter: blur(24px) saturate(1.3);
+    background: color-mix(in srgb, var(--site-bg) 55%, transparent);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px;
+    margin: 20px 0 26px;
+    padding: 4px 26px 6px;
+  }
+
+  // the model page: a cover that fills the screen
+  .site-model-hero {
+    align-items: flex-end;
+    display: flex;
+    min-height: 86vh;
+  }
+
+  .site-model-hero-inner {
+    align-items: flex-end;
+    width: 100%;
+  }
+
+  .site-model-hero-photo {
+    border-radius: 26px;
+    width: min(340px, 34vw);
+  }
+
+  .site-model-hero-text {
+    backdrop-filter: blur(22px);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 28px;
+    padding: 26px 30px;
+
+    h1 {
+      font-size: clamp(44px, 6vw, 96px);
+      letter-spacing: -0.03em;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- inner pages on smaller screens
+
+@media (max-width: 1340px) {
+  .site-layout-mosaic {
+    .site-model-grid,
+    .site-studio-grid {
+      column-count: 4;
+    }
+
+    .site-category-grid {
+      column-count: 3;
+    }
+  }
+
+  .site-layout-spotlight .site-scene-layout {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .site-spot-rows {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .site-layout-spotlight {
+    .site-scene-layout {
+      display: block;
+    }
+
+    .site-scene-aside {
+      max-height: none;
+      position: static;
+    }
+
+    .site-model-page {
+      display: block;
+    }
+
+    .site-model-hero {
+      border-right: 0;
+      height: auto;
+      position: relative;
+      top: 0;
+    }
+
+    .site-model-hero-inner {
+      flex-direction: row;
+    }
+  }
+}
+
+@media (max-width: 760px) {
+  .site-layout-bento {
+    .site-scene-body {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .site-player {
+      border-radius: 0;
+      margin-top: 0;
+    }
+
+    .site-page-title {
+      padding: 22px 20px;
+    }
+
+    .site-category-tile:nth-child(7n + 1) {
+      grid-column: span 1;
+    }
+  }
+
+  .site-layout-mosaic {
+    .site-model-grid,
+    .site-category-grid,
+    .site-studio-grid {
+      column-count: 2;
+      column-gap: 10px;
+    }
+
+    .site-model-tile,
+    .site-category-tile,
+    .site-studio-tile {
+      margin-bottom: 10px;
+    }
+  }
+
+  .site-layout-spotlight {
+    .site-model-grid .site-model-tile {
+      grid-template-columns: 40px 52px minmax(0, 1fr);
+
+      &::before {
+        font-size: 26px;
+      }
+
+      .site-model-photo {
+        width: 52px;
+      }
+    }
+
+    .site-category-tile {
+      height: 78px;
+
+      img,
+      video {
+        height: 58px;
+        width: 104px;
+      }
+    }
+
+    .site-model-hero-inner {
+      flex-direction: column;
+    }
+  }
+
+  .site-layout-immersive {
+    .site-scene-body {
+      padding: 2px 16px 6px;
+    }
+
+    .site-model-hero {
+      min-height: 0;
+    }
+
+    .site-player {
+      padding: 0;
+
+      .VideoPlayer {
+        border-radius: 0;
+      }
+    }
+  }
+
+  .site-layout-showcase .site-player .VideoPlayer {
+    border-radius: 0;
+  }
+}

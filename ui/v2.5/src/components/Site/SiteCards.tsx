@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import * as GQL from "src/core/generated-graphql";
 import { count, locale, t, views } from "./i18n";
 import { LoopClip } from "src/components/Shared/LoopClip";
+import { useSite } from "./SiteContext";
 
 export type SiteScene = GQL.SiteSceneCardFragment;
 export type SiteModel = GQL.SiteModelCardFragment;
@@ -92,6 +93,107 @@ export function ageFrom(birthdate?: string | null): number | null {
   return age > 0 && age < 120 ? age : null;
 }
 
+// Showcase cards lean towards the pointer. Returns the handlers to spread
+// on the card, or nothing in the other layouts.
+export function useTilt(on: boolean) {
+  if (!on) return {};
+  return {
+    onMouseMove: (e: React.MouseEvent<HTMLElement>) => {
+      const el = e.currentTarget;
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      el.style.setProperty("--tilt-x", `${(-y * 10).toFixed(2)}deg`);
+      el.style.setProperty("--tilt-y", `${(x * 12).toFixed(2)}deg`);
+      el.style.setProperty("--glare-x", `${((x + 0.5) * 100).toFixed(0)}%`);
+      el.style.setProperty("--glare-y", `${((y + 0.5) * 100).toFixed(0)}%`);
+    },
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
+      const el = e.currentTarget;
+      el.style.removeProperty("--tilt-x");
+      el.style.removeProperty("--tilt-y");
+    },
+  };
+}
+
+function starringOf(s: SiteScene): string {
+  const women = s.performers.filter((p) => p.gender !== GQL.GenderEnum.Male);
+  return (women.length ? women : s.performers)
+    .slice(0, 2)
+    .map((p) => p.name)
+    .join(" & ");
+}
+
+// Mosaic: a card in the masonry wall that plays when pointed at.
+export const MosaicCard: React.FC<{ scene: SiteScene; shape: number }> = ({ scene, shape }) => {
+  const [hover, setHover] = useState(false);
+  const [videoOk, setVideoOk] = useState(true);
+  const badge = qualityBadge(scene);
+  return (
+    <Link
+      to={`/site/scene/${scene.id}`}
+      className={`site-mosaic-card ar-${shape}`}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      {scene.paths.screenshot ? <img src={scene.paths.screenshot} alt="" loading="lazy" /> : <img alt="" />}
+      {hover && scene.paths.preview && videoOk && (
+        <video src={scene.paths.preview} autoPlay muted loop playsInline onError={() => setVideoOk(false)} />
+      )}
+      <div className="site-thumb-badges">
+        {isNew(scene) && <span className="site-badge site-badge-new">{t("New")}</span>}
+        {badge && <span className="site-badge">{badge}</span>}
+      </div>
+      <div className="site-mosaic-info">
+        <b>{sceneTitle(scene)}</b>
+        <small>
+          {[starringOf(scene), formatTime(scene.files[0]?.duration), scene.site_views > 0 ? views(scene.site_views) : ""]
+            .filter(Boolean)
+            .join(" · ")}
+        </small>
+      </div>
+    </Link>
+  );
+};
+
+// the card shapes repeat in this order, so the wall looks hand-laid
+export const mosaicShapes = [0, 1, 2, 3, 1, 0, 2];
+
+// Spotlight: a numbered row whose picture plays when pointed at.
+export const SpotRow: React.FC<{ scene: SiteScene; n: number }> = ({ scene, n }) => {
+  const [hover, setHover] = useState(false);
+  const [videoOk, setVideoOk] = useState(true);
+  const badge = qualityBadge(scene);
+  return (
+    <Link
+      to={`/site/scene/${scene.id}`}
+      className="site-spot-row site-spot-link"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      <span className="site-spot-num">{String(n).padStart(2, "0")}</span>
+      <span className="site-spot-thumb">
+        {scene.paths.screenshot && <img src={scene.paths.screenshot} alt="" loading="lazy" />}
+        {hover && scene.paths.preview && videoOk && (
+          <video src={scene.paths.preview} autoPlay muted loop playsInline onError={() => setVideoOk(false)} />
+        )}
+        {scene.files[0]?.duration ? <span className="site-duration">{formatTime(scene.files[0].duration)}</span> : null}
+      </span>
+      <div>
+        <b>{sceneTitle(scene)}</b>
+        {starringOf(scene) && <div className="site-scene-models">{starringOf(scene)}</div>}
+        <small>
+          {[scene.studio?.name, formatDate(scene.date), scene.site_views > 0 ? views(scene.site_views) : ""]
+            .filter(Boolean)
+            .join(" · ")}
+          {isNew(scene) && <span className="site-badge site-badge-new">{t("New")}</span>}
+          {badge && <span className="site-badge">{badge}</span>}
+        </small>
+      </div>
+    </Link>
+  );
+};
+
 // A scene thumbnail that plays its short preview when hovered.
 export const SceneTile: React.FC<{
   scene: SiteScene;
@@ -100,6 +202,8 @@ export const SceneTile: React.FC<{
   const video = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const timer = useRef<number>();
+  const { layout } = useSite();
+  const tilt = useTilt(layout.id === "showcase");
 
   const progress =
     scene.resume_time && scene.files[0]?.duration
@@ -129,7 +233,7 @@ export const SceneTile: React.FC<{
   const badge = qualityBadge(scene);
 
   return (
-    <div className={`site-scene-tile site-scene-tile-${size}`}>
+    <div className={`site-scene-tile site-scene-tile-${size}`} {...tilt}>
       <Link
         to={`/site/scene/${scene.id}`}
         className="site-thumb"
@@ -152,6 +256,9 @@ export const SceneTile: React.FC<{
           />
         )}
         <SceneRibbon badges={scene.stasharr_badges} />
+        <span className="site-thumb-play" aria-hidden="true">
+          ▶
+        </span>
         <div className="site-thumb-badges">
           {isNew(scene) && <span className="site-badge site-badge-new">{t("New")}</span>}
           {badge && <span className="site-badge">{badge}</span>}
@@ -192,11 +299,22 @@ export const SceneTile: React.FC<{
   );
 };
 
+// A link to a model page that leans towards the pointer in Showcase.
+const ModelLink: React.FC<{ id: string }> = ({ id, children }) => {
+  const { layout } = useSite();
+  const tilt = useTilt(layout.id === "showcase");
+  return (
+    <Link to={`/site/model/${id}`} className="site-model-tile" {...tilt}>
+      {children}
+    </Link>
+  );
+};
+
 export const ModelTile: React.FC<{ model: SiteModel; rank?: number }> = ({
   model,
   rank,
 }) => (
-  <Link to={`/site/model/${model.id}`} className="site-model-tile">
+  <ModelLink id={model.id}>
     <div className="site-model-photo">
       {model.image_path && <img src={model.image_path} alt="" loading="lazy" />}
       {rank !== undefined && <span className="site-model-rank">{rank}</span>}
@@ -205,7 +323,7 @@ export const ModelTile: React.FC<{ model: SiteModel; rank?: number }> = ({
     <div className="site-model-meta">
       {count(model.scene_count, "scene")}
     </div>
-  </Link>
+  </ModelLink>
 );
 
 export const StudioTile: React.FC<{
@@ -275,16 +393,41 @@ export const Section: React.FC<{
   </section>
 );
 
-export const SceneGrid: React.FC<{ scenes: SiteScene[]; large?: boolean }> = ({
+// Scenes laid out the way the layout wants them: a masonry wall in Mosaic,
+// a numbered list in Spotlight, cards everywhere else. offset numbers the
+// Spotlight list across pages.
+export const SceneGrid: React.FC<{ scenes: SiteScene[]; large?: boolean; offset?: number }> = ({
   scenes,
   large,
-}) => (
-  <div className={`site-scene-grid ${large ? "site-scene-grid-large" : ""}`}>
-    {scenes.map((s) => (
-      <SceneTile key={s.id} scene={s} size={large ? "large" : "normal"} />
-    ))}
-  </div>
-);
+  offset = 0,
+}) => {
+  const { layout } = useSite();
+  if (layout.id === "mosaic") {
+    return (
+      <div className="site-mosaic-wall">
+        {scenes.map((s, i) => (
+          <MosaicCard key={s.id} scene={s} shape={mosaicShapes[(i + offset) % mosaicShapes.length]} />
+        ))}
+      </div>
+    );
+  }
+  if (layout.id === "spotlight") {
+    return (
+      <div className="site-spot-rows">
+        {scenes.map((s, i) => (
+          <SpotRow key={s.id} scene={s} n={offset + i + 1} />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className={`site-scene-grid ${large ? "site-scene-grid-large" : ""}`}>
+      {scenes.map((s) => (
+        <SceneTile key={s.id} scene={s} size={large ? "large" : "normal"} />
+      ))}
+    </div>
+  );
+};
 
 // A row that scrolls sideways, with arrow buttons on wide screens.
 export const Rail: React.FC<{ className?: string }> = ({ className, children }) => {
