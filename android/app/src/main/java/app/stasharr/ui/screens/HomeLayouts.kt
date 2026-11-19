@@ -10,7 +10,8 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -137,7 +138,7 @@ private val fade = Brush.verticalGradient(0.35f to Color.Transparent, 1f to Colo
 // ---------------------------------------------------------------- Bento
 
 @Composable
-private fun BentoTile(modifier: Modifier, onClick: () -> Unit, content: @Composable () -> Unit) {
+private fun BentoTile(modifier: Modifier, onClick: () -> Unit, content: @Composable BoxScope.() -> Unit) {
     Box(
         modifier
             .clip(RoundedCornerShape(24.dp))
