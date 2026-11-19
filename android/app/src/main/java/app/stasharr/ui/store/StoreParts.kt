@@ -1,5 +1,11 @@
 package app.stasharr.ui.store
 
+import app.stasharr.ui.AppLayouts
+import app.stasharr.ui.components.SceneCard
+import app.stasharr.ui.components.SectionHeader
+import app.stasharr.ui.components.layoutFrame
+import app.stasharr.ui.components.portraitFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -146,6 +152,11 @@ fun StoreLogo(name: String, size: Int = 22) {
 /** A heading for a storefront row, with an optional "View all". */
 @Composable
 fun StoreHeader(title: String, onAll: (() -> Unit)? = null, allText: String = "View all") {
+    // the layouts have their own headings
+    if (AppLayouts.current.id != "classic") {
+        SectionHeader(title, onSeeAll = onAll)
+        return
+    }
     Row(
         Modifier.fillMaxWidth().padding(start = 16.dp, end = 10.dp, top = 24.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -172,6 +183,11 @@ fun StoreHeader(title: String, onAll: (() -> Unit)? = null, allText: String = "V
 @Composable
 fun StoreSceneCard(scene: Scene, modifier: Modifier = Modifier, width: Dp? = 260.dp, onClick: (() -> Unit)? = null) {
     val nav = LocalNav.current
+    // the layouts' own cards
+    if (AppLayouts.current.id != "classic") {
+        SceneCard(scene, onClick = { onClick?.invoke() ?: nav.scene(scene.id) }, modifier = modifier, width = width)
+        return
+    }
     val haptics = LocalHapticFeedback.current
     val key = rememberPreviewKey("card")
     val previewing = PreviewPlayer.activeCardId == key && scene.paths.preview != null
@@ -223,9 +239,12 @@ fun StoreSceneCard(scene: Scene, modifier: Modifier = Modifier, width: Dp? = 260
 @Composable
 fun ModelCard(p: Performer, modifier: Modifier = Modifier, width: Dp? = 140.dp, rank: Int? = null, subtitle: String? = null) {
     val nav = LocalNav.current
+    val lay = AppLayouts.current
+    val shape = if (lay.corner == 0.dp) RectangleShape else RoundedCornerShape(lay.corner)
     Column(
         (if (width != null) modifier.width(width) else modifier.fillMaxWidth())
-            .clip(RoundedCornerShape(12.dp))
+            .layoutFrame()
+            .clip(shape)
             .clickable { nav.performer(p.id) },
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -233,13 +252,13 @@ fun ModelCard(p: Performer, modifier: Modifier = Modifier, width: Dp? = 140.dp, 
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(2f / 3f)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(shape)
                 .background(Brand.SurfaceHigh),
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Rounded.Person, null, tint = Brand.TextMuted, modifier = Modifier.size(48.dp))
             if (p.imagePath != null) {
-                AsyncImage(p.imagePath, p.name, contentScale = ContentScale.Crop, alignment = Alignment.TopCenter, modifier = Modifier.fillMaxSize())
+                AsyncImage(p.imagePath, p.name, contentScale = ContentScale.Crop, alignment = Alignment.TopCenter, colorFilter = portraitFilter(), modifier = Modifier.fillMaxSize())
             }
             if (rank != null) {
                 Box(
@@ -254,8 +273,9 @@ fun ModelCard(p: Performer, modifier: Modifier = Modifier, width: Dp? = 140.dp, 
             }
         }
         Spacer(Modifier.height(8.dp))
-        Text(p.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(if (lay.caps) p.name.uppercase() else p.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(subtitle ?: "${p.sceneCount} scenes", style = MaterialTheme.typography.bodySmall, color = Brand.TextMuted, maxLines = 1)
+        if (lay.hard) Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -264,12 +284,14 @@ fun ModelCard(p: Performer, modifier: Modifier = Modifier, width: Dp? = 140.dp, 
 fun CategoryTile(name: String, count: Int, modifier: Modifier = Modifier, clip: TagClip? = null, onClick: () -> Unit) {
     val hue = (name.hashCode() and 0xffff) % 360
     val tint = Color.hsv(hue.toFloat(), 0.5f, 0.45f)
+    val corner = AppLayouts.current.corner
     Box(
         modifier
-            .aspectRatio(3f / 2f)
-            .clip(RoundedCornerShape(12.dp))
+            .aspectRatio(if (AppLayouts.current.glass) 21f / 9f else 3f / 2f)
+            .layoutFrame()
+            .clip(RoundedCornerShape(corner))
             .background(Brush.linearGradient(listOf(tint, Brand.SurfaceHigh)))
-            .border(1.dp, Brand.Outline, RoundedCornerShape(12.dp))
+            .border(1.dp, Brand.Outline, RoundedCornerShape(corner))
             .clickable(onClick = onClick),
     ) {
         if (clip != null) {
