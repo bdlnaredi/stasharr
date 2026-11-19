@@ -30,6 +30,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
+import app.stasharr.data.Scene
+import app.stasharr.ui.AppLayouts
+import app.stasharr.ui.LocalNav
 import androidx.compose.ui.unit.dp
 import app.stasharr.data.Page
 import app.stasharr.ui.theme.Brand
@@ -156,4 +159,39 @@ fun <T> PagedGrid(
 /** A full width item in a grid. */
 fun LazyGridScope.fullWidth(key: Any? = null, content: @Composable () -> Unit) {
     item(key = key, span = { GridItemSpan(maxLineSpan) }) { content() }
+}
+
+
+/**
+ * Scenes in the layout's list style: a masonry wall in Mosaic, a numbered
+ * list in Spotlight, one big card a row in Swipe, a grid of cards elsewhere.
+ */
+@Composable
+fun LayoutSceneGrid(
+    state: PagedState<Scene>,
+    empty: String = "No scenes here yet",
+    contentPadding: PaddingValues = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+    header: (LazyGridScope.() -> Unit)? = null,
+    card: @Composable (Scene) -> Unit,
+) {
+    val nav = LocalNav.current
+    when (AppLayouts.current.id) {
+        "mosaic" -> PagedGrid(
+            state, key = { it.id }, header = header, empty = empty,
+            contentPadding = PaddingValues(bottom = 24.dp),
+            chunkSize = 6,
+            chunk = { _, scenes -> MosaicChunk(scenes, onScene = { nav.scene(it.id) }) },
+        ) { }
+        "spotlight" -> PagedGrid(
+            state, key = { it.id }, header = header, empty = empty,
+            contentPadding = PaddingValues(bottom = 24.dp),
+            chunkSize = 1,
+            chunk = { start, scenes -> SpotRow(scenes.first(), start + 1, onClick = { nav.scene(scenes.first().id) }) },
+        ) { }
+        else -> PagedGrid(
+            state, key = { it.id },
+            minCell = if (AppLayouts.current.id == "swipe") 300.dp else 170.dp,
+            header = header, empty = empty, contentPadding = contentPadding,
+        ) { s -> card(s) }
+    }
 }

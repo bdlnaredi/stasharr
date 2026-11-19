@@ -58,6 +58,7 @@ import app.stasharr.ui.components.GlassButton
 import app.stasharr.ui.components.GradientButton
 import app.stasharr.ui.components.GradientText
 import app.stasharr.ui.components.PagedGrid
+import app.stasharr.ui.components.LayoutSceneGrid
 import app.stasharr.ui.components.MosaicChunk
 import app.stasharr.ui.components.SpotRow
 import app.stasharr.ui.AppLayouts
@@ -82,30 +83,7 @@ fun SceneGrid(
 ) {
     val nav = LocalNav.current
     val state = rememberPaged(*keys) { page -> fetch(page) }
-    when (AppLayouts.current.id) {
-        // a masonry wall, six scenes to a block
-        "mosaic" -> PagedGrid(
-            state, key = { it.id }, minCell = 170.dp, header = header, empty = "No scenes here yet",
-            contentPadding = PaddingValues(bottom = 24.dp),
-            chunkSize = 6,
-            chunk = { _, scenes -> MosaicChunk(scenes, onScene = { nav.scene(it.id) }) },
-        ) { }
-        // a numbered list
-        "spotlight" -> PagedGrid(
-            state, key = { it.id }, minCell = 170.dp, header = header, empty = "No scenes here yet",
-            contentPadding = PaddingValues(bottom = 24.dp),
-            chunkSize = 1,
-            chunk = { start, scenes -> SpotRow(scenes.first(), start + 1, onClick = { nav.scene(scenes.first().id) }) },
-        ) { }
-        // one big card a row in Swipe, cards elsewhere
-        else -> PagedGrid(
-            state, key = { it.id },
-            minCell = if (AppLayouts.current.id == "swipe") 300.dp else 170.dp,
-            header = header, empty = "No scenes here yet",
-        ) { s ->
-            SceneCard(s, onClick = { nav.scene(s.id) }, width = null)
-        }
-    }
+    LayoutSceneGrid(state, header = header) { s -> SceneCard(s, onClick = { nav.scene(s.id) }, width = null) }
 }
 
 // ---------------------------------------------------------------- "see all" lists

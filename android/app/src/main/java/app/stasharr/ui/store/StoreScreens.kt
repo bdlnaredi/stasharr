@@ -1,5 +1,17 @@
 package app.stasharr.ui.store
 
+import app.stasharr.ui.AppLayouts
+import app.stasharr.ui.components.LayoutSceneGrid
+import app.stasharr.ui.components.MosaicChunk
+import app.stasharr.ui.screens.BentoTop
+import app.stasharr.ui.screens.BrutalTop
+import app.stasharr.ui.screens.EditorialTop
+import app.stasharr.ui.screens.HomeData
+import app.stasharr.ui.screens.ImmersiveTop
+import app.stasharr.ui.screens.MosaicTop
+import app.stasharr.ui.screens.ShowcaseTop
+import app.stasharr.ui.screens.SpotlightTop
+import app.stasharr.ui.screens.SwipeTop
 import app.stasharr.alerts.FavoriteAlertsState
 import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
@@ -170,6 +182,29 @@ private fun tagFilter(id: String): JsonObject = buildJsonObject {
     }
 }
 
+/** The storefront's rows, in the shape the layouts' home tops take. */
+@Suppress("UNCHECKED_CAST")
+private fun layoutHomeData(d: StoreHomeData): HomeData {
+    fun scenes(type: String) = (d.rows.firstOrNull { it.first.type == type }?.second as? List<Scene>).orEmpty()
+    val models = (d.rows.firstOrNull { it.first.type == "models" }?.second as? List<Performer>).orEmpty()
+    val tags = (d.rows.firstOrNull { it.first.type == "categories" }?.second as? List<Tag>).orEmpty()
+    val studios = (d.rows.firstOrNull { it.first.type == "channels" }?.second as? List<Studio>).orEmpty()
+    return HomeData(
+        hero = d.featured.ifEmpty { d.ticker.filter { it.paths.screenshot != null }.take(6) },
+        continueWatching = scenes("continue"),
+        recommended = scenes("recommended").ifEmpty { d.featured },
+        recent = scenes("latest").ifEmpty { d.ticker },
+        watchLater = emptyList(),
+        topRated = scenes("top_rated").ifEmpty { scenes("popular") },
+        studios = studios,
+        performers = models,
+        audio = emptyList(),
+        smart = emptyList(),
+        trending = scenes("trending").ifEmpty { d.featured },
+        categories = tags,
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StoreHome() {
@@ -184,8 +219,35 @@ fun StoreHome() {
         Loaded(loader) { data ->
             PullToRefreshBox(isRefreshing = loader.refreshing, onRefresh = loader.reload) {
                 LazyColumn(state = list, modifier = Modifier.fillMaxSize()) {
-                    item(key = "hero") { StoreHero(data.featured) }
-                    item(key = "ticker") { StoreTicker(data.ticker) }
+                    val layout = AppLayouts.current.id
+                    val home = layoutHomeData(data)
+                    item(key = "hero-$layout") {
+                        when (layout) {
+                            "bento" -> BentoTop(home)
+                            "mosaic" -> MosaicTop(home.categories, home.recent.size)
+                            "spotlight" -> SpotlightTop(home)
+                            "showcase" -> ShowcaseTop(home.hero)
+                            "immersive" -> ImmersiveTop(home.hero)
+                            "editorial" -> EditorialTop(home)
+                            "brutal" -> BrutalTop(home)
+                            "swipe" -> SwipeTop(home)
+                            else -> StoreHero(data.featured)
+                        }
+                    }
+                    // Mosaic: the wall is the home page, with a pornstar in every block
+                    if (layout == "mosaic") {
+                        val wall = (home.recent + home.trending + home.recommended + data.ticker)
+                            .distinctBy { it.id }
+                            .filter { it.paths.screenshot != null }
+                        wall.chunked(6).forEachIndexed { i, block ->
+                            item(key = "mosaic-$i") {
+                                MosaicChunk(block, onScene = { nav.scene(it.id) }, model = home.performers.getOrNull(i), onModel = { nav.performer(it.id) })
+                            }
+                        }
+                        item(key = "foot") { StoreFooter() }
+                        return@LazyColumn
+                    }
+                    if (layout == "classic") item(key = "ticker") { StoreTicker(data.ticker) }
                     item(key = "promo") { look?.promo?.let { StorePromo(it) } }
                     data.rows.forEachIndexed { i, (row, content) ->
                         item(key = "row-$i-${row.type}") { HomeRowView(row, content) }
@@ -388,7 +450,7 @@ fun StoreScenes() {
             if (state.total > 0) Text("${state.total} scenes", color = Brand.TextMuted, style = MaterialTheme.typography.bodySmall)
         }
         if (q.isNotEmpty()) SearchModels(q)
-        PagedGrid(state, key = { it.id }, minCell = 170.dp, empty = "No scenes match") { s -> StoreSceneCard(s, width = null) }
+        LayoutSceneGrid(state, empty = "No scenes match") { s -> StoreSceneCard(s, width = null) }
     }
 
     if (showFilters) {
@@ -594,7 +656,7 @@ fun StoreModel(id: String) {
     Loaded(profile) { m ->
         var following by remember(m.id) { mutableStateOf(m.following) }
         val cover = popular.value?.firstOrNull { it.paths.screenshot != null }?.paths?.screenshot ?: m.imagePath
-        PagedGrid(scenes, key = { it.id }, minCell = 170.dp, empty = "No scenes yet", contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp), header = {
+        LayoutSceneGrid(scenes, empty = "No scenes yet", contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp), header = {
             fullWidth("cover") {
                 Box(Modifier.fillMaxWidth().height(520.dp).padding(horizontal = 0.dp)) {
                     AsyncImage(cover, null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
