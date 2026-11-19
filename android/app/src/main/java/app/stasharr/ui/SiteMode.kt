@@ -30,9 +30,12 @@ object SiteMode {
     var ownLayout by mutableStateOf<String?>(null)
         private set
 
-    /** The layout the storefront uses; Classic when it is off. */
+    /**
+     * The layout in use: this phone's own pick first, then the site's for
+     * the storefront, else Classic.
+     */
     val layout: String
-        get() = if (!storefront) "classic" else (ownLayout ?: look?.layout ?: "classic")
+        get() = ownLayout ?: (if (storefront) look?.layout else null) ?: "classic"
 
     /** Whether the person confirmed they are an adult (asked once). */
     var adultOk by mutableStateOf(false)

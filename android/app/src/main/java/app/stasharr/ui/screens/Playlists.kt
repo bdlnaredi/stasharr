@@ -388,7 +388,7 @@ fun ProfileScreen(me: Me?) {
                 )
             }
         }
-        if (SiteMode.storefront) LayoutPicker()
+        LayoutPicker()
         run {
             val ctx = androidx.compose.ui.platform.LocalContext.current
             Row(
