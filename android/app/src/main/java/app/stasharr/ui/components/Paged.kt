@@ -104,15 +104,22 @@ fun <T> PagedGrid(
     contentPadding: PaddingValues = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
     empty: String = "Nothing here yet",
     header: (LazyGridScope.() -> Unit)? = null,
+    // full-width rows of several items at once, for the Mosaic and
+    // Spotlight layouts; the Int is where the row starts in the list
+    chunkSize: Int = 1,
+    chunk: (@Composable (Int, List<T>) -> Unit)? = null,
     cell: @Composable (T) -> Unit,
 ) {
     val grid = rememberLazyGridState()
 
     LaunchedEffect(grid, state) {
+        // asks again whenever more arrived while still near the end, so
+        // pages of big rows keep loading too
         snapshotFlow {
             val last = grid.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            last >= grid.layoutInfo.totalItemsCount - 8
-        }.distinctUntilChanged().collect { nearEnd -> if (nearEnd) state.loadMore() }
+            val total = grid.layoutInfo.totalItemsCount
+            (last >= total - 8) to total
+        }.distinctUntilChanged().collect { (nearEnd, _) -> if (nearEnd) state.loadMore() }
     }
 
     LazyVerticalGrid(
@@ -124,7 +131,14 @@ fun <T> PagedGrid(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         header?.invoke(this)
-        items(state.items, key = key) { cell(it) }
+        if (chunk != null) {
+            val rows = state.items.chunked(chunkSize.coerceAtLeast(1))
+            items(rows.size, key = { i -> "chunk-$i-${key(rows[i].first())}" }, span = { GridItemSpan(maxLineSpan) }) { i ->
+                chunk(i * chunkSize, rows[i])
+            }
+        } else {
+            items(state.items, key = key) { cell(it) }
+        }
         item(span = { GridItemSpan(maxLineSpan) }) {
             Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                 when {

@@ -71,6 +71,8 @@ import app.stasharr.data.Me
 import app.stasharr.data.Playlist
 import app.stasharr.ui.LocalNav
 import app.stasharr.ui.SiteMode
+import app.stasharr.ui.AppLayouts
+import androidx.compose.foundation.rememberScrollState
 import app.stasharr.player.AutoPreview
 import app.stasharr.ui.components.GlassButton
 import app.stasharr.ui.components.GradientButton
@@ -386,6 +388,7 @@ fun ProfileScreen(me: Me?) {
                 )
             }
         }
+        if (SiteMode.storefront) LayoutPicker()
         run {
             val ctx = androidx.compose.ui.platform.LocalContext.current
             Row(
@@ -454,5 +457,66 @@ fun ProfileScreen(me: Me?) {
             onClick = actions.signOut,
             modifier = Modifier.align(Alignment.CenterHorizontally),
         )
+    }
+}
+
+
+/** Picks the storefront layout for this phone; "Site default" follows the site. */
+@Composable
+private fun LayoutPicker() {
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    var open by remember { mutableStateOf(false) }
+    val current = AppLayouts.find(SiteMode.layout)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable { open = true }
+            .padding(horizontal = 20.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text("Layout", style = MaterialTheme.typography.titleSmall)
+            Text(
+                if (SiteMode.ownLayout == null) "${current.name} (site default)" else current.name,
+                style = MaterialTheme.typography.bodySmall,
+                color = Brand.TextMuted,
+            )
+        }
+        Text("Change", color = Brand.Pink, style = MaterialTheme.typography.labelLarge)
+    }
+    if (open) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { open = false },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { open = false }) { Text("Done") }
+            },
+            title = { Text("Layout") },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    LayoutOption("Site default", "Whatever the site uses", SiteMode.ownLayout == null) {
+                        SiteMode.setOwnLayout(ctx, null)
+                    }
+                    AppLayouts.all.forEach { l ->
+                        LayoutOption(l.name, l.description, SiteMode.ownLayout == l.id) {
+                            SiteMode.setOwnLayout(ctx, l.id)
+                        }
+                    }
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun LayoutOption(name: String, description: String, selected: Boolean, onClick: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        androidx.compose.material3.RadioButton(selected = selected, onClick = onClick)
+        Column(Modifier.weight(1f)) {
+            Text(name, style = MaterialTheme.typography.titleSmall)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = Brand.TextMuted)
+        }
     }
 }

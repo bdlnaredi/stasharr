@@ -39,6 +39,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -60,6 +69,7 @@ import app.stasharr.player.PreviewPlayer
 import app.stasharr.player.previewSpot
 import app.stasharr.player.rememberPreviewKey
 import app.stasharr.player.ScenePreview
+import app.stasharr.ui.AppLayouts
 import app.stasharr.ui.theme.Brand
 import coil.compose.AsyncImage
 
@@ -184,19 +194,48 @@ fun Badge(text: String, modifier: Modifier = Modifier, gradient: Boolean = false
 
 @Composable
 fun SectionHeader(title: String, modifier: Modifier = Modifier, onSeeAll: (() -> Unit)? = null) {
+    val lay = AppLayouts.current
+    // Editorial: a thin rule above an italic serif heading
+    if (lay.serif) {
+        Box(Modifier.padding(start = 16.dp, end = 16.dp, top = 22.dp).fillMaxWidth().height(1.dp).background(Brand.Text))
+    }
     Row(
-        modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 22.dp, bottom = 10.dp),
+        modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = if (lay.serif) 8.dp else 22.dp, bottom = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            Modifier
-                .width(4.dp)
-                .height(20.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(Brand.Gradient)
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        when (lay.id) {
+            "classic", "bento", "showcase", "immersive", "swipe" -> {
+                Box(
+                    Modifier
+                        .width(4.dp)
+                        .height(20.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Brand.Gradient)
+                )
+                Spacer(Modifier.width(10.dp))
+            }
+        }
+        when {
+            // Brutal: the heading in a solid block
+            lay.hard -> Box(Modifier.weight(1f)) {
+                Text(
+                    title.uppercase(),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Brand.Background,
+                    modifier = Modifier.background(Brand.Text).padding(horizontal = 10.dp, vertical = 2.dp),
+                )
+            }
+            // Spotlight: big outlined capitals
+            lay.id == "spotlight" -> Text(
+                title.uppercase(),
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Black, drawStyle = Stroke(width = 2.5f)),
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            lay.id == "mosaic" -> Text(title, style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Black), modifier = Modifier.weight(1f))
+            else -> Text(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        }
         if (onSeeAll != null) {
             Row(
                 Modifier
@@ -260,11 +299,12 @@ fun SceneThumb(
     modifier: Modifier = Modifier,
     showProgress: Boolean = true,
     preview: Boolean = false,
+    corner: Dp = AppLayouts.current.corner,
 ) {
     Box(
         modifier
             .aspectRatio(16f / 9f)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(if (corner == 0.dp) RectangleShape else RoundedCornerShape(corner))
             .background(Brand.SurfaceHigh)
     ) {
         if (scene.paths.screenshot != null) {
@@ -312,10 +352,30 @@ fun SceneCard(scene: Scene, onClick: () -> Unit, modifier: Modifier = Modifier, 
     val haptics = LocalHapticFeedback.current
     val key = rememberPreviewKey("card")
     val previewing = PreviewPlayer.activeCardId == key && scene.paths.preview != null
+    val lay = AppLayouts.current
+    val shape = if (lay.corner == 0.dp) RectangleShape else RoundedCornerShape(lay.corner)
+
+    // Showcase leans the card back as you press it; Brutal presses it in
+    val press = remember { MutableInteractionSource() }
+    val pressed by press.collectIsPressedAsState()
+    val lean by animateFloatAsState(if (pressed && lay.id == "showcase") 1f else 0f, label = "lean")
+    val sink by animateFloatAsState(if (pressed && lay.hard) 1f else 0f, label = "sink")
+
     Column(
         (if (width != null) modifier.width(width) else modifier.fillMaxWidth())
-            .clip(RoundedCornerShape(12.dp))
+            .graphicsLayer {
+                rotationX = lean * 10f
+                scaleX = 1f - lean * 0.04f
+                scaleY = 1f - lean * 0.04f
+                cameraDistance = 14f * density
+                translationX = sink * 4.dp.toPx()
+                translationY = sink * 4.dp.toPx()
+            }
+            .layoutFrame(shadow = (5f * (1f - sink)).dp)
+            .clip(shape)
             .combinedClickable(
+                interactionSource = press,
+                indication = LocalIndication.current,
                 onClick = {
                     PreviewPlayer.activeCardId = null
                     onClick()
@@ -328,28 +388,55 @@ fun SceneCard(scene: Scene, onClick: () -> Unit, modifier: Modifier = Modifier, 
                 },
             )
     ) {
-        SceneThumb(scene, preview = previewing, modifier = Modifier.previewSpot(key, AutoPreview.enabled && scene.paths.preview != null))
-        Spacer(Modifier.height(8.dp))
-        Text(
-            scene.displayTitle,
-            style = MaterialTheme.typography.titleSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 2.dp),
-        )
-        SceneBadgePills(scene.badges, Modifier.padding(horizontal = 2.dp, vertical = 2.dp))
+        val thumbMod = Modifier.previewSpot(key, AutoPreview.enabled && scene.paths.preview != null)
+        val title = if (lay.caps) scene.displayTitle.uppercase() else scene.displayTitle
         val sub = listOfNotNull(scene.studio?.name, scene.year).joinToString(" • ")
-        if (sub.isNotBlank()) {
+        if (lay.infoInside) {
+            // the words sit on the picture: a frosted pill in Swipe, a fade elsewhere
+            Box {
+                SceneThumb(scene, preview = previewing, modifier = thumbMod)
+                Column(
+                    Modifier
+                        .align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .then(
+                            if (lay.id == "swipe") Modifier.padding(8.dp).clip(RoundedCornerShape(16.dp)).background(Brand.Background.copy(alpha = 0.72f))
+                            else Modifier.background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))))
+                        )
+                        .padding(horizontal = 10.dp, vertical = 8.dp)
+                ) {
+                    Text(title, style = MaterialTheme.typography.titleSmall, color = if (lay.id == "swipe") Brand.Text else Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    if (sub.isNotBlank()) {
+                        Text(sub, style = MaterialTheme.typography.bodySmall, color = (if (lay.id == "swipe") Brand.TextMuted else Color.White.copy(alpha = 0.75f)), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
+            }
+            SceneBadgePills(scene.badges, Modifier.padding(horizontal = 2.dp, vertical = 2.dp))
+            Spacer(Modifier.height(2.dp))
+        } else {
+            SceneThumb(scene, preview = previewing, modifier = thumbMod)
+            Spacer(Modifier.height(8.dp))
+            val pad = if (lay.hard) 10.dp else 2.dp
             Text(
-                sub,
-                style = MaterialTheme.typography.bodySmall,
-                color = Brand.TextMuted,
-                maxLines = 1,
+                title,
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = if (lay.serif) 2 else 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 2.dp),
+                modifier = Modifier.padding(horizontal = pad),
             )
+            SceneBadgePills(scene.badges, Modifier.padding(horizontal = pad, vertical = 2.dp))
+            if (sub.isNotBlank()) {
+                Text(
+                    if (lay.serif) sub.uppercase() else sub,
+                    style = MaterialTheme.typography.bodySmall.copy(letterSpacing = if (lay.serif) 1.2.sp else MaterialTheme.typography.bodySmall.letterSpacing),
+                    color = Brand.TextMuted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = pad),
+                )
+            }
+            Spacer(Modifier.height(if (lay.hard) 10.dp else 4.dp))
         }
-        Spacer(Modifier.height(4.dp))
     }
 }
 
@@ -362,6 +449,14 @@ fun PerformerBubble(
     size: Dp = 84.dp,
     subtitle: String? = null,
 ) {
+    val lay = AppLayouts.current
+    // round with a ring, except: square and outlined in Brutal, a soft
+    // squircle in Swipe and Bento, a square portrait in Editorial
+    val shape = when {
+        lay.hard || lay.serif -> RectangleShape
+        lay.id == "swipe" || lay.id == "bento" -> RoundedCornerShape(30)
+        else -> CircleShape
+    }
     Column(
         Modifier.width(size + 12.dp).clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -369,14 +464,20 @@ fun PerformerBubble(
         Box(
             Modifier
                 .size(size)
-                .clip(CircleShape)
-                .background(Brand.Gradient)
-                .padding(2.5.dp)
-                .clip(CircleShape)
-                .background(Brand.Background)
-                .padding(2.dp)
-                .clip(CircleShape)
-                .background(Brand.SurfaceHigh),
+                .then(
+                    if (lay.hard) Modifier.hardShadow(Brand.Text, 4.dp).border(3.dp, Brand.Text).background(Brand.SurfaceHigh)
+                    else if (lay.serif) Modifier.background(Brand.SurfaceHigh)
+                    else Modifier
+                        .clip(shape)
+                        .background(Brand.Gradient)
+                        .padding(2.5.dp)
+                        .clip(shape)
+                        .background(Brand.Background)
+                        .padding(2.dp)
+                        .clip(shape)
+                        .background(Brand.SurfaceHigh)
+                )
+                .clip(shape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Rounded.Person, null, tint = Brand.TextMuted, modifier = Modifier.size(size / 2))
@@ -385,12 +486,18 @@ fun PerformerBubble(
                     model = imagePath,
                     contentDescription = name,
                     contentScale = ContentScale.Crop,
+                    colorFilter = portraitFilter(),
                     modifier = Modifier.fillMaxSize(),
                 )
             }
         }
-        Spacer(Modifier.height(6.dp))
-        Text(name, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Spacer(Modifier.height(if (lay.hard) 8.dp else 6.dp))
+        Text(
+            if (lay.caps) name.uppercase() else name,
+            style = if (lay.serif) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
         if (subtitle != null) {
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Brand.TextMuted, maxLines = 1)
         }
@@ -413,9 +520,10 @@ fun StudioTile(studio: Studio, onClick: () -> Unit, modifier: Modifier = Modifie
             Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .clip(RoundedCornerShape(12.dp))
+                .layoutFrame()
+                .clip(RoundedCornerShape(AppLayouts.current.corner))
                 .background(Brush.linearGradient(listOf(Brand.SurfaceHigh, Brand.Surface)))
-                .border(1.dp, Brand.Outline, RoundedCornerShape(12.dp))
+                .border(1.dp, Brand.Outline, RoundedCornerShape(AppLayouts.current.corner))
                 .padding(18.dp),
             contentAlignment = Alignment.Center,
         ) {

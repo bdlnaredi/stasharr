@@ -67,6 +67,7 @@ import app.stasharr.ui.components.GlassButton
 import app.stasharr.ui.components.GradientButton
 import app.stasharr.ui.components.GradientText
 import app.stasharr.ui.components.Loaded
+import app.stasharr.ui.components.MosaicChunk
 import app.stasharr.ui.components.PerformerBubble
 import app.stasharr.ui.components.SceneCard
 import app.stasharr.ui.components.Shelf
@@ -80,7 +81,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 
-private data class HomeData(
+internal data class HomeData(
     val hero: List<Scene>,
     val continueWatching: List<Scene>,
     val recommended: List<Scene>,
@@ -164,12 +165,37 @@ fun HomeScreen() {
                 onRefresh = loader.reload,
             ) {
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                    item(key = "hero") {
-                        if (data.hero.isNotEmpty()) {
-                            Hero(data.hero)
-                        } else {
-                            Spacer(Modifier.statusBarsPadding().height(72.dp))
+                    val layout = if (site) homeLayout else "classic"
+                    item(key = "hero-$layout") {
+                        when {
+                            data.hero.isEmpty() -> Spacer(Modifier.statusBarsPadding().height(72.dp))
+                            layout == "bento" -> BentoTop(data)
+                            layout == "mosaic" -> MosaicTop(data.categories, data.recent.size)
+                            layout == "spotlight" -> SpotlightTop(data)
+                            layout == "showcase" -> ShowcaseTop(data.hero)
+                            layout == "immersive" -> ImmersiveTop(data.hero)
+                            layout == "editorial" -> EditorialTop(data)
+                            layout == "brutal" -> BrutalTop(data)
+                            layout == "swipe" -> SwipeTop(data)
+                            else -> Hero(data.hero)
                         }
+                    }
+                    // Mosaic: the wall is the home page, with a pornstar in every block
+                    if (layout == "mosaic") {
+                        val wall = (data.recent + data.trending + data.recommended).distinctBy { it.id }.filter { it.paths.screenshot != null }
+                        val blocks = wall.chunked(6)
+                        blocks.forEachIndexed { i, block ->
+                            item(key = "mosaic-$i") {
+                                MosaicChunk(
+                                    block,
+                                    onScene = { nav.scene(it.id) },
+                                    model = data.performers.getOrNull(i),
+                                    onModel = { nav.performer(it.id) },
+                                )
+                            }
+                        }
+                        item(key = "end") { Spacer(Modifier.height(32.dp)) }
+                        return@LazyColumn
                     }
                     item(key = "continue") {
                         Shelf("Continue watching", data.continueWatching, key = { it.id }, onSeeAll = { nav.list(SceneListKind.Continue) }) {

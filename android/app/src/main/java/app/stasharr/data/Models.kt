@@ -241,6 +241,8 @@ data class SitePromo(
 data class SiteLook(
     val enabled: Boolean = false,
     val style: String = "velvet",
+    /** Where things sit: classic, bento, mosaic, spotlight, showcase, immersive, editorial, brutal or swipe. */
+    val layout: String = "classic",
     val name: String = "",
     val tagline: String = "",
     val accent: String = "",

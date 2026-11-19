@@ -5,6 +5,18 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Layouts in the Android app
+- The storefront in the app now follows the site's layout too: Bento tiles,
+  the Mosaic wall, Spotlight's big scene with a numbered top 10, Showcase's
+  3D cover-flow, Immersive's full-screen scene, Editorial's magazine cover
+  and "In this issue", Brutal's blocks and marquee, and Swipe's deck (drag
+  right to like, left to skip).
+- Scene lists, cards, headings and portraits change with it: masonry in
+  Mosaic, numbered lists in Spotlight, serif and black-and-white in
+  Editorial, outlined boxes that press in for Brutal, and more.
+- **You → Layout** picks a layout for this phone only; "Site default" follows
+  the site.
+
 ### Profiles, mini-player, discreet mode and monthly recap
 - **Profiles**: up to 5 Netflix-style profiles under one account, each with
   its own history, likes, My list and recap. "Who's watching?" shows once per
