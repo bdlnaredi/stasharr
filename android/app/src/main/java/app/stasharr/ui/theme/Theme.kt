@@ -4,6 +4,9 @@ import app.stasharr.ui.TvFocusIndication
 import app.stasharr.ui.Tv
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import app.stasharr.ui.AppLayouts
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -110,10 +113,34 @@ private val Type = Typography(
     labelSmall = TextStyle(fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.6.sp),
 )
 
+// Editorial uses serif headlines; Brutal heavy capitals-ready ones.
+private val EditorialType = Type.copy(
+    displaySmall = Type.displaySmall.copy(fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic),
+    headlineLarge = Type.headlineLarge.copy(fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold),
+    headlineMedium = Type.headlineMedium.copy(fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic, fontWeight = FontWeight.Bold),
+    headlineSmall = Type.headlineSmall.copy(fontFamily = FontFamily.Serif),
+    titleLarge = Type.titleLarge.copy(fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic),
+    titleMedium = Type.titleMedium.copy(fontFamily = FontFamily.Serif),
+    titleSmall = Type.titleSmall.copy(fontFamily = FontFamily.Serif),
+)
+
+private val BrutalType = Type.copy(
+    headlineLarge = Type.headlineLarge.copy(fontWeight = FontWeight.Black, letterSpacing = (-1).sp),
+    headlineMedium = Type.headlineMedium.copy(fontWeight = FontWeight.Black, letterSpacing = (-0.5).sp),
+    titleLarge = Type.titleLarge.copy(fontWeight = FontWeight.Black),
+    titleMedium = Type.titleMedium.copy(fontWeight = FontWeight.Black),
+    titleSmall = Type.titleSmall.copy(fontWeight = FontWeight.ExtraBold),
+)
+
 @Composable
 fun StasharrTheme(content: @Composable () -> Unit) {
+    val type = when {
+        AppLayouts.current.serif -> EditorialType
+        AppLayouts.current.caps -> BrutalType
+        else -> Type
+    }
     // always dark, like the big streaming apps
-    MaterialTheme(colorScheme = colors(), typography = Type) {
+    MaterialTheme(colorScheme = colors(), typography = type) {
         // on a TV, whatever the remote is on gets an outline
         if (Tv.isTv) {
             androidx.compose.runtime.CompositionLocalProvider(

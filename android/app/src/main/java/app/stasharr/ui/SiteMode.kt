@@ -26,6 +26,14 @@ object SiteMode {
     var preview by mutableStateOf(false)
         private set
 
+    /** This phone's own choice of layout, or null to follow the site. */
+    var ownLayout by mutableStateOf<String?>(null)
+        private set
+
+    /** The layout the storefront uses; Classic when it is off. */
+    val layout: String
+        get() = if (!storefront) "classic" else (ownLayout ?: look?.layout ?: "classic")
+
     /** Whether the person confirmed they are an adult (asked once). */
     var adultOk by mutableStateOf(false)
         private set
@@ -58,6 +66,7 @@ object SiteMode {
         val p = prefs(context)
         preview = p.getBoolean("preview", false)
         adultOk = p.getBoolean("adult_ok", false)
+        ownLayout = p.getString("own_layout", null)
         look = p.getString("look", null)?.let { runCatching { json.decodeFromString<SiteLook>(it) }.getOrNull() }
         paint()
     }
@@ -74,6 +83,12 @@ object SiteMode {
         prefs(context).edit().putBoolean("preview", on).apply()
     }
 
+    /** Picks a layout for this phone only; null follows the site again. */
+    fun setOwnLayout(context: Context, id: String?) {
+        ownLayout = id
+        prefs(context).edit().apply { if (id == null) remove("own_layout") else putString("own_layout", id) }.apply()
+    }
+
     fun confirmAdult(context: Context) {
         adultOk = true
         prefs(context).edit().putBoolean("adult_ok", true).apply()
@@ -82,6 +97,7 @@ object SiteMode {
     fun clear(context: Context) {
         look = null
         preview = false
+        ownLayout = null
         paint()
         prefs(context).edit().clear().apply()
     }

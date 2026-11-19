@@ -311,7 +311,7 @@ class Repository(private val api: Api) {
 
     suspend fun siteLook(): SiteLook? {
         val data = api.gql(
-            """query { siteConfig { enabled style name tagline accent models_gender applies_to_me app_look age_gate logo_url
+            """query { siteConfig { enabled style layout name tagline accent models_gender applies_to_me app_look age_gate logo_url
               home_rows { type title enabled tag { id name } } promo { enabled text link image } } }"""
         )
         return data["siteConfig"].decode<SiteLook?>(null)
