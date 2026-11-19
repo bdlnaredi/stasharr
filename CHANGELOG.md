@@ -17,7 +17,8 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   Mosaic, numbered lists in Spotlight, serif and black-and-white in
   Editorial, outlined boxes that press in for Brutal, and more.
 - **You → Layout** picks a layout for this phone only; "Site default" follows
-  the site.
+  the site. It works on every account, admins included, even with the
+  storefront off.
 
 ### Profiles, mini-player, discreet mode and monthly recap
 - **Profiles**: up to 5 Netflix-style profiles under one account, each with

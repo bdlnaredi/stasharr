@@ -97,7 +97,7 @@ internal data class HomeData(
     val categories: List<Tag> = emptyList(),
 )
 
-private suspend fun loadHome(site: Boolean, femaleOnly: Boolean): HomeData = coroutineScope {
+private suspend fun loadHome(site: Boolean, femaleOnly: Boolean, extras: Boolean = site): HomeData = coroutineScope {
     val repo = app.repo
     // each shelf loads on its own; one failing does not empty the page
     suspend fun <T> safe(block: suspend () -> List<T>): List<T> = runCatching { block() }.getOrDefault(emptyList())
@@ -113,8 +113,9 @@ private suspend fun loadHome(site: Boolean, femaleOnly: Boolean): HomeData = cor
             else repo.scenes(SceneSort.TopRated, perPage = 20).items.filter { (it.rating100 ?: 0) > 0 }
         }
     }
-    val trending = async { if (site) safe { repo.siteScenes("TRENDING", 20) } else emptyList() }
-    val cats = async { if (site) safe { repo.topTags(16) } else emptyList() }
+    // trending and categories feed the storefront and the layouts' home tops
+    val trending = async { if (extras) safe { repo.siteScenes("TRENDING", 20) } else emptyList() }
+    val cats = async { if (extras) safe { repo.topTags(16) } else emptyList() }
     val studios = async { safe { repo.studios(perPage = 16).items.filter { it.sceneCount > 0 } } }
     val perf = async {
         safe {
@@ -153,7 +154,8 @@ private suspend fun loadHome(site: Boolean, femaleOnly: Boolean): HomeData = cor
 fun HomeScreen() {
     val site = SiteMode.active
     val femaleOnly = SiteMode.look?.femaleOnly ?: false
-    val loader = rememberLoad(site, femaleOnly) { loadHome(site, femaleOnly) }
+    val layout = homeLayout
+    val loader = rememberLoad(site, femaleOnly, layout != "classic") { loadHome(site, femaleOnly, extras = site || layout != "classic") }
     val nav = LocalNav.current
     val listState = rememberLazyListState()
     val scrolled by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 200 } }
@@ -165,7 +167,6 @@ fun HomeScreen() {
                 onRefresh = loader.reload,
             ) {
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                    val layout = if (site) homeLayout else "classic"
                     item(key = "hero-$layout") {
                         when {
                             data.hero.isEmpty() -> Spacer(Modifier.statusBarsPadding().height(72.dp))
