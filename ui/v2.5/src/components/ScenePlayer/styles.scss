@@ -350,6 +350,28 @@ $sceneTabWidth: 450px;
     background: #fff;
   }
 
+  // Stasharr: the back/forward buttons draw their own icon
+  .vjs-stasharr-seek {
+    cursor: pointer;
+    flex: none;
+
+    .vjs-icon-placeholder {
+      align-items: center;
+      display: flex;
+      height: 100%;
+      justify-content: center;
+    }
+
+    .vjs-stasharr-seek-icon {
+      height: 1.9em;
+      width: 1.9em;
+    }
+
+    &:hover .vjs-stasharr-seek-icon {
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+    }
+  }
+
   .vjs-seek-button.skip-back span.vjs-icon-placeholder::before {
     -ms-transform: none;
     -webkit-transform: none;
@@ -391,7 +413,8 @@ $sceneTabWidth: 450px;
       }
 
       // hide the regular seek buttons on touch screens
-      .vjs-control-bar .vjs-seek-button {
+      .vjs-control-bar .vjs-seek-button,
+      .vjs-control-bar .vjs-stasharr-seek {
         display: none;
       }
     }
