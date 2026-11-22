@@ -25,6 +25,7 @@ import "./track-activity";
 import "./vrmode";
 import "./media-session";
 import "./wake-sentinel";
+import "./seek10";
 import cx from "classnames";
 import {
   useSceneSaveActivity,
@@ -391,10 +392,8 @@ export const ScenePlayer: React.FC<IScenePlayerProps> = PatchComponent(
           sourceSelector: {},
           persistVolume: {},
           bigButtons: {},
-          seekButtons: {
-            forward: 10,
-            back: 10,
-          },
+          // Stasharr: own back/forward buttons beside play (see seek10.ts)
+          seek10: { seconds: 10 },
           skipButtons: {},
           trackActivity: {},
           vrMenu: {},

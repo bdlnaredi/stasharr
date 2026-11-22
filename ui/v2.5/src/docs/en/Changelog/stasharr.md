@@ -5,6 +5,12 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
 
 ## Next release (not tagged yet)
 
+### Player
+- The back 10 / forward 10 buttons beside the play button on the website
+  player are back: Stasharr now draws its own, so they always show and
+  skip 10 seconds. On touch screens the big buttons in the middle of the
+  picture do the same.
+
 ### Layouts in the Android app
 - The storefront in the app now follows the site's layout too: Bento tiles,
   the Mosaic wall, Spotlight's big scene with a numbered top 10, Showcase's
