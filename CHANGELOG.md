@@ -12,6 +12,8 @@ of the Docker image `ghcr.io/bdlnaredi/stasharr`; Android versions are the
   player are back: Stasharr now draws its own, so they always show and
   skip 10 seconds. On touch screens the big buttons in the middle of the
   picture do the same.
+- On the website, the player's previous / next and other icon buttons showed
+  empty squares: the site's font was replacing the player's icon font. Fixed.
 
 ### Layouts in the Android app
 - The storefront in the app now follows the site's layout too: Bento tiles,

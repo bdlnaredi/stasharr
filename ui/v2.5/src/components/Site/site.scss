@@ -56,7 +56,9 @@ body.site-mode {
     text-transform: var(--site-heading-transform);
   }
 
-  button {
+  // the player's buttons keep their icon font, or their icons turn into
+  // empty squares
+  button:not(.vjs-button) {
     font-family: inherit;
   }
 }
